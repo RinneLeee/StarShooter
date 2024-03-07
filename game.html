@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Press+Start+2P&display=swap">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-color: black;
+        }
+
+        .spaceship {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 25px solid transparent;
+            border-right: 25px solid transparent;
+            border-bottom: 50px solid white;
+            left: 50vw;
+            top: 50vh;
+            transform-origin: bottom;
+        }
+
+        .bullet {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            display: none;
+        }
+
+        .target, .slow-target, .fast-target {
+            position: absolute;
+            display: none;
+            border-radius: 50%; /* Make targets circles */
+        }
+
+        .target {
+            width: 20px;
+            height: 20px;
+            background-color: blue;
+        }
+
+        .slow-target {
+            width: 40px;
+            height: 40px;
+            background-color: lightgreen;
+        }
+
+        .fast-target {
+            width: 20px;
+            height: 20px;
+            background-color: yellow;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+
+        .counter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+        }
+
+        .hearts-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+        }
+
+        .heart {
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            margin-left: 5px;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 30px;
+            display: none;
+        }
+
+        .restart-message {
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 20px;
+            display: none;
+            cursor: pointer;
+        }
+    </style>
+    <title>Spaceship Shooting Game</title>
+</head>
+<body>
+    <div class="game-container">
+        <div class="spaceship" id="spaceship"></div>
+        <div class="counter" id="counter">Score: 0</div>
+        <div class="hearts-container" id="heartsContainer"></div>
+        <div class="game-over" id="gameOver">Game Over!</div>
+        <div class="restart-message" id="restartMessage">Click to Restart</div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const spaceship = document.getElementById("spaceship");
+                const counter = document.getElementById("counter");
+                const heartsContainer = document.getElementById("heartsContainer");
+                const gameOver = document.getElementById("gameOver");
+                const restartMessage = document.getElementById("restartMessage");
+                let score = 0;
+                let gameRunning = true;
+                let targetSpeed = 5; // Initial speed
+                let slowTargetActive = false;
+                let bulletIntervalSpeed = 10; // Initial bullet interval speed
+                let health = 3;
+
+                // Initialize hearts
+                for (let i = 0; i < health; i++) {
+                    const heart = document.createElement("div");
+                    heart.className = "heart";
+                    heartsContainer.appendChild(heart);
+                }
+
+                document.addEventListener("mousemove", function(event) {
+                    // Hide the mouse cursor
+                    if (gameRunning) {
+                        spaceship.style.left = event.clientX - spaceship.offsetWidth / 2 + "px";
+                        spaceship.style.top = event.clientY - spaceship.offsetHeight / 2 + "px";
+                    }
+                });
+
+                function shootBullet() {
+                    if (!gameRunning) return;
+
+                    // Shoot bullets based on score
+                    let numBullets = Math.min(8, Math.floor(score / 10) + 1);
+                    if (score >= 30) {
+                        numBullets = 2;
+                    }
+
+                    for (let i = 0; i < numBullets; i++) {
+                        // Create bullet
+                        const bullet = document.createElement("div");
+                        bullet.className = "bullet";
+                        bullet.style.left = spaceship.offsetLeft + spaceship.offsetWidth / 2 - bullet.offsetWidth / 2 + "px";
+                        bullet.style.top = spaceship.offsetTop - bullet.offsetHeight + "px";
+                        document.body.appendChild(bullet);
+                        bullet.style.display = "block";
+
+                        // Animate bullet
+                        const bulletInterval = setInterval(function() {
+                            bullet.style.top = parseInt(bullet.style.top) - 10 + "px";
+
+                            // Check if the bullet is out of the screen
+                            if (parseInt(bullet.style.top) < 0) {
+                                bullet.remove();
+                                clearInterval(bulletInterval);
+                            }
+
+                            // Check for collision with targets
+                            const targets = document.getElementsByClassName("target");
+                            const slowTargets = document.getElementsByClassName("slow-target");
+                            const fastTargets = document.getElementsByClassName("fast-target");
+
+                            checkAndRemoveCollision(bullet, targets, bulletInterval);
+                            checkAndRemoveCollision(bullet, slowTargets, bulletInterval);
+                            checkAndRemoveCollision(bullet, fastTargets, bulletInterval);
+                        }, bulletIntervalSpeed);
+                    }
+                }
+
+                function createTarget() {
+                    if (!gameRunning) return;
+
+                    // Create target
+                    createAndAnimateTarget("target", "blue", targetSpeed);
+                }
+
+                function createSlowTarget() {
+                    if (!gameRunning) return;
+
+                    // Create slow target (large circle)
+                    createAndAnimateTarget("slow-target", "lightgreen", targetSpeed / 2);
+                }
+
+                function createFastTarget() {
+                    if (!gameRunning) return;
+
+                    // Create fast target (yellow triangle)
+                    const fastTarget = document.createElement("div");
+                    fastTarget.className = "fast-target";
+                    fastTarget.style.left = Math.random() * (window.innerWidth - 20) + "px";
+                    fastTarget.style.top = "0";
+                    document.body.appendChild(fastTarget);
+                    fastTarget.style.display = "block";
+
+                    // Animate fast target
+                    const fastTargetInterval = setInterval(function() {
+                        fastTarget.style.top = parseInt(fastTarget.style.top) + targetSpeed * 1.5 + "px";
+
+                        // Check if the fast target is out of the screen
+                        if (parseInt(fastTarget.style.top) > window.innerHeight) {
+                            fastTarget.remove();
+                            clearInterval(fastTargetInterval);
+                        }
+
+                        // Check for collision with spaceship
+                        if (isCollision(spaceship, fastTarget)) {
+                            removeHearts(health);
+                            fastTarget.remove();
+                            endGame();
+                        }
+                    }, 20);
+                }
+
+                function createAndAnimateTarget(className, color, speed, points) {
+                    // Create target
+                    const target = document.createElement("div");
+                    target.className = className;
+                    target.style.width = "20px";
+                    target.style.height = "20px";
+                    target.style.background = color;
+                    target.style.left = Math.random() * (window.innerWidth - 20) + "px";
+                    target.style.top = "0";
+                    document.body.appendChild(target);
+                    target.style.display = "block";
+
+                    // Animate target
+                    const targetInterval = setInterval(function() {
+                        target.style.top = parseInt(target.style.top) + speed + "px";
+
+                        // Check if the target is out of the screen
+                        if (parseInt(target.style.top) > window.innerHeight) {
+                            target.remove();
+                            clearInterval(targetInterval);
+                        }
+
+                        // Check for collision with spaceship
+                        if (isCollision(spaceship, target)) {
+                            if (points) {
+                                score += points;
+                            } else {
+                                removeHeart();
+                                if (health === 0) {
+                                    endGame();
+                                }
+                            }
+                            target.remove();
+                            updateScore();
+                        }
+                    }, 20);
+                }
+
+                // Check for collision between bullet and targets, remove targets on collision
+                function checkAndRemoveCollision(bullet, targets, interval) {
+                    for (let i = 0; i < targets.length; i++) {
+                        const target = targets[i];
+                        if (isCollision(bullet, target)) {
+                            let points = 1; // Default points for regular targets
+                            if (target.classList.contains("fast-target")) {
+                                points = 3; // Adjust points for the fast target
+                            }
+                            target.remove();
+                            bullet.remove();
+                            clearInterval(interval);
+                            score += points;
+                            updateScore();
+                        }
+                    }
+                }
+
+                // Check for collision between two elements
+                function isCollision(element1, element2) {
+                    const rect1 = element1.getBoundingClientRect();
+                    const rect2 = element2.getBoundingClientRect();
+
+                    return !(rect1.right < rect2.left || 
+                             rect1.left > rect2.right || 
+                             rect1.bottom < rect2.top || 
+                             rect1.top > rect2.bottom);
+                }
+
+                // Update the score
+                function updateScore() {
+                    counter.innerHTML = "Score: " + score;
+                    // Increase target speed with each score
+                    targetSpeed += 1;
+
+                    // Create a slow target at certain intervals
+                    if (score % 5 === 0) {
+                        createSlowTarget();
+                    }
+
+                    // Create a fast target at certain intervals
+                    if (score % 7 === 0) {
+                        createFastTarget();
+                    }
+
+                    // Increase rate of fire in intervals of 5
+                    if (score % 5 === 0) {
+                        bulletIntervalSpeed -= 1;
+                    }
+
+                    // Allow shooting two bullets at a time when the score is 30 and above
+                    if (score >= 30) {
+                        bulletIntervalSpeed = 10; // Adjust the interval speed (in milliseconds)
+                    }
+                }
+
+                // Remove a heart from the display
+                function removeHeart() {
+                    if (health > 0) {
+                        health--;
+                        heartsContainer.removeChild(heartsContainer.lastChild);
+                    }
+                }
+
+                // Remove all hearts from the display
+                function removeHearts(numHearts) {
+                    for (let i = 0; i < numHearts; i++) {
+                        heartsContainer.removeChild(heartsContainer.lastChild);
+                    }
+                    health = 0;
+                }
+
+                // End the game
+                function endGame() {
+                    gameRunning = false;
+                    gameOver.style.display = "block";
+                    restartMessage.style.display = "block";
+                }
+
+                // Restart the game when the user clicks
+                restartMessage.addEventListener("click", function() {
+                    restart();
+                });
+
+                // Automatically shoot bullets and create targets at a consistent rate
+                setInterval(shootBullet, 1000); // Adjust the interval (in milliseconds) for the rate of bullet shooting
+                setInterval(createTarget, 1500); // Adjust the interval (in milliseconds) for the rate of target creation
+
+                // Function to restart the game
+                function restart() {
+                    // Reset variables and hide game over message
+                    score = 0;
+                    gameRunning = true;
+                    targetSpeed = 5;
+                    bulletIntervalSpeed = 10; // Reset bullet interval speed
+                    health = 3;
+
+                    // Reset hearts
+                    heartsContainer.innerHTML = "";
+                    for (let i = 0; i < health; i++) {
+                        const heart = document.createElement("div");
+                        heart.className = "heart";
+                        heartsContainer.appendChild(heart);
+                    }
+
+                    counter.innerHTML = "Score: 0";
+                    gameOver.style.display = "none";
+                    restartMessage.style.display = "none";
+
+                    // Remove existing targets and bullets
+                    const targets = document.getElementsByClassName("target");
+                    const slowTargets = document.getElementsByClassName("slow-target");
+                    const fastTargets = document.getElementsByClassName("fast-target");
+                    const bullets = document.getElementsByClassName("bullet");
+
+                    removeElements(targets);
+                    removeElements(slowTargets);
+                    removeElements(fastTargets);
+                    removeElements(bullets);
+                }
+
+                // Helper function to remove multiple elements
+                function removeElements(elements) {
+                    for (let i = 0; i < elements.length; i++) {
+                        elements[i].remove();
+                    }
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>
