@@ -9,6 +9,7 @@
             margin: 0;
             overflow: hidden;
             font-family: 'Press Start 2P', cursive;
+            cursor: none; /* Hide the mouse cursor */
         }
 
         .game-container {
@@ -38,7 +39,7 @@
             display: none;
         }
 
-        .target, .slow-target, .fast-target {
+        .target, .slow-target, .fast-target, .potion-target {
             position: absolute;
             display: none;
             border-radius: 50%; /* Make targets circles */
@@ -61,6 +62,12 @@
             height: 20px;
             background-color: yellow;
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+
+        .potion-target {
+            width: 20px;
+            height: 20px;
+            background-color: purple;
         }
 
         .counter {
@@ -177,10 +184,12 @@
                             const targets = document.getElementsByClassName("target");
                             const slowTargets = document.getElementsByClassName("slow-target");
                             const fastTargets = document.getElementsByClassName("fast-target");
+                            const potionTargets = document.getElementsByClassName("potion-target");
 
                             checkAndRemoveCollision(bullet, targets, bulletInterval);
                             checkAndRemoveCollision(bullet, slowTargets, bulletInterval);
                             checkAndRemoveCollision(bullet, fastTargets, bulletInterval);
+                            checkAndRemoveCollision(bullet, potionTargets, bulletInterval, true);
                         }, bulletIntervalSpeed);
                     }
                 }
@@ -229,7 +238,48 @@
                     }, 20);
                 }
 
-                function createAndAnimateTarget(className, color, speed, points) {
+                function createPotionTarget() {
+                    if (!gameRunning) return;
+
+                    // Create potion target
+                    const potionTarget = document.createElement("div");
+                    potionTarget.className = "potion-target";
+                    potionTarget.style.width = "20px";
+                    potionTarget.style.height = "20px";
+                    potionTarget.style.background = "purple";
+                    potionTarget.style.left = Math.random() * (window.innerWidth - 20) + "px";
+                    potionTarget.style.top = "0";
+                    document.body.appendChild(potionTarget);
+                    potionTarget.style.display = "block";
+
+                    // Animate potion target
+                    const potionTargetInterval = setInterval(function () {
+                        potionTarget.style.top = parseInt(potionTarget.style.top) + targetSpeed / 2 + "px";
+
+                        // Check if the potion target is out of the screen
+                        if (parseInt(potionTarget.style.top) > window.innerHeight) {
+                            potionTarget.remove();
+                            clearInterval(potionTargetInterval);
+                        }
+
+                        // Check for collision with spaceship
+                        if (isCollision(spaceship, potionTarget)) {
+                            if (health < 3) {
+                                health++;
+                                const heart = document.createElement("div");
+                                heart.className = "heart";
+                                heartsContainer.appendChild(heart);
+                            }
+                            potionTarget.remove();
+                            updateScore();
+                            clearInterval(potionTargetInterval);
+                        }
+                    }, 20);
+                }
+
+
+
+                function createAndAnimateTarget(className, color, speed, isPotion, points) {
                     // Create target
                     const target = document.createElement("div");
                     target.className = className;
@@ -253,12 +303,21 @@
 
                         // Check for collision with spaceship
                         if (isCollision(spaceship, target)) {
-                            if (points) {
-                                score += points;
+                            if (isPotion) {
+                                if (health < 3) {
+                                    health++;
+                                    const heart = document.createElement("div");
+                                    heart.className = "heart";
+                                    heartsContainer.appendChild(heart);
+                                }
                             } else {
-                                removeHeart();
-                                if (health === 0) {
-                                    endGame();
+                                if (points) {
+                                    score += points;
+                                } else {
+                                    removeHeart();
+                                    if (health === 0) {
+                                        endGame();
+                                    }
                                 }
                             }
                             target.remove();
@@ -268,19 +327,25 @@
                 }
 
                 // Check for collision between bullet and targets, remove targets on collision
-                function checkAndRemoveCollision(bullet, targets, interval) {
+                function checkAndRemoveCollision(bullet, targets, interval, isPotion = false) {
                     for (let i = 0; i < targets.length; i++) {
                         const target = targets[i];
                         if (isCollision(bullet, target)) {
-                            let points = 1; // Default points for regular targets
-                            if (target.classList.contains("fast-target")) {
-                                points = 3; // Adjust points for the fast target
+                            if (isPotion) {
+                                target.remove();
+                                bullet.remove();
+                                clearInterval(interval);
+                            } else {
+                                let points = 1; // Default points for regular targets
+                                if (target.classList.contains("fast-target")) {
+                                    points = 3; // Adjust points for the fast target
+                                }
+                                target.remove();
+                                bullet.remove();
+                                clearInterval(interval);
+                                score += points;
+                                updateScore();
                             }
-                            target.remove();
-                            bullet.remove();
-                            clearInterval(interval);
-                            score += points;
-                            updateScore();
                         }
                     }
                 }
@@ -310,6 +375,11 @@
                     // Create a fast target at certain intervals
                     if (score % 7 === 0) {
                         createFastTarget();
+                    }
+
+                    // Create a potion target at certain intervals
+                    if (score % 10 === 0) {
+                        createPotionTarget();
                     }
 
                     // Increase rate of fire in intervals of 5
@@ -380,11 +450,13 @@
                     const targets = document.getElementsByClassName("target");
                     const slowTargets = document.getElementsByClassName("slow-target");
                     const fastTargets = document.getElementsByClassName("fast-target");
+                    const potionTargets = document.getElementsByClassName("potion-target");
                     const bullets = document.getElementsByClassName("bullet");
 
                     removeElements(targets);
                     removeElements(slowTargets);
                     removeElements(fastTargets);
+                    removeElements(potionTargets);
                     removeElements(bullets);
                 }
 
