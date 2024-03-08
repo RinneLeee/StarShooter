@@ -111,6 +111,34 @@
             display: none;
             cursor: pointer;
         }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 10px 5px #00f; }
+            50% { box-shadow: 0 0 20px 10px #00f; }
+            100% { box-shadow: 0 0 10px 5px #00f; }
+        }
+
+        .glow {
+            animation: glow 0.3s linear 0.2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.5s linear;
+        }
+
+        .highscore {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+        }
     </style>
     <title>Spaceship Shooting Game</title>
 </head>
@@ -121,6 +149,7 @@
         <div class="hearts-container" id="heartsContainer"></div>
         <div class="game-over" id="gameOver">Game Over!</div>
         <div class="restart-message" id="restartMessage">Click to Restart</div>
+        <div class="highscore" id="highscore">High Score: 0</div>
 
         <script>
             document.addEventListener("DOMContentLoaded", function() {
@@ -129,12 +158,14 @@
                 const heartsContainer = document.getElementById("heartsContainer");
                 const gameOver = document.getElementById("gameOver");
                 const restartMessage = document.getElementById("restartMessage");
+                const highscoreDisplay = document.getElementById("highscore");
                 let score = 0;
                 let gameRunning = true;
                 let targetSpeed = 5; // Initial speed
                 let slowTargetActive = false;
                 let bulletIntervalSpeed = 10; // Initial bullet interval speed
                 let health = 3;
+                let highscore = 0;
 
                 // Initialize hearts
                 for (let i = 0; i < health; i++) {
@@ -279,16 +310,17 @@
 
 
                 function createAndAnimateTarget(className, color, speed, isPotion, points) {
-                    // Create target
-                    const target = document.createElement("div");
-                    target.className = className;
-                    target.style.width = "20px";
-                    target.style.height = "20px";
-                    target.style.background = color;
-                    target.style.left = Math.random() * (window.innerWidth - 20) + "px";
-                    target.style.top = "0";
-                    document.body.appendChild(target);
-                    target.style.display = "block";
+                // Create target with glow effect
+                const target = document.createElement("div");
+                target.className = className;
+                target.style.width = "20px";
+                target.style.height = "20px";
+                target.style.background = color;
+                target.style.left = Math.random() * (window.innerWidth - 20) + "px";
+                target.style.top = "0";
+                target.classList.add("glow"); // Add the glow effect
+                document.body.appendChild(target);
+                target.style.display = "block";
 
                     // Animate target
                     const targetInterval = setInterval(function() {
@@ -390,6 +422,9 @@
                     if (score >= 30) {
                         bulletIntervalSpeed = 10; // Adjust the interval speed (in milliseconds)
                     }
+
+                    // Call the function to update the high score
+                    updateHighScore();
                 }
 
                 // Remove a heart from the display
@@ -424,6 +459,14 @@
                 setInterval(shootBullet, 1000); // Adjust the interval (in milliseconds) for the rate of bullet shooting
                 setInterval(createTarget, 1500); // Adjust the interval (in milliseconds) for the rate of target creation
 
+
+                function updateHighScore() {
+                    if (score > highscore) {
+                        highscore = score;
+                        highscoreDisplay.innerHTML = "High Score: " + highscore;
+                    }
+                }
+
                 // Function to restart the game
                 function restart() {
                     // Reset variables and hide game over message
@@ -444,6 +487,8 @@
                     counter.innerHTML = "Score: 0";
                     gameOver.style.display = "none";
                     restartMessage.style.display = "none";
+                    // Update the high score display when restarting
+                    highscoreDisplay.innerHTML = "High Score: " + highscore;
 
                     // Remove existing targets and bullets
                     const targets = document.getElementsByClassName("target");
