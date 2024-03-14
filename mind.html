@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mind Reader</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    #loading {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>I can see your past or future</h2>
+  <h3>What did you eat for breakfast?</h3>
+  <form id="inputForm">
+    <input type="text" id="breakfastInput" placeholder="Enter your breakfast...">
+    <button type="submit">Submit</button>
+  </form>
+  <div id="loading">
+    <img src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="Loading...">
+    <p>Processing...</p>
+  </div>
+  <br>
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('inputForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      var breakfast = document.getElementById('breakfastInput').value;
+      var resultDiv = document.getElementById('result');
+      var loadingDiv = document.getElementById('loading');
+
+      loadingDiv.style.display = 'block';
+      resultDiv.textContent = '';
+
+      // Simulate processing delay
+      setTimeout(function() {
+        loadingDiv.style.display = 'none';
+        resultDiv.textContent = "You ate " + breakfast + " for breakfast. Thank you.";
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
