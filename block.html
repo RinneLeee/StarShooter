@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Block Colour Game</title>
+<style>
+    body, html {
+        height: 100%;
+        margin: 0;
+        font-family: 'Arial', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #6ee7b7, #3b82f6);
+    }
+    #gameArea {
+        text-align: center;
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        max-width: 90%; /* Limiting max width for better spacing on mobile */
+    }
+    .block-row {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 20px;
+    }
+    .block {
+        width: 12vw; /* Responsive width */
+        height: 12vw; /* Responsive height, maintaining aspect ratio */
+        max-width: 60px; /* Maximum size */
+        max-height: 60px;
+        display: inline-block;
+        border: 2px solid #000;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+    .block:hover {
+        transform: scale(1.1);
+    }
+    .selected {
+        box-shadow: 0 0 10px 3px #ff8c00;
+    }
+    #hiddenBlocks .block {
+        visibility: hidden;
+    }
+    button {
+        cursor: pointer;
+        padding: 12px 24px; /* Larger padding for easier interaction */
+        font-size: 18px; /* Larger font size for readability */
+        color: #ffffff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+    p, h5 {
+        color: #333;
+        font-size: 1rem; /* Responsive font size */
+    }
+    @media (max-width: 600px) {
+        p, h5 {
+            font-size: 0.9rem; /* Smaller font size on very small devices */
+        }
+        button {
+            padding: 15px 30px; /* Even larger button on small screens */
+            font-size: 20px;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="column"> <!-- Typo fixed: 'column' for semantic structure -->
+<div id="gameArea">
+    <div id="hiddenBlocks" class="block-row">
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+    </div>
+    <div id="userBlocks" class="block-row">
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+    </div>
+    <button id="checkButton">Check</button>
+    <p id="hint">Hint: Press "Check" to verify your match.</p>
+    <p id="hintsLeft">Hints left: 4</p>
+</div>
+<h5>Tips:
+Pay attention to the hints after each check to refine your strategy.
+Plan your moves carefully to conserve hints and increase your chances of winning.</h5>
+</div>
+<script>
+    const colors = ['red', 'green', 'blue', 'yellow', 'purple'];
+    let hintsLeft = 4;
+    let selectedIndex = null; // Ensure selectedIndex is properly scoped
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    const hiddenBlocks = document.querySelectorAll('#hiddenBlocks .block');
+    const userBlocks = document.querySelectorAll('#userBlocks .block');
+
+    function initializeGame() {
+        shuffle(colors);
+        let hiddenColors = [...colors];
+        let userColors = [...colors];
+        shuffle(hiddenColors);
+        shuffle(userColors);
+
+        hiddenBlocks.forEach((block, index) => {
+            block.style.backgroundColor = hiddenColors[index];
+            block.style.visibility = 'hidden'; // Reset visibility for new game
+        });
+
+        userBlocks.forEach((block, index) => {
+            block.style.backgroundColor = userColors[index];
+        });
+
+        hintsLeft = 4;
+        document.getElementById('hintsLeft').textContent = `Hints left: ${hintsLeft}`;
+        document.getElementById('hint').textContent = "Hint: Press 'Check' to verify your match.";
+        document.getElementById('checkButton').textContent = 'Check';
+        selectedIndex = null; // Reset selected index
+    }
+
+    userBlocks.forEach((block, index) => {
+        block.addEventListener('click', () => {
+            selectBlock(index);
+        });
+    });
+
+    function selectBlock(index) {
+        if (selectedIndex === null) {
+            selectedIndex = index;
+            userBlocks[index].classList.add('selected');
+        } else {
+            userBlocks[selectedIndex].classList.remove('selected');
+            let tempColor = userBlocks[selectedIndex].style.backgroundColor;
+            userBlocks[selectedIndex].style.backgroundColor = userBlocks[index].style.backgroundColor;
+            userBlocks[index].style.backgroundColor = tempColor;
+            selectedIndex = null; // Reset after swap
+        }
+    }
+
+    function checkBlocks() {
+        let correctCount = 0;
+        userBlocks.forEach((block, index) => {
+            if (block.style.backgroundColor === hiddenBlocks[index].style.backgroundColor) {
+                correctCount++;
+            }
+        });
+
+        if (correctCount === 5 || hintsLeft === 0) {
+            document.getElementById('hint').textContent = correctCount === 5 ? 'Congratulations, you win!' : 'Game over!';
+            revealBlocks();
+            document.getElementById('checkButton').textContent = 'Replay';
+        } else {
+            document.getElementById('hint').textContent = `Hint: You have ${correctCount} correct matches.`;
+            hintsLeft--;
+            document.getElementById('hintsLeft').textContent = `Hints left: ${hintsLeft}`;
+        }
+    }
+
+    function revealBlocks() {
+        hiddenBlocks.forEach(block => block.style.visibility = 'visible');
+    }
+
+    document.getElementById('checkButton').addEventListener('click', function() {
+        if (this.textContent === 'Check') {
+            checkBlocks();
+        } else if (this.textContent === 'Replay') {
+            initializeGame();
+        }
+    });
+
+    initializeGame(); // Initialize the game when the page loads
+</script>
+</body>
+</html>
