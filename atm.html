@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATM Simulation</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #2b2b2b;
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .container {
+            display: flex;
+            background: #444;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            border: 3px solid #555;
+        }
+        .hints-container {
+            background: #fdfdfd;
+            padding: 20px;
+            border-radius: 10px;
+            color: #333;
+            margin-right: 20px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+            font-family: 'Patrick Hand', cursive;
+            border: 2px #333;
+            position: relative;
+        }
+        .hints-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            border: 1px solid #ddd;
+            margin: 5px;
+            pointer-events: none;
+        }
+        .hints-container h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        .hints p {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            font-family: 'Patrick Hand', cursive;
+            transform: rotate(-3deg);
+        }
+        .atm-container {
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: #fff;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+            border: 3px solid #555;
+        }
+        .screen {
+            background: #000;
+            color: #0f0;
+            font-size: 2em;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            width: 120px;
+            height: 1.5em;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .key {
+            background: #444;
+            border: none;
+            color: #fff;
+            padding: 15px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        .key:active {
+            background: #555;
+        }
+        .blink {
+            animation: blink-animation 0.5s steps(5, start) infinite;
+        }
+        @keyframes blink-animation {
+            to {
+                visibility: hidden;
+            }
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hints-container">
+            <h2>Hints</h2>
+            <div class="hints">
+                <p id="hint1"></p>
+                <p id="hint2"></p>
+                <p id="hint3"></p>
+                <p id="hint4"></p>
+                <p id="hint5"></p>
+                <p id="hint6"></p>
+            </div>
+        </div>
+        <div class="atm-container">
+            <div id="screen" class="screen">******</div>
+            <div class="keypad">
+                <button class="key" onclick="inputDigit(1)">1</button>
+                <button class="key" onclick="inputDigit(2)">2</button>
+                <button class="key" onclick="inputDigit(3)">3</button>
+                <button class="key" onclick="inputDigit(4)">4</button>
+                <button class="key" onclick="inputDigit(5)">5</button>
+                <button class="key" onclick="inputDigit(6)">6</button>
+                <button class="key" onclick="inputDigit(7)">7</button>
+                <button class="key" onclick="inputDigit(8)">8</button>
+                <button class="key" onclick="inputDigit(9)">9</button>
+                <button class="key" onclick="clearInput()">Clear</button>
+                <button class="key" onclick="inputDigit(0)">0</button>
+                <button class="key" onclick="submitInput()">Enter</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        let input = '';
+        const maxDigits = 6;
+        const correctCode = generateRandomCode();
+        
+        function generateRandomCode() {
+            let code = '';
+            for (let i = 0; i < maxDigits; i++) {
+                code += Math.floor(Math.random() * 10);
+            }
+            return code;
+        }
+
+        function inputDigit(digit) {
+            if (input.length < maxDigits) {
+                input += digit;
+                updateScreen();
+            }
+        }
+
+        function clearInput() {
+            input = '';
+            updateScreen();
+        }
+
+        function updateScreen() {
+            const screen = document.getElementById('screen');
+            screen.textContent = '*'.repeat(input.length) + ' '.repeat(maxDigits - input.length);
+        }
+
+        function submitInput() {
+            const screen = document.getElementById('screen');
+            if (input === correctCode) {
+                screen.textContent = 'CORRECT';
+                screen.style.color = '#0f0';
+            } else {
+                screen.classList.add('blink');
+                setTimeout(() => {
+                    screen.classList.remove('blink');
+                    clearInput();
+                }, 1000);
+            }
+        }
+
+        function setHints() {
+            const hints = [
+                `1. Sum of digits: ${correctCode.split('').reduce((a, b) => a + Number(b), 0)}`,
+                `2. First digit + second digit: ${Number(correctCode[0]) + Number(correctCode[1])}`,
+                `3. First digit * third digit: ${Number(correctCode[0]) * Number(correctCode[2])}`,
+                `4. Fourth digit squared: ${Math.pow(correctCode[3], 2)}`,
+                `5. Sum of first three digits: ${Number(correctCode[0]) + Number(correctCode[1]) + Number(correctCode[2])}`,
+                `6. Last two digits subtracted: ${Number(correctCode[correctCode.length - 2]) - Number(correctCode[correctCode.length - 1])}`
+            ];
+
+            for (let i = 1; i <= hints.length; i++) {
+                document.getElementById(`hint${i}`).textContent = hints[i - 1];
+            }
+        }
+
+        // Initialize hints
+        setHints();
+    </script>
+</body>
+</html>
