@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #e0f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+        }
+
+        .game-container {
+            background: #fff;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        #word-display {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #00796b;
+        }
+
+        .highlight-correct {
+            border-color: green;
+            color: green;
+        }
+
+        .highlight-wrong {
+            border-color: red;
+            color: red;
+        }
+
+        #word-input {
+            font-size: 1.5em;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            border: 2px solid #00796b;
+            border-radius: 5px;
+        }
+
+        #timer {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #d32f2f;
+        }
+
+        #start-button {
+            font-size: 1.5em;
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #00796b;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        #start-button:hover {
+            background: #004d40;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div id="word-display">Press Start to Play</div>
+        <input type="text" id="word-input" placeholder="Type here..." disabled>
+        <div id="timer" class="hidden">Time left: 5s</div>
+        <button id="start-button">Start</button>
+    </div>
+    <script>
+        const words = [
+			"zephyr", "quixotic", "bizarre", "cryptic", "ephemeral",
+			"phantasm", "labyrinth", "serendipity", "elixir", "gossamer",
+			"mellifluous", "luminous", "ethereal", "phantasmagoria", "incandescent",
+			"labyrinthine", "nebulous", "oscillation", "pulchritude", "somnolent",
+			"effervescent", "luminescent", "epiphany", "ineffable", "effulgent",
+			"penumbra", "nocturnal", "sibilant", "ephemeral", "mellifluous",
+			"iridescent", "effervescent", "diaphanous", "serendipitous", "whimsical",
+			"incongruous", "surreptitious", "capricious", "liminal", "transient",
+			"evanescent", "amorphous", "aesthetic", "ethereal", "phantasmagoric",
+			"labyrinthian", "mythopoeic", "nebulosity", "numinous", "oneiric",
+			"oscillatory", "palimpsest", "quintessential", "radiance", "reverie",
+			"sibilance", "sonorous", "soporific", "susurrus", "taciturn",
+			"tenebrous", "timorous", "trepidation", "ubiquitous", "umbrageous",
+			"undulating", "venerable", "verisimilitude", "vociferous", "whispering",
+			"wondrous", "zealous", "xenophobic", "yonder", "zeitgeist",
+			"zephyr", "whimsical", "quizzical", "metamorphosis", "polymorphous",
+			"serendipity", "superfluous", "syzygy", "triskaidekaphobia", "unctuous",
+			"vermillion", "vicissitude", "anomalous", "bibliophile", "cacophony",
+			"chiaroscuro", "clairvoyant", "dichotomy", "elucidate", "ephemeral",
+			"flabbergasted", "harbinger", "ineffable", "labyrinthine", "mellifluous"
+		];
+
+        let currentWord = "";
+        let initialTime = 5;
+        let timeLeft = initialTime;
+        let timer;
+        let gameRunning = false;
+
+        const wordDisplay = document.getElementById("word-display");
+        const wordInput = document.getElementById("word-input");
+        const timerDisplay = document.getElementById("timer");
+        const startButton = document.getElementById("start-button");
+
+        function startGame() {
+            gameRunning = true;
+            initialTime = 5;
+            timeLeft = initialTime;
+            wordInput.value = "";
+            wordInput.disabled = false;
+            wordInput.focus();
+            startButton.disabled = true;
+            timerDisplay.classList.remove("hidden");
+            nextWord();
+            wordInput.addEventListener("keydown", startTimerOnFirstKeyPress, { once: true });
+        }
+
+        function nextWord() {
+            currentWord = words[Math.floor(Math.random() * words.length)];
+            wordDisplay.textContent = currentWord;
+            wordInput.classList.remove("highlight-correct", "highlight-wrong");
+        }
+
+        function startTimerOnFirstKeyPress() {
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            timerDisplay.textContent = `Time left: ${timeLeft}s`;
+            timer = setInterval(() => {
+                timeLeft -= 0.1;
+                timerDisplay.textContent = `Time left: ${timeLeft.toFixed(1)}s`;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 100);
+        }
+
+        function checkInput() {
+            const input = wordInput.value;
+            if (currentWord.startsWith(input)) {
+                wordInput.classList.remove("highlight-wrong");
+                wordInput.classList.add("highlight-correct");
+            } else {
+                wordInput.classList.remove("highlight-correct");
+                wordInput.classList.add("highlight-wrong");
+            }
+
+            if (wordInput.value === currentWord) {
+                clearInterval(timer);
+                initialTime = Math.max(initialTime - 0.2, 0.5); // Prevents the timer from going below 0.5 seconds
+                timeLeft = initialTime;
+                wordInput.value = "";
+                nextWord();
+                wordInput.addEventListener("keydown", startTimerOnFirstKeyPress, { once: true });
+            }
+        }
+
+        function endGame() {
+            clearInterval(timer);
+            wordDisplay.textContent = "Game Over! Press Start to Play Again.";
+            wordInput.disabled = true;
+            startButton.disabled = false;
+            timerDisplay.classList.add("hidden");
+            gameRunning = false;
+        }
+
+        startButton.addEventListener("click", startGame);
+        wordInput.addEventListener("input", checkInput);
+    </script>
+</body>
+</html>
