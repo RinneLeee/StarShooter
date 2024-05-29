@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversion Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #282c34;
+            color: white;
+        }
+        .container {
+            background-color: #20232a;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+        .settings, .game, .timer, .next-stage, .feedback {
+            margin-bottom: 20px;
+        }
+        label, select, button, input {
+            display: block;
+            margin: 10px auto;
+            font-size: 1.1em;
+        }
+        select, input {
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            width: 80%;
+        }
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #61dafb;
+        }
+        #question {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .timer {
+            font-size: 1.2em;
+            background-color: #61dafb;
+            padding: 10px;
+            border-radius: 5px;
+            color: #20232a;
+        }
+        .progress {
+            height: 20px;
+            background-color: #282c34;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background-color: #61dafb;
+            transition: width 0.5s ease;
+        }
+        .correct, .incorrect {
+            display: none;
+            font-size: 1.2em;
+            color: #61dafb;
+            animation: fadeOut 2s ease forwards;
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Conversion Game</h1>
+        <div class="settings">
+            <label for="startType">Convert from:</label>
+            <select id="startType">
+                <option value="binary">Binary</option>
+                <option value="hexadecimal">Hexadecimal</option>
+                <option value="octal">Octal</option>
+            </select>
+            <label for="endType">to:</label>
+            <select id="endType">
+                <option value="binary">Binary</option>
+                <option value="hexadecimal">Hexadecimal</option>
+                <option value="octal">Octal</option>
+            </select>
+            <button id="startGame">Start Game</button>
+        </div>
+        <div class="game" style="display: none;">
+            <p id="question"></p>
+            <input type="text" id="answer" placeholder="Enter your answer">
+            <button id="submitAnswer">Submit</button>
+        </div>
+        <div class="next-stage" style="display: none;">
+            <button id="revealStage">Reveal Next Stage</button>
+        </div>
+        <div class="timer" style="display: none;">
+            <p>Time left: <span id="time">5:00</span></p>
+        </div>
+        <div class="progress" style="display: none;">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="feedback">
+            <p class="correct" id="correctFeedback">Correct!</p>
+            <p class="incorrect" id="incorrectFeedback">Incorrect, try again.</p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('startGame').addEventListener('click', startGame);
+        document.getElementById('submitAnswer').addEventListener('click', checkAnswer);
+        document.getElementById('revealStage').addEventListener('click', revealStage);
+
+        let startType, endType, question, correctAnswer;
+        let timeLeft = 300;
+        let interval;
+        let progress = 0;
+        let difficulty = 1;
+
+        function startGame() {
+			startType = document.getElementById('startType').value;
+			endType = document.getElementById('endType').value;
+
+			if (startType === endType) {
+				alert('Please select different conversion types.');
+				return;
+			}
+
+			// Disable the invalid endType option and select a valid default
+			document.querySelectorAll('#endType option').forEach(option => {
+				option.disabled = false;
+			});
+
+			const invalidOption = document.querySelector(`#endType option[value=${startType}]`);
+			if (invalidOption) {
+				invalidOption.disabled = true;
+				if (endType === startType) {
+					document.getElementById('endType').value = document.querySelector('#endType option:not(:disabled)').value;
+				}
+			}
+
+			document.querySelector('.settings').style.display = 'none';
+			document.querySelector('.next-stage').style.display = 'block';
+			document.querySelector('.progress').style.display = 'block';
+			progress = 0;
+			updateProgress();
+		}
+
+
+        function revealStage() {
+            document.querySelector('.next-stage').style.display = 'none';
+            document.querySelector('.game').style.display = 'block';
+            document.querySelector('.timer').style.display = 'block';
+            document.querySelector('.correct').style.display = 'none';
+            document.querySelector('.incorrect').style.display = 'none';
+            generateQuestion();
+            startTimer();
+        }
+
+        function generateQuestion() {
+            let number;
+
+            switch (startType) {
+                case 'binary':
+                    number = Math.floor(Math.random() * Math.pow(2, difficulty + 4)).toString(2);
+                    break;
+                case 'hexadecimal':
+                    number = Math.floor(Math.random() * Math.pow(16, difficulty + 1)).toString(16);
+                    break;
+                case 'octal':
+                    number = Math.floor(Math.random() * Math.pow(8, difficulty + 2)).toString(8);
+                    break;
+            }
+
+            question = number;
+            correctAnswer = convert(number, startType, endType);
+
+            document.getElementById('question').textContent = `Convert ${number} from ${startType} to ${endType}:`;
+            document.getElementById('answer').value = '';
+        }
+
+        function convert(number, from, to) {
+            let decimal;
+            switch (from) {
+                case 'binary':
+                    decimal = parseInt(number, 2);
+                    break;
+				case 'hexadecimal':
+                    decimal = parseInt(number, 16);
+                    break;
+                case 'octal':
+                    decimal = parseInt(number, 8);
+                    break;
+            }
+
+            switch (to) {
+                case 'binary':
+                    return decimal.toString(2);
+                case 'hexadecimal':
+                    return decimal.toString(16);
+                case 'octal':
+                    return decimal.toString(8);
+            }
+        }
+
+        function checkAnswer() {
+            const answer = document.getElementById('answer').value.trim().toLowerCase();
+            if (answer === correctAnswer) {
+                document.querySelector('.correct').style.display = 'block';
+                setTimeout(() => {
+                    document.querySelector('.correct').style.display = 'none';
+                }, 2000);
+                resetStage();
+            } else {
+                document.querySelector('.incorrect').style.display = 'block';
+                setTimeout(() => {
+                    document.querySelector('.incorrect').style.display = 'none';
+                }, 2000);
+            }
+        }
+
+        function resetStage() {
+            document.querySelector('.game').style.display = 'none';
+            document.querySelector('.next-stage').style.display = 'block';
+            if (interval) clearInterval(interval);
+            if (timeLeft > 120) {
+                timeLeft -= 10;
+            }
+            progress += 10;
+            updateProgress();
+            updateTimer();
+            difficulty++;
+        }
+
+        function startTimer() {
+            interval = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    alert('Time\'s up! Game over.');
+                    document.querySelector('.game').style.display = 'none';
+                    document.querySelector('.timer').style.display = 'none';
+                    document.querySelector('.settings').style.display = 'block';
+                    document.querySelector('.next-stage').style.display = 'none';
+                    document.querySelector('.progress').style.display = 'none';
+                    document.querySelector('.correct').style.display = 'none';
+                    document.querySelector('.incorrect').style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('time').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        function updateProgress() {
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = `${progress}%`;
+        }
+    </script>
+</body>
+</html>
+
