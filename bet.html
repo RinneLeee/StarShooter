@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Betting Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            transition: background 0.3s, color 0.3s;
+			text-align:center;
+        }
+
+        .dark-mode .container {
+            background: #1e1e1e;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .dark-mode button {
+            background-color: #4a90e2;
+        }
+
+        .dark-mode button:hover {
+            background-color: #007bff;
+        }
+
+        .selectedRisk {
+            background-color: #ffcc00;
+        }
+		
+		.displaybalance {
+			font-size: 40px;
+		}
+
+        #settings {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+        }
+
+        #meterContainer {
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .meter {
+            width: 100%;
+            height: 20px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .dark-mode .meter {
+            background-color: #333;
+        }
+		
+		.bet-input{
+			min-height: 50px;
+			min-width: 80%;
+		}
+		
+		.disabled {
+			background-color: #ccc;
+			cursor: not-allowed;
+		}
+
+        .meterFill {
+            height: 100%;
+            width: 0;
+            background-color: #007bff;
+            position: absolute;
+            left: 0;
+            top: 0;
+            transition: width 1s;
+        }
+
+        .meterChance {
+            height: 100%;
+            width: 0;
+            background-color: rgba(0, 255, 0, 0.5);
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="settings">⚙️</div>
+    <div class="container">
+        <h1>Just Rolling, They Hatin</h1>
+        <div class="displaybalance" id="balance">Balance: $1000</div>
+        <div>
+            <button id="lowRisk">Low Risk</button>
+            <button id="mediumRisk">Medium Risk</button>
+            <button id="highRisk">High Risk</button>
+        </div>
+		
+		<div>
+            <input class="bet-input" type="number" id="betAmount" min="1" placeholder="Bet Amount : 100">
+        </div>
+        
+        <div id="riskInfo"></div>
+        <button id="spinWheel">ROLL</button>
+        <div id="result"></div>
+        <div id="meterContainer">
+            <div class="meter">
+                <div class="meterChance" id="meterChance"></div>
+            </div>
+            <div class="meter">
+                <div class="meterFill" id="meterFill"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+    let balance = 1000;
+    let maxPercentage, maxBet;
+    const body = document.body;
+    const container = document.querySelector('.container');
+    const settings = document.getElementById('settings');
+
+    document.getElementById('balance').innerText = `Balance: $${balance}`;
+
+    settings.addEventListener('click', () => {
+        body.classList.toggle('dark-mode');
+    });
+
+    document.querySelectorAll('button[id$="Risk"]').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('button[id$="Risk"]').forEach(btn => btn.classList.remove('selectedRisk'));
+            button.classList.add('selectedRisk');
+
+            switch (button.id) {
+                case 'lowRisk':
+                    maxPercentage = 0.40;
+                    maxBet = 50;
+                    break;
+                case 'mediumRisk':
+                    maxPercentage = 0.35;
+                    maxBet = 500;
+                    break;
+                case 'highRisk':
+                    maxPercentage = 0.25;
+                    maxBet = balance;
+                    break;
+            }
+            document.getElementById('riskInfo').innerText =
+                `Risk Level: ${button.innerText}, Max Bet: $${maxBet}, Max Percentage: ${(maxPercentage * 100).toFixed(2)}%`;
+
+            updateMeterChance();
+        });
+    });
+
+    function updateMeterChance() {
+        const betAmount = parseFloat(document.getElementById('betAmount').value);
+        if (isNaN(betAmount) || betAmount <= 0) {
+            document.getElementById('meterChance').style.width = `0%`;
+            return;
+        }
+
+        const betPercentage = Math.min(betAmount / maxBet, 1);
+        const winChance = betPercentage * maxPercentage * 100;
+        document.getElementById('meterChance').style.width = `${winChance}%`;
+    }
+
+    document.getElementById('betAmount').addEventListener('input', updateMeterChance);
+
+    document.getElementById('spinWheel').addEventListener('click', () => {
+        const betAmount = parseFloat(document.getElementById('betAmount').value);
+        if (isNaN(betAmount) || betAmount <= 0) {
+            alert('Please enter a valid bet amount.');
+            return;
+        }
+
+        const risk = document.querySelector('.selectedRisk');
+        if (!risk) {
+            alert('Please select a risk level.');
+            return;
+        }
+
+        if (betAmount > maxBet) {
+            alert(`Maximum bet for ${risk.innerText} is $${maxBet}.`);
+            return;
+        }
+
+        if (balance <= 0) {
+            alert('You have insufficient funds to place a bet.');
+            return;
+        }
+
+        const spinWheelButton = document.getElementById('spinWheel');
+        spinWheelButton.disabled = true;
+        spinWheelButton.classList.add('disabled');
+        spinWheelButton.innerText = 'ROLLING...';
+
+        const betPercentage = Math.min(betAmount / maxBet, 1);
+        const winChance = betPercentage * maxPercentage;
+        const odds = Math.random();
+        const win = odds < winChance;
+
+        let meterFill = document.getElementById('meterFill');
+        let meterChance = document.getElementById('meterChance');
+        let startWidth = 0;
+        let direction = 1;
+
+        const suspenseInterval = setInterval(() => {
+            startWidth += direction * 2;
+            if (startWidth >= 100 || startWidth <= 0) {
+                direction *= -1;
+            }
+            meterFill.style.width = `${startWidth}%`;
+        }, 20);
+
+        setTimeout(() => {
+            clearInterval(suspenseInterval);
+            meterFill.style.width = `${odds * 100}%`;
+            meterFill.style.backgroundColor = win ? '#28a745' : '#dc3545';
+
+            if (win) {
+                let multiplier = 1;
+                switch (risk.id) {
+                    case 'lowRisk':
+                        multiplier = 1.5;
+                        break;
+                    case 'mediumRisk':
+                        multiplier = 3;
+                        break;
+                    case 'highRisk':
+                        multiplier = 10;
+                        break;
+                }
+                const winnings = betAmount * multiplier;
+                balance += winnings;
+                document.getElementById('result').innerText =
+                    `You bet $${betAmount}. You won $${winnings.toFixed(2)}!`;
+            } else {
+                balance -= betAmount;
+                document.getElementById('result').innerText =
+                    `You bet $${betAmount}. You lost the bet.`;
+            }
+
+            document.getElementById('balance').innerText = `Balance: $${balance.toFixed(2)}`;
+            spinWheelButton.disabled = false;
+            spinWheelButton.classList.remove('disabled');
+            spinWheelButton.innerText = 'ROLL';
+        }, 3000);
+    });
+</script>
+
+
+
+</body>
+</html>
