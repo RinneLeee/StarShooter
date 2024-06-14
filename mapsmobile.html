@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            max-height: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s;
+            transform: translateY(-100%);
+        }
+        #sidebar.show {
+            transform: translateY(0);
+        }
+        #sidebar h2 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+        }
+        .place-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            overflow: hidden;
+        }
+        .place-item .text {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            display: inline-block;
+        }
+        .place-item .text.scroll {
+            animation: scroll 10s linear infinite;
+        }
+        .place-item .icons {
+            display: flex;
+            align-items: center;
+        }
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+        .edit-icon, .up-arrow, .down-arrow {
+            cursor: pointer;
+            margin-left: 10px;
+            color: #007bff;
+            padding: 5px;
+        }
+        .checkbox {
+            display: none;
+            margin-right: 10px;
+        }
+        #add-pin {
+            display: block;
+            width: calc(100% - 20px);
+            margin: 10px;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #add-pin.stop {
+            background: #ff5722;
+        }
+        #add-pin:hover {
+            background: #0056b3;
+        }
+        #add-pin.stop:hover {
+            background: #e64a19;
+        }
+        .trash-icon, .reorder-icon {
+            cursor: pointer;
+            font-size: 20px;
+            color: red;
+            margin-left: 10px;
+        }
+        .reorder-icon {
+            color: white;
+        }
+        #toggle-sidebar {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 25px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #toggle-sidebar:hover {
+            background: #0056b3;
+        }
+        #export, #import {
+            display: block;
+            width: calc(100% - 20px);
+            margin: 10px;
+            padding: 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #export:hover, #import:hover {
+            background: #218838;
+        }
+        #import-input {
+            display: none;
+        }
+        #get-location {
+            display: block;
+            width: calc(100% - 20px);
+            margin: 10px;
+            padding: 10px;
+            background: #ffc107;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #get-location:hover {
+            background: #e0a800;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="sidebar">
+        <h2>
+            <span>TRIP PLANNER</span>
+            <span>
+                <span class="reorder-icon" onclick="toggleReorderMode()">🔃</span>
+                <span class="trash-icon" onclick="toggleDeleteMode()">🗑️</span>
+            </span>
+        </h2>
+        <div id="places-list"></div>
+        <button id="add-pin">Add Pin Point</button>
+        <button id="export">Export Pins</button>
+        <button id="import" onclick="document.getElementById('import-input').click()">Import Pins</button>
+        <input type="file" id="import-input" accept=".json" />
+        <button id="get-location">Get Location</button>
+    </div>
+    <button id="toggle-sidebar">☰</button>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script>
+    let map = L.map('map').setView([35.1815, 136.9066], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    let points = JSON.parse(localStorage.getItem('points')) || [];
+    let markers = [];
+    let polylines = L.polyline([]).addTo(map);
+    let isAddingPin = false;
+    let isDeleteMode = false;
+    let isReorderMode = false;
+    let userMarker = null;
+
+    document.getElementById('add-pin').addEventListener('click', () => {
+        isAddingPin = !isAddingPin;
+        if (isAddingPin) {
+            map.on('click', onMapClick);
+            markers.forEach(marker => marker.dragging.enable());
+            document.getElementById('add-pin').textContent = 'Stop Adding Pins';
+            document.getElementById('add-pin').classList.add('stop');
+        } else {
+            map.off('click', onMapClick);
+            markers.forEach(marker => marker.dragging.disable());
+            document.getElementById('add-pin').textContent = 'Add Pin Point';
+            document.getElementById('add-pin').classList.remove('stop');
+        }
+    });
+
+    document.getElementById('toggle-sidebar').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('show');
+    });
+
+    function onMapClick(e) {
+        let point = e.latlng;
+        let pointName = `Point ${points.length + 1}`;
+        points.push({ latlng: point, name: pointName });
+        savePointsToLocalStorage();
+        addMarker(point, pointName);
+        updateList();
+    }
+
+    function addMarker(point, name) {
+        let marker = L.marker(point, { draggable: true }).addTo(map);
+        marker.bindPopup(name).openPopup();
+        marker.on('dragend', function(e) {
+            let index = markers.indexOf(marker);
+            points[index].latlng = e.target.getLatLng();
+            updatePolylines();
+            updateList();
+            savePointsToLocalStorage();
+        });
+        markers.push(marker);
+        updatePolylines();
+    }
+
+    function updatePolylines() {
+        polylines.setLatLngs(points.map(point => point.latlng));
+    }
+
+    function updateList() {
+        let placesList = document.getElementById('places-list');
+        placesList.innerHTML = '';
+        points.forEach((point, index) => {
+            let placeItem = document.createElement('div');
+            placeItem.className = 'place-item';
+            placeItem.innerHTML = `
+                <input type="checkbox" class="checkbox" id="checkbox-${index}">
+                <span class="text">${point.name}: (${point.latlng.lat.toFixed(2)}, ${point.latlng.lng.toFixed(2)})</span>
+                <span class="icons">
+                    <span class="edit-icon" onclick="editPointName(${index})">&#9998;</span>
+                    ${isReorderMode ? `<span class="up-arrow" onclick="moveUp(${index})">&#8593;</span><span class="down-arrow" onclick="moveDown(${index})">&#8595;</span>` : ''}
+                </span>
+            `;
+            placesList.appendChild(placeItem);
+        });
+        updateCheckboxes();
+    }
+
+    function updateCheckboxes() {
+        let checkboxes = document.querySelectorAll('.checkbox');
+        checkboxes.forEach(checkbox => checkbox.style.display = isDeleteMode ? 'block' : 'none');
+    }
+
+    function editPointName(index) {
+        let newName = prompt('Enter new name:', points[index].name);
+        if (newName) {
+            points[index].name = newName;
+            savePointsToLocalStorage();
+            updateList();
+            markers[index].setPopupContent(newName).openPopup();
+        }
+    }
+
+    function moveUp(index) {
+        if (index === 0) return;
+        [points[index], points[index - 1]] = [points[index - 1], points[index]];
+        savePointsToLocalStorage();
+        updateList();
+        updateMarkers();
+    }
+
+    function moveDown(index) {
+        if (index === points.length - 1) return;
+        [points[index], points[index + 1]] = [points[index + 1], points[index]];
+        savePointsToLocalStorage();
+        updateList();
+        updateMarkers();
+    }
+
+    function updateMarkers() {
+        markers.forEach(marker => map.removeLayer(marker));
+        markers = [];
+        points.forEach(point => addMarker(point.latlng, point.name));
+    }
+
+    function savePointsToLocalStorage() {
+        localStorage.setItem('points', JSON.stringify(points));
+    }
+
+    function toggleDeleteMode() {
+        isDeleteMode = !isDeleteMode;
+        updateCheckboxes();
+        if (isDeleteMode) {
+            document.querySelector('.trash-icon').textContent = '✔️';
+        } else {
+            deleteSelectedPoints();
+            document.querySelector('.trash-icon').textContent = '🗑️';
+        }
+    }
+
+    function deleteSelectedPoints() {
+        let checkboxes = document.querySelectorAll('.checkbox:checked');
+        let indicesToDelete = Array.from(checkboxes).map(checkbox => parseInt(checkbox.id.split('-')[1]));
+        points = points.filter((_, index) => !indicesToDelete.includes(index));
+        savePointsToLocalStorage();
+        updateMarkers();
+        updateList();
+    }
+
+    function toggleReorderMode() {
+        isReorderMode = !isReorderMode;
+        updateList();
+        if (isReorderMode) {
+            document.querySelector('.reorder-icon').textContent = '✔️';
+        } else {
+            document.querySelector('.reorder-icon').textContent = '🔃';
+        }
+    }
+
+    document.getElementById('export').addEventListener('click', () => {
+        const data = JSON.stringify(points);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'points.json';
+        a.click();
+    });
+
+    document.getElementById('import-input').addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            points = JSON.parse(e.target.result);
+            savePointsToLocalStorage();
+            updateMarkers();
+            updateList();
+        };
+        reader.readAsText(file);
+    });
+
+    document.getElementById('get-location').addEventListener('click', () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(showPosition, showError, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+    });
+
+    function showPosition(position) {
+        const { latitude, longitude } = position.coords;
+        const userLocation = [latitude, longitude];
+        if (userMarker) {
+            userMarker.setLatLng(userLocation);
+        } else {
+            userMarker = L.marker(userLocation, { icon: L.icon({ iconUrl: 'https://cdn2.iconfinder.com/data/icons/social-media-2169/24/social_media_social_media_logo_user-64.png', iconSize: [38, 38], iconAnchor: [22, 94], popupAnchor: [-3, -76] }) }).addTo(map);
+            userMarker.bindPopup("Your location").openPopup();
+        }
+        map.setView(userLocation, 13);
+    }
+
+    function showError(error) {
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                alert("User denied the request for Geolocation.");
+                break;
+            case error.POSITION_UNAVAILABLE:
+                alert("Location information is unavailable.");
+                break;
+            case error.TIMEOUT:
+                alert("The request to get user location timed out.");
+                break;
+            case error.UNKNOWN_ERROR:
+                alert("An unknown error occurred.");
+                break;
+        }
+    }
+
+    points.forEach(point => addMarker(point.latlng, point.name));
+    updateList();
+    </script>
+</body>
+</html>
