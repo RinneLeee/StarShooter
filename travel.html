@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>360 Degree Car Speedometer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #000;
+            color: #fff;
+        }
+        #speedometer {
+            width: 300px;
+            height: 300px;
+            border: 10px solid #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        #needle {
+            width: 2px;
+            height: 140px;
+            background: red;
+            position: absolute;
+            bottom: 50%;
+            transform-origin: bottom;
+        }
+        .info {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="speedometer">
+        <div id="needle"></div>
+    </div>
+    <div class="info">
+        <p>Speed: <span id="speed">0</span> km/h</p>
+        <p>Direction: <span id="direction">0</span>°</p>
+    </div>
+
+    <script>
+        let speedDisplay = document.getElementById('speed');
+        let directionDisplay = document.getElementById('direction');
+        let needle = document.getElementById('needle');
+
+        // Get user's current position
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(updatePosition);
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+
+        // Get user's device orientation
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', updateOrientation);
+        } else {
+            alert("Device Orientation is not supported by this browser.");
+        }
+
+        function updatePosition(position) {
+            let speed = position.coords.speed; // speed in meters per second
+            let speedKmH = (speed * 3.6).toFixed(2); // convert to km/h
+            let direction = position.coords.heading; // direction in degrees
+
+            speedDisplay.innerText = speedKmH;
+            directionDisplay.innerText = direction;
+
+            // Update the needle position based on speed
+            let needleRotation = (speedKmH / 180) * 360; // assuming max speed of 180 km/h
+            needle.style.transform = `rotate(${needleRotation}deg)`;
+        }
+
+        function updateOrientation(event) {
+            let alpha = event.alpha; // rotation around z-axis
+            let beta = event.beta; // rotation around x-axis
+            let gamma = event.gamma; // rotation around y-axis
+
+            // Update direction display based on alpha (z-axis rotation)
+            directionDisplay.innerText = alpha.toFixed(2);
+        }
+    </script>
+</body>
+</html>
