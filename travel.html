@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>360 Degree Car Speedometer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
@@ -14,18 +15,19 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
-            background: #000;
+            background: #121212;
             color: #fff;
         }
         #speedometer {
             width: 300px;
             height: 300px;
-            border: 10px solid #fff;
+            position: relative;
+            background: #1e1e1e;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         #needle {
             width: 2px;
@@ -33,27 +35,118 @@
             background: red;
             position: absolute;
             bottom: 50%;
+            left: 50%;
             transform-origin: bottom;
+            transform: translateX(-50%);
+            transition: transform 0.3s ease-out;
         }
+        .outer-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid #ffc107;
+            border-radius: 50%;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: -1;
+        }
+        .direction {
+            position: absolute;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .N { top: -20px; }
+        .S { bottom: -20px; }
+        .E { right: -20px; }
+        .W { left: -20px; }
         .info {
-            margin-top: 20px;
+            position: absolute;
+            top: -40px;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        #settings-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        #settings-button:hover {
+            background: #555;
+        }
+        #settings-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            color: #000;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        #settings-modal select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 1em;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
         }
     </style>
 </head>
 <body>
 
     <div id="speedometer">
+        <div class="outer-circle">
+            <div class="direction N">N</div>
+            <div class="direction S">S</div>
+            <div class="direction E">E</div>
+            <div class="direction W">W</div>
+        </div>
+        <div class="info"><span id="speed">0</span> km/h</div>
+		<br><br>
         <div id="needle"></div>
     </div>
-    <div class="info">
-        <p>Speed: <span id="speed">0</span> km/h</p>
-        <p>Direction: <span id="direction">0</span>°</p>
+
+    <button id="settings-button">Settings</button>
+
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <div id="settings-modal">
+        <label for="theme-select">Select Theme:</label>
+        <select id="theme-select">
+            <option value="dark">Dark</option>
+            <option value="white">White</option>
+            <option value="pink">Pink</option>
+        </select>
     </div>
 
     <script>
         let speedDisplay = document.getElementById('speed');
-        let directionDisplay = document.getElementById('direction');
         let needle = document.getElementById('needle');
+        let settingsButton = document.getElementById('settings-button');
+        let settingsModal = document.getElementById('settings-modal');
+        let modalOverlay = document.getElementById('modal-overlay');
+        let themeSelect = document.getElementById('theme-select');
 
         // Get user's current position
         if (navigator.geolocation) {
@@ -72,10 +165,8 @@
         function updatePosition(position) {
             let speed = position.coords.speed; // speed in meters per second
             let speedKmH = (speed * 3.6).toFixed(2); // convert to km/h
-            let direction = position.coords.heading; // direction in degrees
 
             speedDisplay.innerText = speedKmH;
-            directionDisplay.innerText = direction;
 
             // Update the needle position based on speed
             let needleRotation = (speedKmH / 180) * 360; // assuming max speed of 180 km/h
@@ -84,12 +175,39 @@
 
         function updateOrientation(event) {
             let alpha = event.alpha; // rotation around z-axis
-            let beta = event.beta; // rotation around x-axis
-            let gamma = event.gamma; // rotation around y-axis
-
-            // Update direction display based on alpha (z-axis rotation)
-            directionDisplay.innerText = alpha.toFixed(2);
+            // Use alpha to update the compass direction
+            document.querySelector('.outer-circle').style.transform = `rotate(${alpha}deg)`;
         }
+
+        settingsButton.addEventListener('click', () => {
+            settingsModal.style.display = 'block';
+            modalOverlay.style.display = 'block';
+        });
+
+        modalOverlay.addEventListener('click', () => {
+            settingsModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+        });
+
+        themeSelect.addEventListener('change', (event) => {
+            let theme = event.target.value;
+            if (theme === 'dark') {
+                document.body.style.background = '#121212';
+                document.body.style.color = '#fff';
+                settingsButton.style.background = '#333';
+                settingsButton.style.color = '#fff';
+            } else if (theme === 'white') {
+                document.body.style.background = '#fff';
+                document.body.style.color = '#000';
+                settingsButton.style.background = '#ccc';
+                settingsButton.style.color = '#000';
+            } else if (theme === 'pink') {
+                document.body.style.background = 'pink';
+                document.body.style.color = '#000';
+                settingsButton.style.background = '#ff69b4';
+                settingsButton.style.color = '#fff';
+            }
+        });
     </script>
 </body>
 </html>
