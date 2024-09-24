@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Clock</title>
+  <style>
+    /* General Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #1c1c1c;
+      color: #e0e0e0;
+      padding: 20px;
+      position: relative;
+    }
+	
+	.navbar {
+      width: 100%;
+      background-color: #1f1f1f;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 1000;
+    }
+	
+	.navbar a {
+      color: #ffcc00;
+      text-decoration: none;
+      font-size: 18px;
+      margin: 0 15px;
+      transition: color 0.3s ease;
+    }
+
+    .navbar a:hover {
+      color: #ffd633;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+      color: #ffffff;
+    }
+
+    .form-container {
+      display: none;
+      flex-direction: column;
+      margin-bottom: 30px;
+      background-color: #2c2c2c;
+      padding-top: 30px;
+      padding: 15px;
+      border-radius: 8px;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      transform: translateY(100%);
+      transition: transform 0.4s ease-in-out;
+      z-index: 10;
+    }
+
+    .form-container.active {
+      display: flex;
+      transform: translateY(0);
+    }
+
+    label {
+      margin-bottom: 5px;
+      font-size: 16px;
+      color: #bbbbbb;
+    }
+
+    input, button {
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 16px;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      background-color: #333;
+      color: #ffffff;
+    }
+
+    button {
+      background-color: #5cb85c;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+
+    button:hover {
+      background-color: #4cae4c;
+    }
+
+    .add-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #3498db;
+      color: white;
+      padding: 15px;
+      border-radius: 10%;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      height: 50px;
+      width: 50px;
+      z-index: 1;
+    }
+
+    .add-btn:hover {
+      background-color: #2980b9;
+    }
+
+    .timeline {
+      border-left: 3px solid #3498db;
+      margin-left: 20px;
+      padding-left: 10px;
+      list-style: none;
+    }
+
+    .timeline-day {
+      margin-bottom: 30px;
+    }
+
+    .timeline-day.past {
+      color: #e74c3c;
+    }
+
+    .timeline-day h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #3498db;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 20px;
+      padding: 10px;
+      background-color: #2e2e2e;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .timeline-item.past {
+      background-color: #e74c3c;
+      color: white;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -11px;
+      top: 15px;
+      width: 12px;
+      height: 12px;
+      background-color: #3498db;
+      border-radius: 50%;
+      border: 2px solid #1c1c1c;
+    }
+
+    .edit, .delete {
+      background-color: #f39c12;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      margin-left: 5px;
+      border-radius: 4px;
+    }
+
+    .delete {
+      background-color: #e74c3c;
+    }
+
+    .time-gap {
+      margin-left: 20px;
+      font-size: 14px;
+      color: #bbbbbb;
+    }
+
+    @media (max-width: 600px) {
+      .form-container, .timeline {
+        padding: 0 10px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      input, button {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <div>
+      <a href="plantrip.html">Plan Trip</a>
+      <a href="loading.html">Loading</a>
+	  <a href="view.html">View</a>
+    </div>
+  </div>
+
+  <h1>Travel Track</h1>
+  
+
+  <div class="form-container" id="formContainer">
+    <br>
+    <label for="place">Place</label>
+    <input type="text" id="place" placeholder="Enter the place" required>
+
+    <label for="date">Date</label>
+    <input type="date" id="date" required>
+
+    <label for="time">Time (optional)</label>
+    <input type="time" id="time">
+
+    <button id="addEntry">Add Entry</button>
+    <button id="updateEntry" style="display: none;">Update Entry</button>
+  </div>
+
+  <button class="add-btn" id="showFormBtn">+</button>
+
+  <ul class="timeline" id="timeline"></ul>
+
+  <script>
+    const addEntryBtn = document.getElementById('addEntry');
+    const updateEntryBtn = document.getElementById('updateEntry');
+    const showFormBtn = document.getElementById('showFormBtn');
+    const formContainer = document.getElementById('formContainer');
+    const timeline = document.getElementById('timeline');
+    let editingIndex = null;
+
+    let entries = JSON.parse(localStorage.getItem('timetableEntries')) || [];
+
+    sortAndDisplayEntries();
+
+    showFormBtn.addEventListener('click', () => {
+      formContainer.classList.toggle('active');
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!formContainer.contains(event.target) && !showFormBtn.contains(event.target)) {
+        formContainer.classList.remove('active');
+      }
+    });
+
+    addEntryBtn.addEventListener('click', () => {
+      const place = document.getElementById('place').value;
+      const date = document.getElementById('date').value;
+      let time = document.getElementById('time').value;
+
+      if (!time) {
+        const now = new Date();
+        time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      }
+
+      if (place && date) {
+        const entry = { place, date, time };
+        entries.push(entry);
+        saveToLocalStorage();
+        sortAndDisplayEntries();
+        clearInputs();
+        formContainer.classList.remove('active');
+      } else {
+        alert('Please fill out all fields.');
+      }
+    });
+
+    updateEntryBtn.addEventListener('click', () => {
+      const place = document.getElementById('place').value;
+      const date = document.getElementById('date').value;
+      const time = document.getElementById('time').value;
+
+      if (place && date) {
+        entries[editingIndex] = { place, date, time };
+        saveToLocalStorage();
+        sortAndDisplayEntries();
+        clearInputs();
+        formContainer.classList.remove('active');
+        editingIndex = null;
+        addEntryBtn.style.display = 'block';
+        updateEntryBtn.style.display = 'none';
+      }
+    });
+
+    function sortAndDisplayEntries() {
+      const currentDate = new Date();
+
+      entries.sort((a, b) => {
+        const aDateTime = new Date(`${a.date}T${a.time}`);
+        const bDateTime = new Date(`${b.date}T${b.time}`);
+
+        if (aDateTime < currentDate && bDateTime >= currentDate) return 1;
+        if (bDateTime < currentDate && aDateTime >= currentDate) return -1;
+
+        return a.date === b.date ? a.time.localeCompare(b.time) : new Date(a.date) - new Date(b.date);
+      });
+
+      displayEntries();
+    }
+
+    function displayEntries() {
+      timeline.innerHTML = '';
+      const groupedByDate = groupEntriesByDate(entries);
+      const currentDate = new Date();
+
+      for (const [date, dailyEntries] of Object.entries(groupedByDate)) {
+        const isPast = new Date(date) < currentDate;
+        const daySection = document.createElement('li');
+        daySection.classList.add('timeline-day');
+        if (isPast) daySection.classList.add('past');
+
+        daySection.innerHTML = `<h2>${formatDate(date)}</h2>`;
+
+        dailyEntries.forEach((entry, index) => {
+          const isPastEntry = new Date(`${entry.date}T${entry.time}`) < currentDate;
+
+          const item = document.createElement('div');
+          item.classList.add('timeline-item');
+          if (isPastEntry) item.classList.add('past');
+
+          const timeGap = calculateTimeGap(entry.date, entry.time);
+
+          item.innerHTML = `
+            <p>${entry.place} @ ${entry.time}</p>
+            <p class="time-gap">${timeGap}</p>
+            <button class="edit" data-index="${entries.indexOf(entry)}">Edit</button>
+            <button class="delete" data-index="${entries.indexOf(entry)}">Delete</button>
+          `;
+
+          daySection.appendChild(item);
+        });
+
+        timeline.appendChild(daySection);
+      }
+
+      setupEditAndDelete();
+      startCountdown(); // Start real-time countdown
+    }
+
+    function groupEntriesByDate(entries) {
+      return entries.reduce((grouped, entry) => {
+        if (!grouped[entry.date]) grouped[entry.date] = [];
+        grouped[entry.date].push(entry);
+        return grouped;
+      }, {});
+    }
+
+    function setupEditAndDelete() {
+      const editBtns = document.querySelectorAll('.edit');
+      const deleteBtns = document.querySelectorAll('.delete');
+
+      editBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          editingIndex = e.target.dataset.index;
+          const entry = entries[editingIndex];
+
+          document.getElementById('place').value = entry.place;
+          document.getElementById('date').value = entry.date;
+          document.getElementById('time').value = entry.time;
+
+          formContainer.classList.add('active');
+          addEntryBtn.style.display = 'none';
+          updateEntryBtn.style.display = 'block';
+        });
+      });
+
+      deleteBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const indexToDelete = e.target.dataset.index;
+          entries.splice(indexToDelete, 1);
+          saveToLocalStorage();
+          sortAndDisplayEntries();
+        });
+      });
+    }
+
+    function saveToLocalStorage() {
+      localStorage.setItem('timetableEntries', JSON.stringify(entries));
+    }
+
+    function clearInputs() {
+      document.getElementById('place').value = '';
+      document.getElementById('date').value = '';
+      document.getElementById('time').value = '';
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return date.toLocaleDateString(undefined, options);
+    }
+
+    function calculateTimeGap(dateStr, timeStr) {
+      const entryTime = new Date(`${dateStr}T${timeStr}`);
+      const now = new Date();
+      const diffInMinutes = Math.round((entryTime - now) / 60000);
+
+      if (diffInMinutes < 0) return `Occurred ${Math.abs(diffInMinutes)} minutes ago`;
+      if (diffInMinutes < 60) return `${diffInMinutes} minutes from now`;
+
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      const remainingMinutes = diffInMinutes % 60;
+
+      return `${diffInHours} hours and ${remainingMinutes} minutes from now`;
+    }
+
+    function startCountdown() {
+      setInterval(() => {
+        sortAndDisplayEntries();
+      }, 60000); // Update every minute
+    }
+  </script>
+</body>
+</html>

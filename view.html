@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity Viewer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .navbar {
+      width: 100%;
+      background-color: #1f1f1f;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 1000;
+    }
+
+    .navbar a {
+      color: #ffcc00;
+      text-decoration: none;
+      font-size: 18px;
+      margin: 0 15px;
+      transition: color 0.3s ease;
+    }
+
+    .navbar a:hover {
+      color: #ffd633;
+    }
+
+    .container {
+      width: 100vw;
+      height: calc(100vh - 60px); /* Adjust height to fit navbar */
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #1f1f1f;
+      padding: 30px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 36px;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    #liveClock {
+      font-size: 20px;
+      color: #ffcc00;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    #currentDate {
+      font-size: 28px;
+      font-weight: bold;
+      color: #ffcc00;
+      margin-bottom: 20px;
+    }
+
+    #activityList {
+      flex-grow: 1;
+      width: 100%;
+      max-width: 800px;
+      margin-top: 20px;
+      list-style-type: none;
+      padding: 0;
+      overflow-y: auto;
+    }
+
+    .activity-card {
+      margin: 10px 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #232323, #1e1e1e);
+      border: 1px solid #ffcc00;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.2s ease, background-color 0.2s ease;
+      position: relative;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .activity-card:hover {
+      background-color: #ffcc00;
+      color: #000;
+      transform: translateY(-5px);
+    }
+
+    .activity-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 6px;
+      height: 100%;
+      background-color: #ffcc00;
+      border-radius: 12px 0 0 12px;
+    }
+
+    .activity-card.past {
+      background: linear-gradient(135deg, #333333, #292929);
+      color: #999;
+    }
+
+    .activity-card.upcoming {
+      background: linear-gradient(135deg, #ffcc00, #ffb700);
+      color: #000;
+    }
+
+    .activity-details {
+      display: flex;
+      align-items: center;
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      background-color: #ffcc00;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 18px;
+      margin-right: 15px;
+      color: #000;
+    }
+
+    .activity-time {
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 800px;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 12px 25px;
+      cursor: pointer;
+      background-color: #ffcc00;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #ffd633;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 24px;
+      }
+      #currentDate {
+        font-size: 22px;
+      }
+      .activity-card {
+        font-size: 16px;
+      }
+      button {
+        padding: 10px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <div class="navbar">
+    <div>
+      <a href="plantrip.html">Plan Trip</a>
+      <a href="loading.html">Loading</a>
+	  <a href="view.html">View</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>Travel Track</h1>
+
+    <!-- Live countdown clock -->
+    <div id="liveClock">Next activity in: --:--:--</div>
+
+    <!-- Date display -->
+    <h2 id="currentDate"></h2>
+
+    <!-- Activities for the date -->
+    <ul id="activityList"></ul>
+
+    <!-- Navigation buttons for next/previous dates -->
+    <div class="nav-buttons">
+      <button id="prevBtn">Previous</button>
+      <button id="nextBtn">Next</button>
+    </div>
+  </div>
+
+  <script>
+    let entries = JSON.parse(localStorage.getItem('timetableEntries')) || [
+      { date: '2024-09-25', place: 'Visit Museum', time: '10:00' },
+      { date: '2024-09-25', place: 'Lunch at Cafe', time: '14:00' },
+      { date: '2024-09-29', place: 'Hiking Trip', time: '08:00' },
+      { date: '2024-10-02', place: 'Attend Concert', time: '19:00' },
+      { date: '2024-10-10', place: 'Lunch with Friends', time: '12:00' }
+    ];
+
+    let availableDates = [...new Set(entries.map(entry => entry.date))].sort();
+    let currentIndex = findClosestDateIndex();
+
+    function formatDate(dateString) {
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString('en-US', options);
+    }
+
+    function convertTo12HourFormat(time) {
+      const [hours, minutes] = time.split(':');
+      const hour = +hours % 12 || 12;
+      const ampm = +hours < 12 ? 'AM' : 'PM';
+      return `${hour}:${minutes} ${ampm}`;
+    }
+
+    function displayEntries(date) {
+      const activityList = document.getElementById('activityList');
+      const currentDateEl = document.getElementById('currentDate');
+      activityList.innerHTML = '';
+
+      const activitiesForDate = entries
+        .filter(entry => entry.date === date)
+        .sort((a, b) => new Date(`${date}T${a.time}`) - new Date(`${date}T${b.time}`));
+
+      const now = new Date();
+
+      activitiesForDate.forEach(activity => {
+        const li = document.createElement('li');
+        li.classList.add('activity-card');
+
+        const activityTime = new Date(`${date}T${activity.time}:00`);
+        const timeFormatted = convertTo12HourFormat(activity.time);
+        const statusClass = now > activityTime ? 'past' : 'upcoming';
+        li.classList.add(statusClass);
+
+        li.innerHTML = `
+          <div class="activity-details">
+            <div class="activity-icon">${statusClass === 'past' ? '✓' : '⌛'}</div>
+            <div>${activity.place}</div>
+          </div>
+          <div class="activity-time">${timeFormatted}</div>
+        `;
+
+        activityList.appendChild(li);
+      });
+
+      currentDateEl.textContent = formatDate(date);
+      updateCountdown(activitiesForDate);
+    }
+
+    function updateCountdown(activitiesForDate) {
+      const now = new Date();
+      const upcomingActivities = activitiesForDate.filter(activity => new Date(`${activity.date}T${activity.time}:00`) > now);
+
+      const countdownEl = document.getElementById('liveClock');
+
+      if (upcomingActivities.length > 0) {
+        const nextActivityTime = new Date(`${upcomingActivities[0].date}T${upcomingActivities[0].time}:00`);
+        const timeDiff = nextActivityTime - now;
+
+        if (timeDiff > 0) {
+          const hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
+          const minutes = Math.floor((timeDiff / (1000 * 60)) % 60);
+          const seconds = Math.floor((timeDiff / 1000) % 60);
+          countdownEl.textContent = `Next activity in: ${hours}h ${minutes}m ${seconds}s`;
+        } else {
+          countdownEl.textContent = 'Next activity: --:--:--';
+        }
+      } else {
+        countdownEl.textContent = 'Next activity: --:--:--';
+      }
+    }
+
+    function findClosestDateIndex() {
+      const now = new Date();
+      const closestDate = availableDates.find(date => new Date(date) >= now);
+      return availableDates.indexOf(closestDate !== -1 ? closestDate : availableDates[0]);
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      currentIndex = currentIndex > 0 ? currentIndex - 1 : availableDates.length - 1;
+      displayEntries(availableDates[currentIndex]);
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % availableDates.length;
+      displayEntries(availableDates[currentIndex]);
+    });
+
+    // Initialize the display with the closest date
+    displayEntries(availableDates[currentIndex]);
+  </script>
+</body>
+</html>
