@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Date Idea Generator</title>
+  <style>
+    /* General styling for body and container */
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      color: #333;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      background-color: white;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.1);
+    }
+	
+	 /* Navigation Panel Styling */
+    .nav-panel {
+      position: fixed;
+      top: 0;
+      left: -250px; /* Start off-screen */
+      width: 250px;
+      height: 100%;
+      background-color: #333;
+      color: white;
+      transition: 0.3s;
+      padding-top: 60px;
+	  z-index: 5;
+    }
+
+    .nav-panel a {
+      padding: 15px;
+      text-decoration: none;
+      font-size: 18px;
+      color: white;
+      display: block;
+      transition: 0.3s;
+    }
+
+    .nav-panel a:hover {
+      background-color: #575757;
+    }
+
+    .nav-panel .close-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 30px;
+      color: white;
+      cursor: pointer;
+    }
+	
+	.open-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 30px;
+      cursor: pointer;
+    }
+
+    h1, h2 {
+      margin: 0 0 20px;
+      font-weight: bold;
+    }
+
+    h1 {
+      color: #e63946;
+    }
+
+    /* Swiping buttons */
+    button {
+      padding: 12px 18px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 30px;
+      border: none;
+      margin: 5px;
+      width: 45%;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+
+    button.left-btn {
+      background-color: #e63946;
+    }
+
+    button.left-btn:hover {
+      background-color: #d62828;
+    }
+
+    button.right-btn {
+      background-color: #2a9d8f;
+    }
+
+    button.right-btn:hover {
+      background-color: #21867a;
+    }
+
+    /* Hidden screens */
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    /* Card styling */
+    .card-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 250px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .card {
+      width: 100%;
+	  height: 50%;
+      max-width: 300px;
+      padding-top: 120px;
+      border-radius: 10px;
+      background-color: #f7f7f7;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      font-size: 20px;
+      font-weight: bold;
+      transition: transform 0.5s ease, opacity 0.5s ease;
+      user-select: none;
+      text-align: center;
+    }
+
+    /* Colors for girl's and guy's turns */
+    .girl-turn {
+      color: white;
+	  background-color:#ff69b4;
+    }
+
+    .guy-turn {
+	  color: white;
+      background-color:#0077b6;
+    }
+
+    /* Buttons and screen */
+    .actions {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .header h2 {
+      font-size: 1.2em;
+      color: #666;
+    }
+
+    /* Transition animations */
+    .swipe-left {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+
+    .swipe-right {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+	
+	.number-input {
+      font-weight: bold;
+      color: #e63946;
+      font-size: 24px;
+      margin: 20px 0;
+    }
+
+    .range-input {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 10px;
+      background: #ddd;
+      border-radius: 5px;
+      outline: none;
+      transition: background 0.3s ease;
+    }
+
+    .range-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #e63946;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+	
+	.start-btn {
+      background-color: #e63946;
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      padding: 15px;
+      font-size: 18px;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .start-btn:hover {
+      background-color: #d62828;
+    }
+
+    /* Media Queries for smaller screens */
+    @media screen and (max-width: 480px) {
+      .container {
+        width: 95%;
+      }
+
+      button {
+        padding: 14px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>Date Idea ?</h1>
+    </div>
+	
+	<div id="navPanel" class="nav-panel">
+    <span class="close-btn" onclick="closeNav()">&times;</span>
+		<a href="dateidea.html">Date Idea</a>
+		<a href="foodidea.html">Food Idea</a>
+		<a href="placeidea.html">Place Idea</a>
+	  </div>
+
+	  <!-- Three-line Button -->
+	  <span class="open-btn" onclick="openNav()">&#9776;</span>
+
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen active">
+      <h2>How many date ideas would you like?</h2>
+      <div class="number-input">
+        <input id="ideaCount" class="range-input" type="range" min="1" max="15" value="8" oninput="updateRangeValue(this.value)">
+		<br><br>
+        <span id="numberDisplay">8</span>
+      </div>
+      <button id="startBtn" class="start-btn" onclick="startGame()">Start</button>
+    </div>
+
+    <!-- Swipe Screen -->
+    <div id="swipeScreen" class="screen">
+      <h2 id="turnLabel">Girl's Turn</h2>
+      <div class="card-container">
+        <div id="card" class="card">Swipe left or right!</div>
+      </div>
+      <div class="actions">
+        <button id="leftBtn" class="left-btn" onclick="swipe('left')">👎 Left (No)</button>
+        <button id="rightBtn" class="right-btn" onclick="swipe('right')">👍 Right (Yes)</button>
+      </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="resultScreen" class="screen">
+      <h2>Matching Activities</h2>
+      <ul id="resultList"></ul>
+      <button class="start-btn" onclick="location.reload()">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    const ideas = [
+      "Take a sunset walk",
+      "Visit a botanical garden",
+      "Try a food truck tour",
+      "Go for a scenic drive",
+      "Take a pottery class",
+      "Attend a local farmers market",
+      "Go ice skating",
+      "Visit an aquarium",
+      "Go to a trivia night",
+      "Have a DIY pizza night",
+      "Go for a bike ride around town",
+      "Take a yoga class together",
+      "Have a photo scavenger hunt",
+      "Go to a zoo",
+      "Go to a local brewery for a tasting",
+      "Try indoor skydiving",
+      "Take a helicopter tour",
+      "Have a beach bonfire",
+      "Go on a ghost tour",
+      "Explore a new neighborhood",
+      "Go fruit picking at a farm",
+      "Have a sushi-making night",
+      "Go to a drive-in movie",
+      "Take a cooking class together",
+      "Visit an escape room",
+      "Have a spa day",
+      "Try paddleboarding",
+      "Go to a poetry reading",
+      "Go for a wine and paint night",
+      "Visit a historical landmark",
+      "Take a scenic train ride",
+      "Go horseback riding",
+      "Do a DIY craft project",
+      "Go on a hot air balloon ride",
+      "Have a fondue night",
+      "Take a scenic hike",
+      "Visit a new city for the day",
+      "Attend a live comedy show",
+      "Go for a nature walk",
+      "Go to a trampoline park",
+      "Visit a planetarium",
+      "Take a road trip to a nearby town",
+      "Go on a picnic with a twist (e.g. blindfolded)",
+      "Go to an amusement park",
+      "Attend a cooking competition or festival",
+      "Take a painting class together",
+      "Try a new type of cuisine",
+      "Go for a kayak ride",
+      "Go to a farmer’s market and cook with fresh ingredients",
+      "Go to a pottery painting studio",
+      "Take a scenic boat ride",
+      "Go on a scenic helicopter ride",
+      "Visit a flea market",
+      "Attend a wine tasting event",
+      "Try a fun workout class like aerial silks",
+      "Have a rooftop dinner",
+      "Go to a botanical garden at night",
+      "Have a baking competition",
+      "Go to a vintage shop",
+      "Visit a historic battlefield",
+      "Go to an outdoor cinema",
+      "Try a photography challenge",
+      "Go to a local festival",
+      "Visit a sculpture park",
+      "Do a DIY beer tasting at home",
+      "Go on a lighthouse tour",
+      "Try rock climbing together",
+      "Go to a trampoline park",
+      "Go for a scenic drive and stop at quirky roadside attractions",
+      "Try a silent disco",
+      "Go to a local jazz club",
+      "Try zip lining",
+      "Go to a pottery studio",
+      "Have a DIY sushi night",
+      "Take a cooking class for a new cuisine",
+      "Go to a rooftop bar",
+      "Have a picnic in the park with wine",
+      "Go to a science museum",
+      "Take a scenic walk along the beach",
+      "Go to a thrift store and challenge each other to find the best outfit",
+      "Go on a sunset boat cruise",
+      "Attend a sports game",
+      "Go ice skating at a rink",
+      "Try a comedy improv class",
+      "Visit a cave or cavern",
+      "Take a dance class together",
+      "Go to an art gallery opening",
+      "Take a pottery class",
+      "Try a food and drink pairing event",
+      "Take a long walk in a nature reserve",
+      "Go to a food tasting event",
+      "Do a wine and cheese pairing",
+      "Go to an antique fair",
+      "Visit a butterfly garden",
+      "Go to a new part of town and explore",
+      "Have a cooking challenge at home",
+      "Go to a farmers market and buy ingredients for dinner",
+      "Try geocaching",
+      "Visit an arcade",
+      "Go stargazing with a telescope",
+      "Visit a vineyard",
+      "Take a scenic drive to a nearby town",
+      "Have a fondue night at home",
+      "Go on a weekend camping trip",
+      "Do a puzzle together",
+      "Take a pottery class",
+      "Go on a nature hike and take photos",
+      "Go to a live theater performance",
+      "Attend a local fair",
+      "Go to a comedy club",
+      "Try out a new type of workout together",
+      "Go to a chocolate-making workshop",
+      "Take a scenic train trip",
+      "Have a video game marathon",
+      "Go on a brewery tour",
+      "Visit a haunted house",
+      "Take a dance lesson",
+      "Go on a photo walk",
+      "Go to a mini-golf course",
+      "Take a scenic drive along the coast",
+      "Visit a butterfly house",
+      "Try pottery together",
+      "Go to a wildlife sanctuary",
+      "Have a game night with friends",
+      "Try an aerial yoga class",
+      "Go on a wine tour",
+      "Visit a sunflower field",
+      "Go to a local art walk",
+      "Attend a live band performance"
+];
+
+
+    let girlChoices = [];
+    let guyChoices = [];
+    let currentIndex = 0;
+    let currentTurn = 'girl';
+    let selectedIdeas = [];
+    let selectedIdeaCount = 0;
+    let currentRound = 0; // Track whether we're on girl or guy's round
+
+    // Start the game
+    function startGame() {
+      selectedIdeaCount = document.getElementById('ideaCount').value;
+      selectedIdeas = shuffleArray(ideas).slice(0, selectedIdeaCount);
+      
+      document.getElementById('startScreen').classList.remove('active');
+      document.getElementById('swipeScreen').classList.add('active');
+      showCard();
+    }
+
+    // Shuffle ideas randomly
+    function shuffleArray(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    // Display the current card/idea
+    function showCard() {
+      const card = document.getElementById('card');
+      card.innerText = selectedIdeas[currentIndex];
+      card.classList.remove('swipe-left', 'swipe-right');
+      updateCardStyle();
+    }
+
+    // Update card style based on the turn (Girl's or Guy's)
+    function updateCardStyle() {
+      const card = document.getElementById('card');
+      const turnLabel = document.getElementById('turnLabel');
+      
+      if (currentRound === 0) {
+        turnLabel.innerText = "Girl's Turn";
+        card.classList.remove('guy-turn');
+        card.classList.add('girl-turn');
+      } else {
+        turnLabel.innerText = "Guy's Turn";
+        card.classList.remove('girl-turn');
+        card.classList.add('guy-turn');
+      }
+    }
+
+    // Handle swipe actions (left or right)
+    function swipe(direction) {
+      const card = document.getElementById('card');
+      if (direction === 'left') {
+        card.classList.add('swipe-left');
+      } else {
+        card.classList.add('swipe-right');
+      }
+
+      setTimeout(() => {
+        if (currentRound === 0) {
+          girlChoices.push(direction === 'right');
+          currentIndex++;
+          if (currentIndex === selectedIdeas.length) {
+            currentIndex = 0; // Reset index for the guy's turn
+            currentRound = 1;  // Switch to guy's round
+          }
+        } else if (currentRound === 1) {
+          guyChoices.push(direction === 'right');
+          currentIndex++;
+          if (currentIndex === selectedIdeas.length) {
+            endGame(); // End game if guy finishes his turn
+            return;
+          }
+        }
+        showCard();
+      }, 500);
+    }
+
+    // End the game and show matching activities
+    function endGame() {
+      const matchingActivities = selectedIdeas.filter((_, index) => girlChoices[index] && guyChoices[index]);
+      
+      document.getElementById('swipeScreen').classList.remove('active');
+      document.getElementById('resultScreen').classList.add('active');
+      
+      const resultList = document.getElementById('resultList');
+      resultList.innerHTML = '';
+
+      if (matchingActivities.length > 0) {
+        matchingActivities.forEach(activity => {
+          const li = document.createElement('li');
+          li.innerText = activity;
+          resultList.appendChild(li);
+        });
+      } else {
+        resultList.innerHTML = '<li>No matching activities</li>';
+      }
+    }
+	
+	// Update the range display value
+    function updateRangeValue(value) {
+      document.getElementById('numberDisplay').textContent = value;
+      selectedIdeaCount = parseInt(value);
+    }
+	
+	// Open the navigation panel
+    function openNav() {
+      document.getElementById('navPanel').style.left = '0';
+    }
+
+    // Close the navigation panel
+    function closeNav() {
+      document.getElementById('navPanel').style.left = '-250px';
+    }
+
+    // Close the nav if clicked outside
+    window.onclick = function(event) {
+      if (!event.target.matches('.open-btn') && !event.target.matches('.nav-panel') && !event.target.matches('.nav-panel a')) {
+        closeNav();
+      }
+    };
+  </script>
+
+</body>
+</html>
