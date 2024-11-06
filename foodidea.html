@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Idea Generator</title>
+  <style>
+    /* General styling for body and container */
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      color: #333;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      background-color: white;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.1);
+    }
+	
+	 /* Navigation Panel Styling */
+    .nav-panel {
+      position: fixed;
+      top: 0;
+      left: -250px; /* Start off-screen */
+      width: 250px;
+      height: 100%;
+      background-color: #333;
+      color: white;
+      transition: 0.3s;
+      padding-top: 60px;
+	  z-index: 5;
+    }
+
+    .nav-panel a {
+      padding: 15px;
+      text-decoration: none;
+      font-size: 18px;
+      color: white;
+      display: block;
+      transition: 0.3s;
+    }
+
+    .nav-panel a:hover {
+      background-color: #575757;
+    }
+
+    .nav-panel .close-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 30px;
+      color: white;
+      cursor: pointer;
+    }
+	
+	.open-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 30px;
+      cursor: pointer;
+    }
+
+    h1, h2 {
+      margin: 0 0 20px;
+      font-weight: bold;
+    }
+
+    h1 {
+      color: #e63946;
+    }
+
+    /* Swiping buttons */
+    button {
+      padding: 12px 18px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 30px;
+      border: none;
+      margin: 5px;
+      width: 45%;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+
+    button.left-btn {
+      background-color: #e63946;
+    }
+
+    button.left-btn:hover {
+      background-color: #d62828;
+    }
+
+    button.right-btn {
+      background-color: #2a9d8f;
+    }
+
+    button.right-btn:hover {
+      background-color: #21867a;
+    }
+
+    /* Hidden screens */
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    /* Card styling */
+    .card-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 250px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .card {
+      width: 100%;
+	  height: 50%;
+      max-width: 300px;
+      padding-top: 120px;
+      border-radius: 10px;
+      background-color: #f7f7f7;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      font-size: 20px;
+      font-weight: bold;
+      transition: transform 0.5s ease, opacity 0.5s ease;
+      user-select: none;
+      text-align: center;
+    }
+
+    /* Colors for girl's and guy's turns */
+    .girl-turn {
+      color: white;
+	  background-color:darkgreen;
+    }
+
+    .guy-turn {
+	  color: white;
+      background-color:darkblue;
+    }
+
+    /* Buttons and screen */
+    .actions {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .header h2 {
+      font-size: 1.2em;
+      color: #666;
+    }
+
+    /* Transition animations */
+    .swipe-left {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+
+    .swipe-right {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+	
+	.number-input {
+      font-weight: bold;
+      color: #e63946;
+      font-size: 24px;
+      margin: 20px 0;
+    }
+
+    .range-input {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 10px;
+      background: #ddd;
+      border-radius: 5px;
+      outline: none;
+      transition: background 0.3s ease;
+    }
+
+    .range-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #e63946;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+	
+	.start-btn {
+      background-color: #e63946;
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      padding: 15px;
+      font-size: 18px;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .start-btn:hover {
+      background-color: #d62828;
+    }
+
+    /* Media Queries for smaller screens */
+    @media screen and (max-width: 480px) {
+      .container {
+        width: 95%;
+      }
+
+      button {
+        padding: 14px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>Food Idea ?</h1>
+    </div>
+	
+	<div id="navPanel" class="nav-panel">
+    <span class="close-btn" onclick="closeNav()">&times;</span>
+		<a href="dateidea.html">Date Idea</a>
+		<a href="foodidea.html">Food Idea</a>
+		<a href="placeidea.html">Place Idea</a>
+	  </div>
+
+	  <!-- Three-line Button -->
+	  <span class="open-btn" onclick="openNav()">&#9776;</span>
+
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen active">
+      <h2>How many date ideas would you like?</h2>
+      <div class="number-input">
+        <input id="ideaCount" class="range-input" type="range" min="1" max="15" value="8" oninput="updateRangeValue(this.value)">
+		<br><br>
+        <span id="numberDisplay">8</span>
+      </div>
+      <button id="startBtn" class="start-btn" onclick="startGame()">Start</button>
+    </div>
+
+    <!-- Swipe Screen -->
+    <div id="swipeScreen" class="screen">
+      <h2 id="turnLabel">Girl's Turn</h2>
+      <div class="card-container">
+        <div id="card" class="card">Swipe left or right!</div>
+      </div>
+      <div class="actions">
+        <button id="leftBtn" class="left-btn" onclick="swipe('left')">👎 Left (No)</button>
+        <button id="rightBtn" class="right-btn" onclick="swipe('right')">👍 Right (Yes)</button>
+      </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="resultScreen" class="screen">
+      <h2>Matching Foods</h2>
+      <ul id="resultList"></ul>
+      <button class="start-btn" onclick="location.reload()">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    const ideas = [
+      // Malaysian Cuisine
+      "Nasi Lemak",
+      "Roti Canai",
+      "Char Kway Teow",
+      "Laksa",
+      "Satay",
+      "Hainanese Chicken Rice",
+      "Nasi Goreng",
+      "Mee Goreng Mamak",
+      "Rendang",
+      "Asam Pedas",
+      "Curry Laksa",
+      "Teh Tarik",
+      "Bak Kut Teh",
+      "Maggi Goreng",
+      "Cendol",
+      "Kuih Lapis",
+      "Nasi Kerabu",
+      "Rojak",
+      "Hokkien Mee",
+      "Ais Kacang",
+      "Ikan Bakar",
+      "Lontong",
+      "Pulut Inti",
+      "Sambal Udang",
+      "Beef Satay",
+      "Otak-Otak",
+      "Mee Rebus",
+      "Nasi Dagang",
+      "Ayam Masak Merah",
+      "Keropok Lekor",
+      "Bubur Cha Cha",
+      "Nasi Kandar",
+      "Pisang Goreng",
+      "Kuih Seri Muka",
+      "Popiah",
+      "Lemang",
+      "Tandoori Chicken",
+      "Masak Lemak",
+      "Roti Jala",
+      "Penang Prawn Mee",
+      "Yong Tau Foo",
+      "Kuih Kapit",
+      "Banana Leaf Rice",
+      "Mee Bandung",
+      "Kaya Toast",
+      "ABC (Ais Batu Campur)",
+      "Kuih Bahulu",
+      "Chee Cheong Fun",
+      "Murtabak",
+      "Soto Ayam",
+      "Kuey Teow Soup",
+      "Kopi O",
+      "Bubur Lambuk",
+
+      // International Cuisine
+      "Spaghetti Bolognese",
+      "Sushi",
+      "Pizza Margherita",
+      "Pad Thai",
+      "Chicken Shawarma",
+      "Beef Bulgogi",
+      "Fish and Chips",
+      "Biryani",
+      "Dim Sum",
+      "Tom Yum Soup",
+      "Tacos",
+      "Lasagna",
+      "Croissant",
+      "Paella",
+      "French Onion Soup",
+      "Ratatouille",
+      "Chicken Parmigiana",
+      "Falafel",
+      "Peking Duck",
+      "Kimchi",
+      "Pho",
+      "Beef Stroganoff",
+      "Ramen",
+      "Gnocchi",
+      "Souvlaki",
+      "Quesadilla",
+      "Shepherd's Pie",
+      "Chicken Alfredo",
+      "Crepes",
+      "Shakshuka",
+      "Moussaka",
+      "Fettuccine Alfredo",
+      "Shabu Shabu",
+      "Gyros",
+      "Baklava",
+      "Churros",
+      "Fajitas",
+      "Gyoza",
+      "Bruschetta",
+      "Escargot",
+      "Pavlova",
+      "Pierogi",
+      "Wiener Schnitzel",
+      "Hummus",
+      "Enchiladas",
+      "Tiramisu",
+      "Coq au Vin",
+      "Borscht",
+      "Empanadas",
+      "Sauerbraten",
+      "Polenta",
+      "Risotto",
+      "Ceviche",
+      "Banh Mi",
+      "Couscous",
+      "Gelato",
+      "Tagine",
+      "Dumplings",
+      "Shawarma",
+      "Fried Chicken",
+      "Goulash",
+      "Chili Con Carne",
+      "Tempura",
+      "Cannoli",
+      "Tapas",
+      "Spring Rolls",
+      "Doner Kebab",
+      "Carbonara"
+];
+
+
+
+    let girlChoices = [];
+    let guyChoices = [];
+    let currentIndex = 0;
+    let currentTurn = 'girl';
+    let selectedIdeas = [];
+    let selectedIdeaCount = 0;
+    let currentRound = 0; // Track whether we're on girl or guy's round
+
+    // Start the game
+    function startGame() {
+      selectedIdeaCount = document.getElementById('ideaCount').value;
+      selectedIdeas = shuffleArray(ideas).slice(0, selectedIdeaCount);
+      
+      document.getElementById('startScreen').classList.remove('active');
+      document.getElementById('swipeScreen').classList.add('active');
+      showCard();
+    }
+
+    // Shuffle ideas randomly
+    function shuffleArray(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    // Display the current card/idea
+    function showCard() {
+      const card = document.getElementById('card');
+      card.innerText = selectedIdeas[currentIndex];
+      card.classList.remove('swipe-left', 'swipe-right');
+      updateCardStyle();
+    }
+
+    // Update card style based on the turn (Girl's or Guy's)
+    function updateCardStyle() {
+      const card = document.getElementById('card');
+      const turnLabel = document.getElementById('turnLabel');
+      
+      if (currentRound === 0) {
+        turnLabel.innerText = "Person 1's Turn";
+        card.classList.remove('guy-turn');
+        card.classList.add('girl-turn');
+      } else {
+        turnLabel.innerText = "Person 2's Turn";
+        card.classList.remove('girl-turn');
+        card.classList.add('guy-turn');
+      }
+    }
+
+    // Handle swipe actions (left or right)
+    function swipe(direction) {
+      const card = document.getElementById('card');
+      if (direction === 'left') {
+        card.classList.add('swipe-left');
+      } else {
+        card.classList.add('swipe-right');
+      }
+
+      setTimeout(() => {
+        if (currentRound === 0) {
+          girlChoices.push(direction === 'right');
+          currentIndex++;
+          if (currentIndex === selectedIdeas.length) {
+            currentIndex = 0; // Reset index for the guy's turn
+            currentRound = 1;  // Switch to guy's round
+          }
+        } else if (currentRound === 1) {
+          guyChoices.push(direction === 'right');
+          currentIndex++;
+          if (currentIndex === selectedIdeas.length) {
+            endGame(); // End game if guy finishes his turn
+            return;
+          }
+        }
+        showCard();
+      }, 500);
+    }
+
+    // End the game and show matching activities
+    function endGame() {
+      const matchingActivities = selectedIdeas.filter((_, index) => girlChoices[index] && guyChoices[index]);
+      
+      document.getElementById('swipeScreen').classList.remove('active');
+      document.getElementById('resultScreen').classList.add('active');
+      
+      const resultList = document.getElementById('resultList');
+      resultList.innerHTML = '';
+
+      if (matchingActivities.length > 0) {
+        matchingActivities.forEach(activity => {
+          const li = document.createElement('li');
+          li.innerText = activity;
+          resultList.appendChild(li);
+        });
+      } else {
+        resultList.innerHTML = '<li>No matching activities</li>';
+      }
+    }
+	
+	// Update the range display value
+    function updateRangeValue(value) {
+      document.getElementById('numberDisplay').textContent = value;
+      selectedIdeaCount = parseInt(value);
+    }
+	
+	// Open the navigation panel
+    function openNav() {
+      document.getElementById('navPanel').style.left = '0';
+    }
+
+    // Close the navigation panel
+    function closeNav() {
+      document.getElementById('navPanel').style.left = '-250px';
+    }
+
+    // Close the nav if clicked outside
+    window.onclick = function(event) {
+      if (!event.target.matches('.open-btn') && !event.target.matches('.nav-panel') && !event.target.matches('.nav-panel a')) {
+        closeNav();
+      }
+    };
+  </script>
+
+</body>
+</html>
