@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moomoo Fee Calculator</title>
+    <style>
+        :root {
+            --primary-color: #2e5bff;
+            --secondary-color: #1a3a8f;
+            --accent-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4bb543;
+            --warning-color: #f0ad4e;
+            --danger-color: #d9534f;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7ff;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+        
+        .calculator {
+            background-color: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 700px;
+        }
+        
+        h2 {
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            text-align: center;
+            color: var(--primary-color);
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--accent-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        
+        button {
+            margin-top: 15px;
+            padding: 12px;
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .results-container {
+            margin-top: 30px;
+        }
+        
+        .result-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+        }
+        
+        .result-section h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed #ddd;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .result-item strong {
+            color: var(--secondary-color);
+        }
+        
+        .quantity-tiers {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .tier-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .tier-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tier-quantity {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .tier-price {
+            font-size: 0.9em;
+            color: var(--dark-color);
+        }
+        
+        .highlight {
+            background-color: rgba(72, 149, 239, 0.1);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .highlight strong {
+            color: var(--primary-color);
+        }
+        
+        .fee-warning {
+            color: var(--warning-color);
+            font-weight: bold;
+        }
+        
+        .fee-details {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 600px) {
+            .calculator {
+                padding: 20px;
+            }
+            
+            .quantity-tiers {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>Moomoo Fee Calculator</h2>
+        
+        <div class="input-group">
+            <label for="stockPrice">Stock Price per Share (USD):</label>
+            <input type="number" id="stockPrice" step="0.00001" placeholder="e.g. 25.50" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="quantity">Number of Shares:</label>
+            <input type="number" id="quantity" step="1" placeholder="e.g. 100" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="orderType">Order Type:</label>
+            <select id="orderType">
+                <option value="buy">Buy Order</option>
+                <option value="sell">Sell Order</option>
+            </select>
+        </div>
+        
+        <button onclick="calculateFees()">Calculate Fees</button>
+        
+        <div class="results-container" id="results">
+            <!-- Results will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Moomoo Fee Structure (confirmed)
+        const FEE_STRUCTURE = {
+            platformFee: 0.99, // Fixed platform fee in USD
+            gstRate: 0.09, // 9% GST on platform fee only
+            settlementFeePerShare: 0.003, // $0.003 per share
+            settlementFeeCapRate: 0.01, // Capped at 1% of trade value
+            secFeeRate: 0.0000278, // 0.00278% of trade value (sell only)
+            secFeeMin: 0.01, // $0.01 minimum (sell only)
+            tafPerShare: 0.000166, // $0.000166 per share (sell only)
+            tafMin: 0.01, // $0.01 minimum (sell only)
+            tafMax: 8.30 // $8.30 maximum (sell only)
+        };
+        
+        function calculateFees() {
+            try {
+                const stockPrice = parseFloat(document.getElementById('stockPrice').value);
+                const quantity = parseInt(document.getElementById('quantity').value);
+                const isSellOrder = document.getElementById('orderType').value === 'sell';
+                
+                // Validate inputs
+                if (isNaN(stockPrice) || stockPrice <= 0) {
+                    showError('Please enter a valid stock price (greater than 0)');
+                    return;
+                }
+                
+                if (isNaN(quantity) || quantity <= 0) {
+                    showError('Please enter a valid number of shares (minimum 1)');
+                    return;
+                }
+
+                // Show loading state
+                document.getElementById('results').innerHTML = '<div class="result-section"><p>Calculating Moomoo fees...</p></div>';
+                
+                // Calculate fees
+                const result = calculateMoomooFees(stockPrice, quantity, isSellOrder);
+                
+                // Display results
+                displayResults(result, stockPrice, quantity, isSellOrder);
+                
+            } catch (error) {
+                console.error("Calculation error:", error);
+                showError('An error occurred. Please check your inputs and try again.');
+            }
+        }
+        
+        function calculateMoomooFees(stockPrice, quantity, isSellOrder) {
+            const totalTradeValue = stockPrice * quantity;
+            
+            // 1. Platform Fee ($0.99 fixed)
+            const platformFee = FEE_STRUCTURE.platformFee;
+            
+            // 2. GST on Platform Fee (9%)
+            const gst = platformFee * FEE_STRUCTURE.gstRate;
+            
+            // 3. Settlement Fee ($0.003/share, capped at 1% of trade value)
+            const settlementFeeUncapped = FEE_STRUCTURE.settlementFeePerShare * quantity;
+            const settlementFeeCap = totalTradeValue * FEE_STRUCTURE.settlementFeeCapRate;
+            const settlementFee = Math.min(settlementFeeUncapped, settlementFeeCap);
+            
+            // 4. SEC Fee (sell orders only)
+            let secFee = 0;
+            if (isSellOrder) {
+                secFee = totalTradeValue * FEE_STRUCTURE.secFeeRate;
+                secFee = Math.max(secFee, FEE_STRUCTURE.secFeeMin);
+            }
+            
+            // 5. TAF Fee (sell orders only)
+            let tafFee = 0;
+            if (isSellOrder) {
+                tafFee = FEE_STRUCTURE.tafPerShare * quantity;
+                tafFee = Math.max(tafFee, FEE_STRUCTURE.tafMin);
+                tafFee = Math.min(tafFee, FEE_STRUCTURE.tafMax);
+            }
+            
+            // Calculate totals
+            const totalFees = platformFee + gst + settlementFee + secFee + tafFee;
+            const totalCost = isSellOrder ? 
+                totalTradeValue - totalFees : // For sells: trade value minus fees
+                totalTradeValue + totalFees;  // For buys: trade value plus fees
+                
+            const feePercentage = (totalFees / totalTradeValue) * 100;
+            const breakEvenPrice = isSellOrder ?
+                stockPrice - (totalFees / quantity) : // For sells: price reduced by fees per share
+                stockPrice + (totalFees / quantity);  // For buys: price increased by fees per share
+            
+            return {
+                stockPrice,
+                quantity,
+                isSellOrder,
+                totalTradeValue,
+                platformFee,
+                gst,
+                settlementFee: {
+                    uncapped: settlementFeeUncapped,
+                    capped: settlementFeeCap,
+                    actual: settlementFee
+                },
+                secFee,
+                tafFee,
+                totalFees,
+                totalCost,
+                feePercentage,
+                breakEvenPrice
+            };
+        }
+        
+        function displayResults(result, stockPrice, quantity, isSellOrder) {
+            const resultsContainer = document.getElementById('results');
+            const orderType = isSellOrder ? "Sell" : "Buy";
+            
+            let html = `
+                <div class="result-section">
+                    <h3>${orderType} Order Details</h3>
+                    <div class="result-item">
+                        <span>Stock Price:</span>
+                        <strong>$${stockPrice.toFixed(4)}</strong>
+                    </div>
+                    <div class="result-item">
+                        <span>Quantity:</span>
+                        <strong>${quantity.toLocaleString()} shares</strong>
+                    </div>
+                    <div class="result-item">
+                        <span>Trade Value:</span>
+                        <strong>$${result.totalTradeValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
+                    </div>
+                </div>
+                
+                <div class="result-section">
+                    <h3>Fee Breakdown</h3>
+                    <div class="result-item">
+                        <span>Platform Fee:</span>
+                        <strong>$${result.platformFee.toFixed(2)}</strong>
+                    </div>
+                    <div class="result-item">
+                        <span>GST (9% on Platform Fee):</span>
+                        <strong>$${result.gst.toFixed(2)}</strong>
+                    </div>
+                    <div class="result-item">
+                        <span>Settlement Fee:</span>
+                        <strong>$${result.settlementFee.actual.toFixed(4)}</strong>
+                        <div class="fee-details">
+                            ($${result.settlementFee.uncapped.toFixed(2)} uncapped, 
+                            capped at $${result.settlementFee.capped.toFixed(2)})
+                        </div>
+                    </div>
+            `;
+            
+            // Only show SEC and TAF fees for sell orders
+            if (isSellOrder) {
+                html += `
+                    <div class="result-item">
+                        <span>SEC Fee (0.00278%):</span>
+                        <strong>$${result.secFee.toFixed(4)}</strong>
+                    </div>
+                    <div class="result-item">
+                        <span>TAF Fee:</span>
+                        <strong>$${result.tafFee.toFixed(4)}</strong>
+                        <div class="fee-details">
+                            ($0.000166/share, min $0.01, max $8.30)
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Total fees and final amounts
+            html += `
+                    <div class="result-item" style="margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px;">
+                        <span><strong>Total Fees:</strong></span>
+                        <strong>$${result.totalFees.toFixed(4)} (${result.feePercentage.toFixed(4)}%)</strong>
+                    </div>
+                </div>
+                
+                <div class="result-section highlight">
+                    <h3>Final Amount</h3>
+                    <div class="result-item">
+                        <span>Total ${orderType} Amount:</span>
+                        <strong>$${result.totalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
+                    </div>
+                    <div class="result-item">
+                        <span>Effective Price Per Share:</span>
+                        <strong>$${result.breakEvenPrice.toFixed(4)}</strong>
+                    </div>
+                    <div class="result-item">
+                        <span>Fees as % of Trade:</span>
+                        <strong>${result.feePercentage.toFixed(4)}%</strong>
+                    </div>
+                </div>
+            `;
+            
+            // Show fee impact at different quantities
+            const quantityTiers = [10, 50, 100, 200, 500, 1000, 2000, 5000];
+            html += `
+                <div class="result-section">
+                    <h3>Fee Impact at Different Quantities</h3>
+                    <p>How fees scale with different order sizes (same $${stockPrice.toFixed(2)} price):</p>
+                    <div class="quantity-tiers">
+            `;
+            
+            quantityTiers.forEach(qty => {
+                const tierResult = calculateMoomooFees(stockPrice, qty, isSellOrder);
+                const isCurrentQty = qty === quantity;
+                const cardStyle = isCurrentQty ? 'border: 2px solid var(--primary-color);' : '';
+                
+                html += `
+                    <div class="tier-card" style="${cardStyle}">
+                        <div class="tier-quantity">${qty.toLocaleString()} shares</div>
+                        <div class="tier-price">Fees: $${tierResult.totalFees.toFixed(2)}</div>
+                        <div class="tier-price">${tierResult.feePercentage.toFixed(4)}%</div>
+                        <div class="tier-price">BEP: $${tierResult.breakEvenPrice.toFixed(4)}</div>
+                        ${isCurrentQty ? '<div style="color: var(--primary-color); font-weight: bold;">Your Qty</div>' : ''}
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            resultsContainer.innerHTML = html;
+        }
+        
+        function showError(message) {
+            document.getElementById('results').innerHTML = `
+                <div class="result-section" style="color: var(--danger-color);">
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
