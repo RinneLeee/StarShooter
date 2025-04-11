@@ -3,460 +3,1003 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moomoo Fee Calculator</title>
+    <title>PFA Alert Monitoring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/darkly/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
-        :root {
-            --primary-color: #2e5bff;
-            --secondary-color: #1a3a8f;
-            --accent-color: #4cc9f0;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
-            --success-color: #4bb543;
-            --warning-color: #f0ad4e;
-            --danger-color: #d9534f;
-            --border-radius: 8px;
-            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7ff;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            color: var(--dark-color);
-        }
-        
-        .calculator {
-            background-color: white;
-            padding: 30px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            width: 100%;
-            max-width: 700px;
-        }
-        
-        h2 {
-            margin-bottom: 25px;
-            font-size: 1.8em;
-            text-align: center;
-            color: var(--primary-color);
-        }
-        
-        .input-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--secondary-color);
-        }
-        
-        input, select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: var(--border-radius);
-            font-size: 1em;
-            transition: border 0.3s;
-        }
-        
-        input:focus, select:focus {
-            border-color: var(--accent-color);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
-        }
-        
-        button {
-            margin-top: 15px;
-            padding: 12px;
-            width: 100%;
-            background-color: var(--primary-color);
+            font-family: Arial, sans-serif;
+            background-color: #121212;
             color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            font-size: 1.1em;
-            font-weight: 600;
-            transition: background-color 0.3s, transform 0.2s;
+            margin: 0;
+            padding-top: 60px;
         }
         
-        button:hover {
-            background-color: var(--secondary-color);
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
         }
         
-        button:active {
-            transform: translateY(1px);
+        .table-container {
+			margin-top: 20px;
+			width: 95%;
+			margin: 20px auto;
+			background-color: #1E1E1E;
+			border-radius: 10px;
+			padding: 10px;
+			box-shadow: 0 0 10px rgb(255,207,0);
+			overflow: hidden;
+			position: relative;
+		}
+
+		.table-wrapper {
+			overflow-x: auto;
+			max-height: 70vh;
+			overflow-y: auto;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			background-color: #808080; /* Grey background */
+			/* table-layout: fixed; */ /* Removed to prevent text clipping */
+		}
+
+		th, td {
+			padding: 10px;
+			border: 1px solid rgb(255,207,0);
+			text-align: left;
+			white-space: normal; /* Allow wrapping instead of clipping */
+			color: white;
+			height: 15px;
+			word-wrap: break-word; /* Helps break long words if needed */
+			background-color: #808080; /* Grey background */
+		}
+
+		th {
+			background-color: #333;
+			color: #FFD700;
+			position: sticky;
+			top: 0;
+			z-index: 2;
+		}
+
+        
+        /* Threshold row coloring */
+        .soft-threshold {
+            background-color: LightSlateGray !important;
         }
         
-        .results-container {
-            margin-top: 30px;
+        .hard-threshold {
+            background-color: Tomato !important;
         }
         
-        .result-section {
-            margin-bottom: 30px;
-            padding: 20px;
-            background-color: var(--light-color);
-            border-radius: var(--border-radius);
+        .hit-threshold {
+            background-color: Tan !important;
         }
         
-        .result-section h3 {
-            margin-top: 0;
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--accent-color);
-            padding-bottom: 10px;
+        .notes-cell {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
-        .result-item {
+        /* Top Navbar */
+        .top-navbar {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
-            padding-bottom: 12px;
-            border-bottom: 1px dashed #ddd;
+            align-items: center;
+            background: #1e1e1e;
+            color: white;
+            padding: 0.5rem 1rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .top-navbar h3 {
+            margin: 0;
+            font-size: 1.5rem;
         }
         
-        .result-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        
-        .result-item strong {
-            color: var(--secondary-color);
-        }
-        
-        .quantity-tiers {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        /* Navbar controls */
+        .navbar-controls {
+            display: flex;
+            align-items: center;
             gap: 15px;
-            margin-top: 15px;
         }
         
-        .tier-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        .navbar-control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .navbar-control-group label {
+            color: rgb(255,207,0);
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .navbar-control-group select,
+        .navbar-control-group input {
+            background-color: #1E1E1E;
+            color: white;
+            border: 1px solid rgb(255,207,0);
+            border-radius: 4px;
+            padding: 5px 10px;
+        }
+        
+        /* More Options Button */
+        .toggle-button {
+            padding: 0.5rem 0.5rem;
+            background: transparent;
+            border: 0px solid rgba(0, 0, 0, 0.5);
+            color: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .toggle-button:hover {
+            background: #444;
+        }
+        
+        /* Slide-Out Sidebar */
+        .slide-out {
+            position: fixed;
+            top: 60px;
+            left: -400px;
+            width: 300px;
+            height: 100%;
+            background: #1e1e1e;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+            transition: left 0.3s ease;
+            z-index: 999;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .slide-out.active {
+            left: 0;
+        }
+        
+        .slide-out button {
+            padding: 0.5rem;
+            width: 100%;
+            background-color: rgb(255,207,0);
+            color: black;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .slide-out button:hover {
+            background-color: rgb(255,160,0);
+        }
+        
+        .directory-section {
+            padding: 1rem;
+            border-radius: 5px;
+            width: 90%;
+            max-width: 600px;
+            background-color: #2a2a2a;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .directory-section h4 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            color: #ffcc00;
+        }
+
+        .directory-list {
+            list-style: none;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .directory-item {
+            position: relative;
+            margin: 0.5rem 0;
+            cursor: pointer;
+        }
+
+        .directory-item .toggle {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            background-color: #ffcc00;
+            color: #1e1e1e;
+            font-weight: bold;
+            border-radius: 4px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .directory-item .toggle:hover {
+            background-color: #ffd54f;
+            transform: scale(1.1);
+        }
+
+        .directory-item a {
+            text-decoration: none;
+            color: #ffffff;
+            font-weight: bold;
+            transition: color 0.2s ease;
             text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .directory-item a:hover {
+            color: #ffd54f;
+        }
+
+        .directory-item ul {
+            display: none;
+            list-style: none;
+            margin-left: 20px;
+            padding-left: 20px;
+            border-left: 2px solid #ffcc00;
+        }
+
+        .directory-item.expanded > ul {
+            display: block;
+        }
+
+        .directory-item.expanded .toggle::before {
+            content: '-';
+        }
+
+        .toggle::before {
+            content: '+';
+        }
+
+        /* Different color coding for each level */
+        .directory-item ul {
+            border-left: 2px solid #ffcc00;
+            text-align: left;
+        }
+
+        .sub-item ul {
+            border-left: 2px solid #1e88e5;
+            text-align: left;
+        }
+
+        .sub-sub-item ul {
+            border-left: 2px solid #76ff03;
+            text-align: left;
+        }
+
+        .directory-item .toggle {
+            background-color: #ffcc00;
+        }
+
+        .sub-item .toggle {
+            background-color: #1e88e5;
+        }
+
+        .sub-sub-item .toggle {
+            background-color: #76ff03;
         }
         
-        .tier-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        /* Modal fixes */
+        .modal-backdrop {
+            z-index: 1040 !important;
         }
         
-        .tier-quantity {
-            font-weight: bold;
-            font-size: 1.2em;
-            color: var(--primary-color);
-            margin-bottom: 5px;
+        .modal {
+            z-index: 1050 !important;
         }
         
-        .tier-price {
-            font-size: 0.9em;
-            color: var(--dark-color);
+        /* For webkit-based browsers */
+        .table-wrapper::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: rgb(255,207,0);
+            border-radius: 4px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #1a1a1a;
         }
         
-        .highlight {
-            background-color: rgba(72, 149, 239, 0.1);
-            padding: 15px;
-            border-radius: var(--border-radius);
-            margin-top: 20px;
-            border-left: 4px solid var(--accent-color);
+        /* Button styles */
+        .btn-primary {
+            background-color: rgb(255,207,0);
+            border-color: rgb(255,207,0);
+            color: black;
         }
         
-        .highlight strong {
-            color: var(--primary-color);
+        .btn-primary:hover {
+            background-color: rgb(255,160,0);
+            border-color: rgb(255,160,0);
+            color: black;
         }
         
-        .fee-warning {
-            color: var(--warning-color);
-            font-weight: bold;
+        .btn-info {
+            background-color: #4a8bc9;
+            border-color: #4a8bc9;
         }
         
-        .fee-details {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 5px;
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
         }
         
-        @media (max-width: 600px) {
-            .calculator {
-                padding: 20px;
-            }
-            
-            .quantity-tiers {
-                grid-template-columns: 1fr 1fr;
-            }
+        /* Badge styles */
+        .badge {
+            font-weight: normal;
         }
+        
+        .badge.bg-danger {
+            background-color: #dc3545 !important;
+        }
+        
+        .badge.bg-warning {
+            background-color: #ffc107 !important;
+            color: black !important;
+        }
+        
+        .badge.bg-success {
+            background-color: #28a745 !important;
+        }
+        
+        /* Card styles */
+        .card {
+            background-color: #1E1E1E;
+            border: 1px solid rgb(255,207,0);
+        }
+        
+        .card-body {
+            padding: 1rem;
+        }
+        
+        /* Form control styles */
+        .form-control, .form-select {
+            background-color: #1E1E1E;
+            color: white;
+            border: 1px solid rgb(255,207,0);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #1E1E1E;
+            color: white;
+            border-color: rgb(255,207,0);
+            box-shadow: 0 0 0 0.25rem rgba(255, 207, 0, 0.25);
+        }
+		.logo-a {
+			font-size: 0.9rem;
+			text-decoration: none;
+			color: white;
+		}
+		
+		.eye-button {
+			color: rgb(255,207,0);
+			background-color: transparent;
+			border: none;
+			transition: box-shadow 0.1s, color 0.1s;
+			width: 100%;
+			height: 100%;
+		}
+
+		.eye-button:hover {
+			color: white; 
+			background-color: rgb(255,207,0);
+			box-shadow: 0 0 8px 2px rgba(255, 165, 0, 0.6);
+			cursor: pointer;
+		}
+
+		.eye-button:focus {
+			outline: none;
+			box-shadow: 0 0 10px 3px rgba(255, 165, 0, 0.7);
+		}
+		 .threshold-comparison {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 20px;
+        background-color: #2a2a2a;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid rgb(255,207,0);
+    }
+    
+    .threshold-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 4px;
+    }
+    
+    .threshold-value {
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+    
+    .current-value {
+        background-color: rgba(255, 207, 0, 0.2);
+        border: 1px solid rgb(255,207,0);
+    }
+    
+    .above-threshold {
+        background-color: rgba(255, 0, 0, 0.2);
+        border: 1px solid Tomato;
+    }
+    
+    .below-threshold {
+        background-color: rgba(0, 255, 0, 0.2);
+        border: 1px solid #28a745;
+    }
+    
+    .threshold-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .threshold-label i {
+        font-size: 1.2em;
+    }
     </style>
 </head>
 <body>
-    <div class="calculator">
-        <h2>Moomoo Fee Calculator</h2>
-        
-        <div class="input-group">
-            <label for="stockPrice">Stock Price per Share (USD):</label>
-            <input type="number" id="stockPrice" step="0.00001" placeholder="e.g. 25.50" required>
+    <!-- Top Navigation Bar -->
+    <div class="top-navbar">
+        <button class="toggle-button" id="toggleButton">
+            <h3 style="color: rgb(255,207,0);">MBB CICS</h3>
+            <a class="logo-a">CICS Alert</a>
+        </button> 
+        <br><br>
+        <div class="navbar-controls">
+            <div class="navbar-control-group">
+                <label for="requestDate">Date:</label>
+                <input type="text" class="form-control datepicker" id="requestDate" name="request_date" placeholder="Select date" style="width: 120px;">
+            </div>
+            <div class="navbar-control-group">
+                <label for="alertType">Type:</label>
+                <select class="form-select" id="alertType" name="alert_type" style="width: 150px;">
+                    <option value="">All Types</option>
+                    <option value="Resptime">Resptime</option>
+                    <option value="Processor">Processor</option>
+                    <option value="StringWait">StringWait</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide-Out Sidebar -->
+    <div class="slide-out" id="slideOut">
+        <br><br>
+        <div class="directory-section">
+            <h4>Directory</h4>
+            <ul class="directory-list">
+                <li class="directory-item">
+                    <span class="toggle"></span>
+                    <a href="#">Main (Home Page)</a>
+                    <ul>
+                        <li class="directory-item sub-item">
+                            <span class="toggle"></span>
+                            <a href="cics_response.php">CICS</a>
+                            <ul>
+                                <li class="directory-item sub-sub-item">
+                                    <span class="toggle"></span>
+                                    <a href="cics_response.php">Dropdown Input</a>
+                                </li>
+                                <li class="directory-item sub-sub-item">
+                                    <span class="toggle"></span>
+                                    <a href="cics_response_test.php">Text Input</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="directory-item sub-item">
+                            <span class="toggle"></span>
+                            <a href="cics_alert.php">Alert</a>
+                        </li>
+                        <li class="directory-item sub-item">
+                            <span class="toggle"></span>
+                            <a href="cics_string.php">String Weight</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
         </div>
         
-        <div class="input-group">
-            <label for="quantity">Number of Shares:</label>
-            <input type="number" id="quantity" step="1" placeholder="e.g. 100" required>
+        <h4>Action: </h4>
+        <a href="#" style="text-decoration: none;">
+            <button style="display: flex; align-items: center; justify-content: center; padding: 8px 12px; border: none; cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-log-out" viewBox="0 0 24 24" style="margin-right: 8px;">
+                    <path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7M13 12l4-4m0 0l4 4m-4-4v12"></path>
+                </svg>
+                <span style="line-height: 24px;">Logout</span>
+            </button>
+        </a>
+    </div>
+    
+    <br><br>
+
+    <div class="container-width">
+        
+
+        <!-- Add search box above the table -->
+        <div class="table-search-container" style="margin: 20px auto; width: 95%;">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" id="searchInput" placeholder="Search alerts..." disabled>
+                <button class="btn btn-primary" id="searchButton" type="button" disabled>
+                    <i class="bi bi-search"></i> Search
+                </button>
+                <button class="btn btn-secondary" id="clearSearchButton" type="button" disabled>
+                    <i class="bi bi-x-circle"></i> Clear
+                </button>
+            </div>
         </div>
-        
-        <div class="input-group">
-            <label for="orderType">Order Type:</label>
-            <select id="orderType">
-                <option value="buy">Buy Order</option>
-                <option value="sell">Sell Order</option>
-            </select>
+		
+		<div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading data...</p>
         </div>
-        
-        <button onclick="calculateFees()">Calculate Fees</button>
-        
-        <div class="results-container" id="results">
-            <!-- Results will be inserted here -->
+
+        <div class="table-responsive table-container" id="tableContainer">
+            <table class="table" id="alertTable">
+                <thead>
+                    <tr>
+                        <th>View</th>
+                        <th>APPLID</th>
+                        <th>Resources</th>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Value</th>
+                        <th>Alert</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <script>
-        // Moomoo Fee Structure (confirmed)
-        const FEE_STRUCTURE = {
-            platformFee: 0.99, // Fixed platform fee in USD
-            gstRate: 0.09, // 9% GST on platform fee only
-            settlementFeePerShare: 0.003, // $0.003 per share
-            settlementFeeCapRate: 0.01, // Capped at 1% of trade value
-            secFeeRate: 0.0000278, // 0.00278% of trade value (sell only)
-            secFeeMin: 0.01, // $0.01 minimum (sell only)
-            tafPerShare: 0.000166, // $0.000166 per share (sell only)
-            tafMin: 0.01, // $0.01 minimum (sell only)
-            tafMax: 8.30 // $8.30 maximum (sell only)
-        };
-        
-        function calculateFees() {
-            try {
-                const stockPrice = parseFloat(document.getElementById('stockPrice').value);
-                const quantity = parseInt(document.getElementById('quantity').value);
-                const isSellOrder = document.getElementById('orderType').value === 'sell';
-                
-                // Validate inputs
-                if (isNaN(stockPrice) || stockPrice <= 0) {
-                    showError('Please enter a valid stock price (greater than 0)');
-                    return;
-                }
-                
-                if (isNaN(quantity) || quantity <= 0) {
-                    showError('Please enter a valid number of shares (minimum 1)');
-                    return;
-                }
+    <!-- Detail Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background-color: #1E1E1E; color: white;">
+                <div class="modal-header" style="border-bottom: 1px solid rgb(255,207,0);">
+                    <h5 class="modal-title" id="detailModalLabel">Alert Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold">Type:</div>
+                            <div class="col-md-8" id="detail-type"></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold">APPLID:</div>
+                            <div class="col-md-8" id="detail-applid"></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold">Resource:</div>
+                            <div class="col-md-8" id="detail-resource"></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold">Date:</div>
+                            <div class="col-md-8" id="detail-date"></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold">Time:</div>
+                            <div class="col-md-8" id="detail-time"></div>
+                        </div>
+                        
+                        <!-- New threshold comparison section -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <h5>Threshold Comparison</h5>
+                                <div class="threshold-comparison" id="thresholdComparison">
+                                    <!-- Will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold">Notes:</div>
+                            <div class="col-md-8" id="detail-notes"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid rgb(255,207,0);">
+                    <button type="button" class="btn btn-primary" id="redirectButton">Redirect</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                // Show loading state
-                document.getElementById('results').innerHTML = '<div class="result-section"><p>Calculating Moomoo fees...</p></div>';
-                
-                // Calculate fees
-                const result = calculateMoomooFees(stockPrice, quantity, isSellOrder);
-                
-                // Display results
-                displayResults(result, stockPrice, quantity, isSellOrder);
-                
-            } catch (error) {
-                console.error("Calculation error:", error);
-                showError('An error occurred. Please check your inputs and try again.');
-            }
-        }
-        
-        function calculateMoomooFees(stockPrice, quantity, isSellOrder) {
-            const totalTradeValue = stockPrice * quantity;
-            
-            // 1. Platform Fee ($0.99 fixed)
-            const platformFee = FEE_STRUCTURE.platformFee;
-            
-            // 2. GST on Platform Fee (9%)
-            const gst = platformFee * FEE_STRUCTURE.gstRate;
-            
-            // 3. Settlement Fee ($0.003/share, capped at 1% of trade value)
-            const settlementFeeUncapped = FEE_STRUCTURE.settlementFeePerShare * quantity;
-            const settlementFeeCap = totalTradeValue * FEE_STRUCTURE.settlementFeeCapRate;
-            const settlementFee = Math.min(settlementFeeUncapped, settlementFeeCap);
-            
-            // 4. SEC Fee (sell orders only)
-            let secFee = 0;
-            if (isSellOrder) {
-                secFee = totalTradeValue * FEE_STRUCTURE.secFeeRate;
-                secFee = Math.max(secFee, FEE_STRUCTURE.secFeeMin);
-            }
-            
-            // 5. TAF Fee (sell orders only)
-            let tafFee = 0;
-            if (isSellOrder) {
-                tafFee = FEE_STRUCTURE.tafPerShare * quantity;
-                tafFee = Math.max(tafFee, FEE_STRUCTURE.tafMin);
-                tafFee = Math.min(tafFee, FEE_STRUCTURE.tafMax);
-            }
-            
-            // Calculate totals
-            const totalFees = platformFee + gst + settlementFee + secFee + tafFee;
-            const totalCost = isSellOrder ? 
-                totalTradeValue - totalFees : // For sells: trade value minus fees
-                totalTradeValue + totalFees;  // For buys: trade value plus fees
-                
-            const feePercentage = (totalFees / totalTradeValue) * 100;
-            const breakEvenPrice = isSellOrder ?
-                stockPrice - (totalFees / quantity) : // For sells: price reduced by fees per share
-                stockPrice + (totalFees / quantity);  // For buys: price increased by fees per share
-            
-            return {
-                stockPrice,
-                quantity,
-                isSellOrder,
-                totalTradeValue,
-                platformFee,
-                gst,
-                settlementFee: {
-                    uncapped: settlementFeeUncapped,
-                    capped: settlementFeeCap,
-                    actual: settlementFee
-                },
-                secFee,
-                tafFee,
-                totalFees,
-                totalCost,
-                feePercentage,
-                breakEvenPrice
-            };
-        }
-        
-        function displayResults(result, stockPrice, quantity, isSellOrder) {
-            const resultsContainer = document.getElementById('results');
-            const orderType = isSellOrder ? "Sell" : "Buy";
-            
-            let html = `
-                <div class="result-section">
-                    <h3>${orderType} Order Details</h3>
-                    <div class="result-item">
-                        <span>Stock Price:</span>
-                        <strong>$${stockPrice.toFixed(4)}</strong>
-                    </div>
-                    <div class="result-item">
-                        <span>Quantity:</span>
-                        <strong>${quantity.toLocaleString()} shares</strong>
-                    </div>
-                    <div class="result-item">
-                        <span>Trade Value:</span>
-                        <strong>$${result.totalTradeValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
-                    </div>
-                </div>
-                
-                <div class="result-section">
-                    <h3>Fee Breakdown</h3>
-                    <div class="result-item">
-                        <span>Platform Fee:</span>
-                        <strong>$${result.platformFee.toFixed(2)}</strong>
-                    </div>
-                    <div class="result-item">
-                        <span>GST (9% on Platform Fee):</span>
-                        <strong>$${result.gst.toFixed(2)}</strong>
-                    </div>
-                    <div class="result-item">
-                        <span>Settlement Fee:</span>
-                        <strong>$${result.settlementFee.actual.toFixed(4)}</strong>
-                        <div class="fee-details">
-                            ($${result.settlementFee.uncapped.toFixed(2)} uncapped, 
-                            capped at $${result.settlementFee.capped.toFixed(2)})
-                        </div>
-                    </div>
-            `;
-            
-            // Only show SEC and TAF fees for sell orders
-            if (isSellOrder) {
-                html += `
-                    <div class="result-item">
-                        <span>SEC Fee (0.00278%):</span>
-                        <strong>$${result.secFee.toFixed(4)}</strong>
-                    </div>
-                    <div class="result-item">
-                        <span>TAF Fee:</span>
-                        <strong>$${result.tafFee.toFixed(4)}</strong>
-                        <div class="fee-details">
-                            ($0.000166/share, min $0.01, max $8.30)
-                        </div>
-                    </div>
-                `;
-            }
-            
-            // Total fees and final amounts
-            html += `
-                    <div class="result-item" style="margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px;">
-                        <span><strong>Total Fees:</strong></span>
-                        <strong>$${result.totalFees.toFixed(4)} (${result.feePercentage.toFixed(4)}%)</strong>
-                    </div>
-                </div>
-                
-                <div class="result-section highlight">
-                    <h3>Final Amount</h3>
-                    <div class="result-item">
-                        <span>Total ${orderType} Amount:</span>
-                        <strong>$${result.totalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
-                    </div>
-                    <div class="result-item">
-                        <span>Effective Price Per Share:</span>
-                        <strong>$${result.breakEvenPrice.toFixed(4)}</strong>
-                    </div>
-                    <div class="result-item">
-                        <span>Fees as % of Trade:</span>
-                        <strong>${result.feePercentage.toFixed(4)}%</strong>
-                    </div>
-                </div>
-            `;
-            
-            // Show fee impact at different quantities
-            const quantityTiers = [10, 50, 100, 200, 500, 1000, 2000, 5000];
-            html += `
-                <div class="result-section">
-                    <h3>Fee Impact at Different Quantities</h3>
-                    <p>How fees scale with different order sizes (same $${stockPrice.toFixed(2)} price):</p>
-                    <div class="quantity-tiers">
-            `;
-            
-            quantityTiers.forEach(qty => {
-                const tierResult = calculateMoomooFees(stockPrice, qty, isSellOrder);
-                const isCurrentQty = qty === quantity;
-                const cardStyle = isCurrentQty ? 'border: 2px solid var(--primary-color);' : '';
-                
-                html += `
-                    <div class="tier-card" style="${cardStyle}">
-                        <div class="tier-quantity">${qty.toLocaleString()} shares</div>
-                        <div class="tier-price">Fees: $${tierResult.totalFees.toFixed(2)}</div>
-                        <div class="tier-price">${tierResult.feePercentage.toFixed(4)}%</div>
-                        <div class="tier-price">BEP: $${tierResult.breakEvenPrice.toFixed(4)}</div>
-                        ${isCurrentQty ? '<div style="color: var(--primary-color); font-weight: bold;">Your Qty</div>' : ''}
-                    </div>
-                `;
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize date picker
+            $(".datepicker").flatpickr({
+                dateFormat: "Ymd",
+                defaultDate: "today",
+                allowInput: true
             });
             
-            html += `
-                    </div>
-                </div>
-            `;
+            // Initialize modal
+            var detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
             
-            resultsContainer.innerHTML = html;
-        }
-        
-        function showError(message) {
-            document.getElementById('results').innerHTML = `
-                <div class="result-section" style="color: var(--danger-color);">
-                    <h3>Error</h3>
-                    <p>${message}</p>
-                </div>
-            `;
-        }
+            // Store all loaded data for searching
+            let allAlertData = [];
+            let filteredAlertData = [];
+            
+            // Form submit handler
+            function submitForm() {
+                // Show loading spinner
+                $('#loadingSpinner').show();
+                $('#tableContainer').hide();
+                
+                // Get form data
+                const formData = {
+                    request_date: $('#requestDate').val(),
+                    alert_type: $('#alertType').val()
+                };
+                
+                // Send AJAX request to backend
+                $.ajax({
+                    url: 'cics_alert_data.php',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        // Hide loading spinner
+                        $('#loadingSpinner').hide();
+                        
+                        // Clear previous data
+                        $('#alertTable tbody').empty();
+                        allAlertData = [];
+                        
+                        // Check if response is an array
+                        if (Array.isArray(response)) {
+                            if (response.length > 0) {
+                                allAlertData = response;
+                                filteredAlertData = [...allAlertData];
+                                
+                                // Enable search functionality
+                                $('#searchInput').prop('disabled', false);
+                                $('#searchButton').prop('disabled', false);
+                                $('#clearSearchButton').prop('disabled', false);
+                                
+                                // Populate table with data
+                                populateTable(filteredAlertData);
+                            } else {
+                                $('#alertTable tbody').append('<tr><td colspan="7" class="text-center">No data found</td></tr>');
+                                
+                                // Disable search functionality
+                                $('#searchInput').prop('disabled', true);
+                                $('#searchButton').prop('disabled', true);
+                                $('#clearSearchButton').prop('disabled', true);
+                            }
+                        } else {
+                            console.error('Invalid response format:', response);
+                            $('#alertTable tbody').append('<tr><td colspan="7" class="text-center text-danger">Error loading data</td></tr>');
+                            
+                            // Disable search functionality
+                            $('#searchInput').prop('disabled', true);
+                            $('#searchButton').prop('disabled', true);
+                            $('#clearSearchButton').prop('disabled', true);
+                        }
+                        
+                        // Show table
+                        $('#tableContainer').show();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                        $('#loadingSpinner').hide();
+                        $('#alertTable tbody').empty();
+                        $('#alertTable tbody').append('<tr><td colspan="7" class="text-center text-danger">Error: ' + error + '</td></tr>');
+                        $('#tableContainer').show();
+                        
+                        // Disable search functionality
+                        $('#searchInput').prop('disabled', true);
+                        $('#searchButton').prop('disabled', true);
+                        $('#clearSearchButton').prop('disabled', true);
+                    }
+                });
+            }
+            
+            // Function to populate table with data
+            function populateTable(data) {
+                $('#alertTable tbody').empty();
+                
+                data.forEach(function(alert) {
+                    // Format time if it exists
+                    let timeDisplay = '';
+                    if (alert.TIME) {
+                        const timeStr = alert.TIME.toString();
+                        if (timeStr.length === 6) {
+                            timeDisplay = timeStr.substr(0, 2) + ':' + timeStr.substr(2, 2) + ':' + timeStr.substr(4, 2);
+                        } else {
+                            timeDisplay = alert.TIME;
+                        }
+                    }
+                    
+                    // Format date if it exists (remove time portion)
+                    let dateDisplay = '';
+                    if (alert.DATE) {
+                        const dateObj = new Date(alert.DATE);
+                        if (!isNaN(dateObj.getTime())) {
+                            dateDisplay = dateObj.toLocaleDateString();
+                        } else {
+                            dateDisplay = alert.DATE;
+                        }
+                    }
+                    
+                    // Determine alert status based on value and thresholds
+                    let alertStatus = '';
+                    if (alert.VALUE && alert.HARDTHRES) {
+                        const value = parseFloat(alert.VALUE);
+                        const hardThres = parseFloat(alert.HARDTHRES);
+                        if (value >= hardThres) {
+                            alertStatus = '<span class="badge bg-danger">Critical</span>';
+                        } else if (alert.SOFTTHRES && value >= parseFloat(alert.SOFTTHRES)) {
+                            alertStatus = '<span class="badge bg-warning text-dark">Warning</span>';
+                        } else {
+                            alertStatus = '<span class="badge bg-success">Normal</span>';
+                        }
+                    }
+                    
+                    // Display notes in the Alert column
+                    const notesDisplay = alert.NOTES ? 
+                        `<div class="notes-cell" title="${alert.NOTES.replace(/"/g, '&quot;')}">${alert.NOTES}</div>` : 
+                        '';
+						
+                    
+                    const row = `
+                        <tr>
+                            <td>
+                                <button class="btn btn-sm view-detail eye-button" data-alert='${JSON.stringify(alert).replace(/'/g, "\\'")}'>
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </td>
+                            <td>${alert.APPLID || ''}</td>
+                            <td>${alert.RESOURCE || ''}</td>
+                            <td>${timeDisplay}</td>
+                            <td>${alert.TYPE || ''}</td>
+                            <td>${alert.VALUE || ''}</td>
+                            <td>
+                                ${alertStatus}
+                                ${notesDisplay}
+                            </td>
+                        </tr>
+                    `;
+                    $('#alertTable tbody').append(row);
+                });
+                
+                // Add click handlers for view buttons
+                $('.view-detail').click(function() {
+                    const alertData = JSON.parse($(this).attr('data-alert'));
+                    
+                    // Populate modal with details
+                    $('#detail-type').text(alertData.TYPE || 'N/A');
+                    $('#detail-applid').text(alertData.APPLID || 'N/A');
+                    $('#detail-resource').text(alertData.RESOURCE || 'N/A');
+                    
+                    // Format date (remove time portion)
+                    let dateDisplay = 'N/A';
+                    if (alertData.DATE) {
+                        const dateObj = new Date(alertData.DATE);
+                        if (!isNaN(dateObj.getTime())) {
+                            dateDisplay = dateObj.toLocaleDateString();
+                        } else {
+                            dateDisplay = alertData.DATE;
+                        }
+                    }
+                    $('#detail-date').text(dateDisplay);
+                    
+                    // Format time
+                    let timeDisplay = 'N/A';
+                    if (alertData.TIME) {
+                        const timeStr = alertData.TIME.toString();
+                        if (timeStr.length === 6) {
+                            timeDisplay = timeStr.substr(0, 2) + ':' + timeStr.substr(2, 2) + ':' + timeStr.substr(4, 2);
+                        } else {
+                            timeDisplay = alertData.TIME;
+                        }
+                    }
+                    $('#detail-time').text(timeDisplay);
+                    
+                    // Create threshold comparison display
+                    const value = parseFloat(alertData.VALUE) || 0;
+                    const softThres = parseFloat(alertData.SOFTTHRES) || 0;
+                    const hardThres = parseFloat(alertData.HARDTHRES) || 0;
+                    const histThres = parseFloat(alertData.HISTHRES) || 0;
+                    
+                    let comparisonHTML = `
+                        <div class="threshold-item current-value">
+                            <div class="threshold-label">
+                                <i class="bi bi-star-fill" style="color: rgb(255,207,0);"></i>
+                                <span>Current Value</span>
+                            </div>
+                            <div class="threshold-value">${value.toFixed(4)}</div>
+                        </div>
+                    `;
+                    
+                    // Add soft threshold comparison
+                    comparisonHTML += createThresholdItem("Soft Threshold", softThres, value, "bi-exclamation-triangle", "rgb(255,207,0)");
+                    
+                    // Add hard threshold comparison
+                    comparisonHTML += createThresholdItem("Hard Threshold", hardThres, value, "bi-exclamation-octagon", "Tomato");
+                    
+                    // Add historical threshold comparison
+                    comparisonHTML += createThresholdItem("Historical Threshold", histThres, value, "bi-graph-up", "#4a8bc9");
+                    
+                    $('#thresholdComparison').html(comparisonHTML);
+                    
+                    $('#detail-notes').text(alertData.NOTES || 'N/A');
+                    
+                    // Store alert data for redirect button
+                    $('#detailModal').data('alertData', alertData);
+                    
+                    // Show modal
+                    detailModal.show();
+                });
+            }
+            
+            // Helper function to create threshold comparison items
+            function createThresholdItem(label, threshold, value, iconClass, iconColor) {
+                const isAbove = value >= threshold;
+                const diff = Math.abs(value - threshold);
+                
+                return `
+                    <div class="threshold-item ${isAbove ? 'above-threshold' : 'below-threshold'}">
+                        <div class="threshold-label">
+                            <i class="bi ${iconClass}" style="color: ${iconColor};"></i>
+                            <span>${label}</span>
+                            <small>(${isAbove ? 'above by' : 'below by'} ${diff.toFixed(4)})</small>
+                        </div>
+                        <div class="threshold-value">${threshold.toFixed(4)}</div>
+                    </div>
+                `;
+            }
+            
+            // Search function
+            function performSearch() {
+                const searchTerm = $('#searchInput').val().toLowerCase();
+                
+                if (searchTerm.trim() === '') {
+                    filteredAlertData = [...allAlertData];
+                } else {
+                    filteredAlertData = allAlertData.filter(alert => {
+                        return (
+                            (alert.APPLID && alert.APPLID.toLowerCase().includes(searchTerm)) ||
+                            (alert.RESOURCE && alert.RESOURCE.toLowerCase().includes(searchTerm)) ||
+                            (alert.TYPE && alert.TYPE.toLowerCase().includes(searchTerm)) ||
+                            (alert.VALUE && alert.VALUE.toString().toLowerCase().includes(searchTerm)) ||
+                            (alert.NOTES && alert.NOTES.toLowerCase().includes(searchTerm))
+                        );
+                    });
+                }
+                
+                populateTable(filteredAlertData);
+            }
+            
+            // Handle search button click
+            $('#searchButton').click(function() {
+                performSearch();
+            });
+            
+            // Handle Enter key in search input
+            $('#searchInput').keypress(function(e) {
+                if (e.which === 13) {
+                    performSearch();
+                }
+            });
+            
+            // Handle clear search button
+            $('#clearSearchButton').click(function() {
+                $('#searchInput').val('');
+                filteredAlertData = [...allAlertData];
+                populateTable(filteredAlertData);
+            });
+            
+            // Handle redirect button click
+            $('#redirectButton').click(function() {
+                const alertData = $('#detailModal').data('alertData');
+                if (!alertData) return;
+                
+                // Format date from "March 12, 2025" to "20250312"
+                let formattedDate = '';
+                if (alertData.DATE) {
+                    const dateObj = new Date(alertData.DATE);
+                    if (!isNaN(dateObj.getTime())) {
+                        const year = dateObj.getFullYear();
+                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        const day = String(dateObj.getDate()).padStart(2, '0');
+                        formattedDate = `${year}${month}${day}`;
+                    }
+                }
+                
+                // Determine redirect URL based on type
+                let redirectUrl = '';
+                const params = new URLSearchParams();
+                
+                if (alertData.APPLID) params.append('applid', alertData.APPLID);
+                if (alertData.RESOURCE) params.append('transid', alertData.RESOURCE);
+                if (formattedDate) params.append('date', formattedDate);
+                
+                switch(alertData.TYPE) {
+                    case 'Resptime':
+                        redirectUrl = `cics_response_test.php?${params.toString()}`;
+                        break;
+                    case 'Processor':
+                        redirectUrl = `cics_cpu.php?${params.toString()}`;
+                        break;
+                    case 'StringWait':
+                        redirectUrl = `cics_string.php?${params.toString()}`;
+                        break;
+                    default:
+                        alert('No redirect URL defined for this alert type');
+                        return;
+                }
+                
+                window.open(redirectUrl, '_blank');
+            });
+            
+            // Also submit when date changes
+            $('#requestDate').change(function() {
+                submitForm();
+            });
+            
+            // Also submit when alert type changes
+            $('#alertType').change(function() {
+                submitForm();
+            });
+            
+            // Trigger initial load
+            submitForm();
+            
+            // Slide-out toggle logic
+            const toggleButton = document.getElementById('toggleButton');
+            const slideOut = document.getElementById('slideOut');
+
+            toggleButton.addEventListener('click', (event) => {
+                slideOut.classList.toggle('active');
+                event.stopPropagation();
+            });
+
+            // Close sidebar when clicking outside
+            document.addEventListener('click', (event) => {
+                const isClickInside = slideOut.contains(event.target) || toggleButton.contains(event.target);
+                if (!isClickInside && slideOut.classList.contains('active')) {
+                    slideOut.classList.remove('active');
+                }
+            });
+            
+            // Add toggle functionality to the directory items
+            document.querySelectorAll('.directory-item .toggle').forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const parentItem = this.parentElement;
+                    parentItem.classList.toggle('expanded');
+                });
+            });
+        });
     </script>
 </body>
 </html>
