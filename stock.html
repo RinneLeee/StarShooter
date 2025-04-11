@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moomoo Multi-Currency Fee Calculator</title>
+    <title>Multi-Platform Fee Calculator</title>
     <style>
         :root {
             --moomoo-dark: #121826;
@@ -202,6 +202,47 @@
             border-radius: var(--border-radius);
         }
         
+        .platform-comparison {
+            margin-top: 20px;
+        }
+        
+        .platform-comparison h3 {
+            margin-bottom: 15px;
+        }
+        
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .platform-item {
+            background-color: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .platform-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .platform-item.active {
+            border: 2px solid var(--moomoo-primary);
+            background-color: rgba(46, 91, 255, 0.2);
+        }
+        
+        .platform-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .platform-fee {
+            font-size: 0.8rem;
+            color: var(--moomoo-light-text);
+        }
+        
         .currency-flag {
             width: 20px;
             height: 20px;
@@ -234,7 +275,8 @@
                 padding: 10px 12px;
             }
             
-            .currency-grid {
+            .currency-grid,
+            .platform-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -243,7 +285,7 @@
 <body>
     <div class="calculator-container">
         <div class="calculator-header">
-            <h1>Multi-Currency Fee Calculator</h1>
+            <h1>Multi-Platform Fee Calculator</h1>
         </div>
         
         <div class="calculator-card">
@@ -278,6 +320,18 @@
                 </select>
             </div>
             
+            <div class="input-group">
+                <label for="platform">Trading Platform</label>
+                <select id="platform">
+                    <option value="moomoo">Moomoo (by FUTU)</option>
+                    <option value="tiger">Tiger Brokers</option>
+                    <option value="webull">Webull Singapore</option>
+                    <option value="cmc">CMC Invest</option>
+                    <option value="syfe">Syfe Trade</option>
+                    <option value="ibkr">Interactive Brokers (IBKR)</option>
+                </select>
+            </div>
+            
             <button class="btn-calculate" id="calculateBtn">Calculate Fees</button>
         </div>
         
@@ -287,19 +341,6 @@
     </div>
 
     <script>
-        // Moomoo Fee Structure (in USD)
-        const FEE_STRUCTURE = {
-            platformFee: 0.99, // Fixed platform fee in USD
-            gstRate: 0.09, // 9% GST on platform fee only
-            settlementFeePerShare: 0.003, // $0.003 per share
-            settlementFeeCapRate: 0.01, // Capped at 1% of trade value
-            secFeeRate: 0.0000278, // 0.00278% of trade value (sell only)
-            secFeeMin: 0.01, // $0.01 minimum (sell only)
-            tafPerShare: 0.000166, // $0.000166 per share (sell only)
-            tafMin: 0.01, // $0.01 minimum (sell only)
-            tafMax: 8.30 // $8.30 maximum (sell only)
-        };
-
         // Exchange rates (1 USD = X currency)
         const exchangeRates = {
             MYR: 4.70, // Malaysian Ringgit
@@ -322,10 +363,65 @@
             HKD: { symbol: 'HK$', flag: '🇭🇰' }
         };
 
+        // Platform Fee Structures (in USD)
+        const PLATFORM_FEES = {
+            moomoo: {
+                name: "Moomoo (by FUTU)",
+                platformFee: 0.99, // Fixed platform fee in USD
+                gstRate: 0.09, // 9% GST on platform fee only
+                settlementFeePerShare: 0.003, // $0.003 per share
+                settlementFeeCapRate: 0.01, // Capped at 1% of trade value
+                secFeeRate: 0.0000278, // 0.00278% of trade value (sell only)
+                secFeeMin: 0.01, // $0.01 minimum (sell only)
+                tafPerShare: 0.000166, // $0.000166 per share (sell only)
+                tafMin: 0.01, // $0.01 minimum (sell only)
+                tafMax: 8.30, // $8.30 maximum (sell only)
+                tradingFeeRate: 0.0003 // 0.03% trading fee
+            },
+            tiger: {
+                name: "Tiger Brokers",
+                tradingFeeRate: 0.0003, // 0.03%
+                platformFeeRate: 0.0003, // 0.03%
+                minCommission: 0.73, // USD
+                minPlatformFee: 0.74, // USD
+                totalMinFee: 1.47 // USD
+            },
+            webull: {
+                name: "Webull Singapore",
+                tradingFeeRate: 0.00025, // 0.025%
+                platformFeeRate: 0.00025, // 0.025%
+                minCommission: 0.59, // USD
+                minPlatformFee: 0.59, // USD
+                totalMinFee: 1.18 // USD
+            },
+            cmc: {
+                name: "CMC Invest",
+                tradingFeeRate: 0.0004, // 0.04%
+                minCommission: 1.48, // USD
+                totalMinFee: 1.48 // USD
+            },
+            syfe: {
+                name: "Syfe Trade",
+                tradingFeeRate: 0.0006, // 0.06%
+                minCommission: 1.46, // USD
+                totalMinFee: 1.46 // USD
+            },
+            ibkr: {
+                name: "Interactive Brokers (IBKR)",
+                // For Singapore stocks
+                sgCommissionRate: 0.0008, // 0.08%
+                sgMinCommission: 1.85, // USD
+                // For US stocks
+                usCommissionPerShare: 0.005, // USD
+                usMinCommission: 1.00 // USD
+            }
+        };
+
         // DOM Elements
         const calculateBtn = document.getElementById('calculateBtn');
         const resultsContainer = document.getElementById('results');
         const currencySelect = document.getElementById('currency');
+        const platformSelect = document.getElementById('platform');
 
         // Initialize calculator
         document.addEventListener('DOMContentLoaded', function() {
@@ -347,6 +443,7 @@
                 const stockPrice = parseFloat(document.getElementById('stockPrice').value);
                 const quantity = parseFloat(document.getElementById('quantity').value);
                 const isSellOrder = document.getElementById('orderType').value === 'sell';
+                const selectedPlatform = platformSelect.value;
                 
                 // Validate inputs
                 if (isNaN(stockPrice) || stockPrice <= 0) {
@@ -365,11 +462,11 @@
                 // Convert input price to USD for calculations
                 const stockPriceUSD = stockPrice / exchangeRates[selectedCurrency];
                 
-                // Calculate fees in USD
-                const result = calculateMoomooFees(stockPriceUSD, quantity, isSellOrder);
+                // Calculate fees in USD based on selected platform
+                const result = calculatePlatformFees(selectedPlatform, stockPriceUSD, quantity, isSellOrder);
                 
                 // Display results
-                displayResults(result, selectedCurrency);
+                displayResults(result, selectedCurrency, selectedPlatform);
                 
             } catch (error) {
                 console.error("Calculation error:", error);
@@ -377,61 +474,121 @@
             }
         }
         
-        function calculateMoomooFees(stockPriceUSD, quantity, isSellOrder) {
+        function calculatePlatformFees(platform, stockPriceUSD, quantity, isSellOrder) {
             const totalTradeValueUSD = stockPriceUSD * quantity;
+            const platformFees = PLATFORM_FEES[platform];
+            let totalFeesUSD = 0;
+            let feeDetails = [];
             
-            // 1. Platform Fee ($0.99 fixed)
-            const platformFeeUSD = FEE_STRUCTURE.platformFee;
-            
-            // 2. GST on Platform Fee (9%)
-            const gstUSD = platformFeeUSD * FEE_STRUCTURE.gstRate;
-            
-            // 3. Settlement Fee ($0.003/share, capped at 1% of trade value)
-            const settlementFeeUncappedUSD = FEE_STRUCTURE.settlementFeePerShare * quantity;
-            const settlementFeeCapUSD = totalTradeValueUSD * FEE_STRUCTURE.settlementFeeCapRate;
-            const settlementFeeUSD = Math.min(settlementFeeUncappedUSD, settlementFeeCapUSD);
-            
-            // 4. SEC Fee (sell orders only)
-            let secFeeUSD = 0;
-            if (isSellOrder) {
-                secFeeUSD = totalTradeValueUSD * FEE_STRUCTURE.secFeeRate;
-                secFeeUSD = Math.max(secFeeUSD, FEE_STRUCTURE.secFeeMin);
+            if (platform === 'moomoo') {
+                // Moomoo specific fees
+                const platformFeeUSD = platformFees.platformFee;
+                const gstUSD = platformFeeUSD * platformFees.gstRate;
+                const settlementFeeUncappedUSD = platformFees.settlementFeePerShare * quantity;
+                const settlementFeeCapUSD = totalTradeValueUSD * platformFees.settlementFeeCapRate;
+                const settlementFeeUSD = Math.min(settlementFeeUncappedUSD, settlementFeeCapUSD);
+                
+                let secFeeUSD = 0;
+                let tafFeeUSD = 0;
+                
+                if (isSellOrder) {
+                    secFeeUSD = totalTradeValueUSD * platformFees.secFeeRate;
+                    secFeeUSD = Math.max(secFeeUSD, platformFees.secFeeMin);
+                    
+                    tafFeeUSD = platformFees.tafPerShare * quantity;
+                    tafFeeUSD = Math.max(tafFeeUSD, platformFees.tafMin);
+                    tafFeeUSD = Math.min(tafFeeUSD, platformFees.tafMax);
+                }
+                
+                totalFeesUSD = platformFeeUSD + gstUSD + settlementFeeUSD + secFeeUSD + tafFeeUSD;
+                
+                feeDetails = [
+                    { name: "Platform Fee", value: platformFeeUSD },
+                    { name: "GST (9%)", value: gstUSD },
+                    { name: "Settlement Fee", value: settlementFeeUSD },
+                ];
+                
+                if (isSellOrder) {
+                    feeDetails.push(
+                        { name: "SEC Fee", value: secFeeUSD },
+                        { name: "TAF Fee", value: tafFeeUSD }
+                    );
+                }
+                
+            } else if (platform === 'ibkr') {
+                // IBKR has different fees for US and SG stocks
+                // For simplicity, we'll assume US stocks for this calculator
+                const commissionUSD = Math.max(
+                    platformFees.usCommissionPerShare * quantity,
+                    platformFees.usMinCommission
+                );
+                
+                totalFeesUSD = commissionUSD;
+                feeDetails = [
+                    { name: "Commission", value: commissionUSD }
+                ];
+                
+            } else {
+                // For other platforms (Tiger, Webull, CMC, Syfe)
+                const tradingFee = Math.max(
+                    totalTradeValueUSD * platformFees.tradingFeeRate,
+                    platformFees.minCommission || 0
+                );
+                
+                const platformFee = platformFees.platformFeeRate 
+                    ? Math.max(
+                        totalTradeValueUSD * platformFees.platformFeeRate,
+                        platformFees.minPlatformFee || 0
+                      )
+                    : 0;
+                
+                totalFeesUSD = platform === 'tiger' || platform === 'webull'
+                    ? tradingFee + platformFee
+                    : tradingFee;
+                
+                feeDetails = [
+                    { name: "Trading Fee", value: tradingFee }
+                ];
+                
+                if (platform === 'tiger' || platform === 'webull') {
+                    feeDetails.push({ name: "Platform Fee", value: platformFee });
+                }
+                
+                // Apply minimum fee if applicable
+                if (platformFees.totalMinFee && totalFeesUSD < platformFees.totalMinFee) {
+                    const minFeeDiff = platformFees.totalMinFee - totalFeesUSD;
+                    feeDetails.push({ name: "Minimum Fee Adjustment", value: minFeeDiff });
+                    totalFeesUSD = platformFees.totalMinFee;
+                }
             }
             
-            // 5. TAF Fee (sell orders only)
-            let tafFeeUSD = 0;
-            if (isSellOrder) {
-                tafFeeUSD = FEE_STRUCTURE.tafPerShare * quantity;
-                tafFeeUSD = Math.max(tafFeeUSD, FEE_STRUCTURE.tafMin);
-                tafFeeUSD = Math.min(taafFeeUSD, FEE_STRUCTURE.tafMax);
-            }
-            
-            // Calculate totals in USD
-            const totalFeesUSD = platformFeeUSD + gstUSD + settlementFeeUSD + secFeeUSD + tafFeeUSD;
-            const totalCostUSD = totalTradeValueUSD + totalFeesUSD; // For buy orders
-            
-            // Break-even price (price needed when selling to recover costs)
-            const breakEvenPriceUSD = totalCostUSD / quantity;
+            // Calculate totals
+            const totalCostUSD = isSellOrder 
+                ? totalTradeValueUSD - totalFeesUSD
+                : totalTradeValueUSD + totalFeesUSD;
+                
+            const breakEvenPriceUSD = isSellOrder
+                ? (totalTradeValueUSD - totalFeesUSD) / quantity
+                : (totalTradeValueUSD + totalFeesUSD) / quantity;
+                
             const feePercentage = (totalFeesUSD / totalTradeValueUSD * 100);
             
             return {
+                platform: platformFees.name,
                 stockPriceUSD,
                 quantity,
                 totalTradeValueUSD,
-                platformFeeUSD,
-                gstUSD,
-                settlementFeeUSD,
-                secFeeUSD,
-                tafFeeUSD,
+                feeDetails,
                 totalFeesUSD,
                 totalCostUSD,
                 breakEvenPriceUSD,
-                feePercentage
+                feePercentage,
+                isSellOrder
             };
         }
         
-        function displayResults(result, selectedCurrency) {
-            const isSellOrder = document.getElementById('orderType').value === 'sell';
+        function displayResults(result, selectedCurrency, selectedPlatform) {
+            const isSellOrder = result.isSellOrder;
             
             // Convert USD results to selected currency
             const convertToSelected = (amount) => amount * exchangeRates[selectedCurrency];
@@ -440,7 +597,11 @@
                 <div class="result-card">
                     <h3>Order Details (${selectedCurrency})</h3>
                     <div class="result-row">
-                        <span class="result-label">Purchase Price</span>
+                        <span class="result-label">Platform</span>
+                        <span class="result-value">${result.platform}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">${isSellOrder ? 'Sell' : 'Buy'} Price</span>
                         <span class="result-value">${formatCurrency(result.stockPriceUSD * exchangeRates[selectedCurrency], selectedCurrency, 4)}</span>
                     </div>
                     <div class="result-row">
@@ -455,32 +616,17 @@
                 
                 <div class="result-card">
                     <h3>Fee Breakdown (${selectedCurrency})</h3>
-                    <div class="result-row">
-                        <span class="result-label">Platform Fee</span>
-                        <span class="result-value">${formatCurrency(result.platformFeeUSD * exchangeRates[selectedCurrency], selectedCurrency, 2)}</span>
-                    </div>
-                    <div class="result-row">
-                        <span class="result-label">GST (9%)</span>
-                        <span class="result-value">${formatCurrency(result.gstUSD * exchangeRates[selectedCurrency], selectedCurrency, 2)}</span>
-                    </div>
-                    <div class="result-row">
-                        <span class="result-label">Settlement Fee</span>
-                        <span class="result-value">${formatCurrency(result.settlementFeeUSD * exchangeRates[selectedCurrency], selectedCurrency, 4)}</span>
-                    </div>
             `;
             
-            if (isSellOrder) {
+            // Add all fee details
+            result.feeDetails.forEach(fee => {
                 html += `
                     <div class="result-row">
-                        <span class="result-label">SEC Fee</span>
-                        <span class="result-value">${formatCurrency(result.secFeeUSD * exchangeRates[selectedCurrency], selectedCurrency, 4)}</span>
-                    </div>
-                    <div class="result-row">
-                        <span class="result-label">TAF Fee</span>
-                        <span class="result-value">${formatCurrency(result.tafFeeUSD * exchangeRates[selectedCurrency], selectedCurrency, 4)}</span>
+                        <span class="result-label">${fee.name}</span>
+                        <span class="result-value">${formatCurrency(fee.value * exchangeRates[selectedCurrency], selectedCurrency, 4)}</span>
                     </div>
                 `;
-            }
+            });
             
             html += `
                     <div class="result-row" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
@@ -492,7 +638,7 @@
                 <div class="result-card break-even-card">
                     <h3>Break-Even Analysis (${selectedCurrency})</h3>
                     <div class="result-row">
-                        <span class="result-label">Total Cost</span>
+                        <span class="result-label">Total ${isSellOrder ? 'Proceeds After Fees' : 'Cost'}</span>
                         <span class="result-value">${formatCurrency(result.totalCostUSD * exchangeRates[selectedCurrency], selectedCurrency, 2)}</span>
                     </div>
                     <div class="result-row" style="margin: 15px 0;">
@@ -500,7 +646,7 @@
                         <span class="result-value break-even-price">${formatCurrency(result.breakEvenPriceUSD * exchangeRates[selectedCurrency], selectedCurrency, 4)}</span>
                     </div>
                     <div class="fee-details">
-                        You need to sell at ${formatCurrency(result.breakEvenPriceUSD * exchangeRates[selectedCurrency], selectedCurrency, 4)} per share to recover your total investment after fees.
+                        You need to ${isSellOrder ? 'sell' : 'buy'} at ${formatCurrency(result.breakEvenPriceUSD * exchangeRates[selectedCurrency], selectedCurrency, 4)} per share to ${isSellOrder ? 'receive your target amount after fees' : 'cover your total investment including fees'}.
                     </div>
                 </div>
                 
@@ -523,7 +669,7 @@
                                 <span class="currency-code">${currency} (${currencyInfo[currency].symbol})</span>
                             </div>
                             <div class="currency-rate">
-                                <div>Total Cost: ${formatCurrency(totalCostConverted, currency, 2)}</div>
+                                <div>Total ${isSellOrder ? 'Proceeds' : 'Cost'}: ${formatCurrency(totalCostConverted, currency, 2)}</div>
                                 <div>Break-Even: ${formatCurrency(breakEvenConverted, currency, 4)}</div>
                                 <div>1 ${selectedCurrency} = ${rateToSelected.toFixed(4)} ${currency}</div>
                             </div>
@@ -535,9 +681,48 @@
             html += `
                     </div>
                 </div>
+                
+                <div class="result-card platform-comparison">
+                    <h3>Compare With Other Platforms</h3>
+                    <div class="platform-grid" id="platformComparison">
+                        <!-- Platform comparison will be inserted here -->
+                    </div>
+                </div>
             `;
             
             resultsContainer.innerHTML = html;
+            
+            // Add platform comparison
+            addPlatformComparison(result.stockPriceUSD, result.quantity, isSellOrder, selectedCurrency, selectedPlatform);
+        }
+        
+        function addPlatformComparison(stockPriceUSD, quantity, isSellOrder, selectedCurrency, currentPlatform) {
+            const comparisonContainer = document.getElementById('platformComparison');
+            let html = '';
+            
+            for (const platformId of Object.keys(PLATFORM_FEES)) {
+                if (platformId === currentPlatform) continue;
+                
+                const platform = PLATFORM_FEES[platformId];
+                const result = calculatePlatformFees(platformId, stockPriceUSD, quantity, isSellOrder);
+                const breakEvenPrice = formatCurrency(result.breakEvenPriceUSD * exchangeRates[selectedCurrency], selectedCurrency, 4);
+                const totalFees = formatCurrency(result.totalFeesUSD * exchangeRates[selectedCurrency], selectedCurrency, 2);
+                
+                html += `
+                    <div class="platform-item" onclick="switchPlatform('${platformId}')">
+                        <div class="platform-name">${platform.name}</div>
+                        <div class="platform-fee">Break-Even: ${breakEvenPrice}</div>
+                        <div class="platform-fee">Fees: ${totalFees}</div>
+                    </div>
+                `;
+            }
+            
+            comparisonContainer.innerHTML = html;
+        }
+        
+        function switchPlatform(platformId) {
+            platformSelect.value = platformId;
+            calculateFees();
         }
         
         function showError(message) {
