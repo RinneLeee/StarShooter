@@ -156,6 +156,12 @@
       color: var(--dark-bg);
     }
 
+    .results-info {
+      color: var(--text-secondary);
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+
     .video-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -234,22 +240,6 @@
       font-size: 14px;
       color: var(--text-secondary);
       display: block;
-    }
-
-    .video-unavailable {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      text-align: center;
-      color: var(--text-secondary);
-    }
-
-    .video-unavailable i {
-      font-size: 40px;
-      margin-bottom: 10px;
-      color: var(--primary-color);
     }
 
     .loading {
@@ -415,6 +405,7 @@
         <button class="filter-btn">Watched</button>
       </div>
 
+      <div class="results-info" id="resultsInfo"></div>
       <div class="video-grid" id="results"></div>
 
       <div class="pagination" id="pagination">
@@ -440,6 +431,8 @@
     let currentPageToken = '';
     let prevPageToken = '';
     let currentQuery = '';
+    let totalResults = 0;
+    let filteredCount = 0;
 
     async function searchYouTube(pageToken = '') {
       const query = document.getElementById('searchQuery').value || currentQuery;
@@ -447,14 +440,16 @@
       
       currentQuery = query;
       const resultsDiv = document.getElementById('results');
+      const resultsInfo = document.getElementById('resultsInfo');
       resultsDiv.innerHTML = `
         <div class="loading">
           <div class="spinner"></div>
         </div>
       `;
+      resultsInfo.textContent = '';
 
       try {
-        let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=12&q=${encodeURIComponent(query)}&key=${API_KEY}`;
+        let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=20&q=${encodeURIComponent(query)}&key=${API_KEY}`;
         
         if (pageToken) {
           url += `&pageToken=${pageToken}`;
@@ -464,6 +459,7 @@
         const data = await response.json();
 
         resultsDiv.innerHTML = '';
+        filteredCount = 0;
 
         if (!data.items || data.items.length === 0) {
           resultsDiv.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No results found. Try a different search term.</p>';
@@ -473,51 +469,55 @@
         // Update page tokens
         currentPageToken = data.nextPageToken || '';
         prevPageToken = data.prevPageToken || '';
+        totalResults = data.pageInfo.totalResults || 0;
 
         // Enable/disable pagination buttons
         document.getElementById('prevPage').disabled = !prevPageToken;
         document.getElementById('nextPage').disabled = !currentPageToken;
 
-        // Process videos to get more details (duration, view count, etc.)
+        // Process videos to get more details and check availability
         const videoIds = data.items.map(item => item.id.videoId).join(',');
         const detailsResponse = await fetch(
-          `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoIds}&key=${API_KEY}`
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics,status&id=${videoIds}&key=${API_KEY}`
         );
         const detailsData = await detailsResponse.json();
 
-        // Create a map of video details for easy access
-        const videoDetailsMap = {};
+        // Filter out unplayable videos
+        const playableVideos = [];
+        const unplayableVideos = [];
+        
         if (detailsData.items) {
           detailsData.items.forEach(video => {
-            videoDetailsMap[video.id] = video;
+            // Check if video is playable (embeddable and not restricted)
+            if (video.status && video.status.embeddable && 
+                video.status.privacyStatus === 'public' && 
+                !video.contentDetails.regionRestriction) {
+              playableVideos.push(video);
+            } else {
+              unplayableVideos.push(video);
+            }
           });
         }
 
-        data.items.forEach((item) => {
-          const videoId = item.id.videoId;
-          const videoDetails = videoDetailsMap[videoId];
-          
-          // Skip if video details aren't available
-          if (!videoDetails) {
-            const errorCard = document.createElement('div');
-            errorCard.classList.add('video-card');
-            errorCard.innerHTML = `
-              <div class="video-unavailable">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Video unavailable</p>
-                <p class="video-stats">${item.snippet.title}</p>
-              </div>
-            `;
-            resultsDiv.appendChild(errorCard);
-            return;
-          }
+        filteredCount = unplayableVideos.length;
+        
+        // Update results info
+        updateResultsInfo(playableVideos.length, filteredCount, totalResults);
 
-          const title = item.snippet.title;
-          const channelTitle = item.snippet.channelTitle;
-          const thumbnail = item.snippet.thumbnails?.medium?.url || '';
-          const duration = formatDuration(videoDetails.contentDetails.duration);
-          const viewCount = formatViewCount(videoDetails.statistics.viewCount);
-          const publishedAt = formatPublishedDate(item.snippet.publishedAt);
+        if (playableVideos.length === 0) {
+          resultsDiv.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No playable videos found. Try a different search term.</p>';
+          return;
+        }
+
+        // Display playable videos
+        playableVideos.forEach((video) => {
+          const videoId = video.id;
+          const title = video.snippet.title;
+          const channelTitle = video.snippet.channelTitle;
+          const thumbnail = video.snippet.thumbnails?.medium?.url || '';
+          const duration = formatDuration(video.contentDetails.duration);
+          const viewCount = formatViewCount(video.statistics.viewCount);
+          const publishedAt = formatPublishedDate(video.snippet.publishedAt);
 
           const videoCard = document.createElement('div');
           videoCard.classList.add('video-card');
@@ -546,6 +546,21 @@
         console.error('Error fetching data:', error);
         resultsDiv.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">An error occurred. Please try again later.</p>';
       }
+    }
+
+    function updateResultsInfo(playableCount, filteredCount, totalResults) {
+      const resultsInfo = document.getElementById('resultsInfo');
+      let infoText = `Showing ${playableCount} playable videos`;
+      
+      if (filteredCount > 0) {
+        infoText += ` (filtered out ${filteredCount} unavailable videos)`;
+      }
+      
+      if (totalResults > 0) {
+        infoText += ` • ${totalResults} total results found`;
+      }
+      
+      resultsInfo.textContent = infoText;
     }
 
     function nextPage() {
