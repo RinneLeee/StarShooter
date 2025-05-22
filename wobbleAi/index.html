@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleek Chat Interface</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /*
+         * Global Styles & Body Reset
+         * Sets basic font, removes default margins, and hides overflow to manage sidebar.
+         */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden; /* Prevent body scroll when sidebar is open */
+            background-color: #222; /* Ensure body background matches main-content for seamless scrollbar */
+        }
+
+        /* Custom Scrollbar for the entire page (if content overflows) */
+        body::-webkit-scrollbar {
+            width: 8px; /* Narrow scrollbar */
+        }
+
+        body::-webkit-scrollbar-track {
+            background: transparent; /* Transparent track */
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background-color: #555; /* Grey thumb */
+            border-radius: 4px; /* Rounded corners for the thumb */
+        }
+
+        /*
+         * Container for the entire chat application
+         * Uses flexbox to arrange the sidebar trigger strip, sidebar, and main content.
+         * Sets the height to 100% of the viewport height.
+         */
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /*
+         * Sidebar Trigger Strip
+         * The narrow strip on the left that contains the hamburger and new chat buttons.
+         * Width reduced by 1.2x for a more compact feel.
+         */
+        .sidebar-trigger-strip {
+            width: 60px; /* Reduced width (was 75px) */
+            background-color: #333; /* Darker grey */
+            display: flex;
+            flex-direction: column; /* Stacks buttons vertically */
+            align-items: center; /* Centers items horizontally */
+            padding-top: 15px; /* Slightly reduced padding-top */
+            position: relative;
+            z-index: 2; /* Ensures it stays on top */
+        }
+
+        /*
+         * Hamburger Button Styling
+         * Icons are now white, smaller, and have a circular hover effect.
+         * Adjusted padding for a more elegant, less clunky look.
+         */
+        .hamburger-btn {
+            background: none;
+            border: none;
+            font-size: 18px; /* Slightly smaller icon size */
+            cursor: pointer;
+            color: white; /* White icon */
+            padding: 8px; /* Reduced padding for more narrow look */
+            width: 35px; /* Smaller square for circular hover */
+            height: 35px; /* Smaller square for circular hover */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .hamburger-btn:hover {
+            background-color: #444; /* Slightly darker grey background on hover */
+        }
+
+        /*
+         * New Chat Button Styling
+         * Now has the same elegant styling and hover effect as the hamburger button.
+         */
+        .new-chat-btn {
+            background: none;
+            border: none;
+            font-size: 18px; /* Slightly smaller icon size */
+            cursor: pointer;
+            color: white; /* White icon */
+            padding: 8px; /* Reduced padding for more narrow look */
+            margin-top: 20px; /* Adjusted margin-top for more space */
+            opacity: 0;
+            visibility: hidden;
+            width: 35px; /* Smaller square for circular hover */
+            height: 35px; /* Smaller square for circular hover */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            transition: opacity 0.3s ease, visibility 0.3s ease, background-color 0.3s ease;
+        }
+
+        .new-chat-btn.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .new-chat-btn:hover {
+            background-color: #444; /* Slightly darker grey background on hover */
+        }
+
+        /*
+         * Sidebar (Slide-out Section)
+         * Background is now solid dark grey (#333) for consistency.
+         */
+        .sidebar {
+            width: 0; /* Initially hidden */
+            background-color: #333; /* Solid dark grey for consistency */
+            overflow-x: hidden;
+            transition: width 0.3s ease, transform 0.3s ease;
+            position: absolute;
+            height: 100%;
+            left: 60px; /* Adjusted to match new trigger strip width */
+            z-index: 1;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /*
+         * Class to open the sidebar
+         * Added by JavaScript to expand the sidebar.
+         */
+        .sidebar.open {
+            width: 250px; /* Desired width when open */
+            transform: translateX(0);
+        }
+
+        /* New Sidebar Header for the search icon */
+        .sidebar-header {
+            display: flex;
+            justify-content: flex-end; /* Align search icon to the right */
+            align-items: center;
+            padding: 10px 15px; /* Reduced padding for compactness */
+            height: 60px; /* Match main header height */
+            box-sizing: border-box;
+            background-color: transparent; /* Transparent header within sidebar */
+        }
+
+        .sidebar-header .search-icon-in-sidebar {
+            font-size: 18px; /* Slightly smaller icon size */
+            color: white; /* White color for the icon */
+            cursor: pointer;
+            width: 35px; /* Smaller square for circular hover */
+            height: 35px; /* Smaller square for circular hover */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+            /* No padding-top adjustment needed with flex centering and reduced icon size */
+        }
+
+        .sidebar-header .search-icon-in-sidebar:hover {
+            background-color: #444; /* Slightly darker grey background on hover */
+        }
+
+        /*
+         * Content within the sidebar
+         * Text colors adjusted for contrast on dark background.
+         */
+        .sidebar-content {
+            flex-grow: 1;
+            padding: 0 15px 15px; /* Reduced padding for compactness */
+            overflow-y: auto;
+        }
+
+        .sidebar-content h2 {
+            margin-top: 0;
+            color: #eee;
+        }
+
+        .sidebar-content ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        /* Styling for each chat list item */
+        .sidebar-content li.chat-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0; /* Reduced padding for compactness */
+            border-bottom: 1px solid #555;
+            color: #ccc;
+            cursor: pointer;
+            white-space: nowrap; /* Prevent text wrapping */
+            overflow: hidden; /* Hide overflow text */
+            text-overflow: ellipsis; /* Add ellipsis for overflow */
+            position: relative; /* For tooltip positioning */
+        }
+
+        .sidebar-content li.chat-list-item:hover {
+            background-color: #444;
+        }
+
+        /* Delete button (X icon) */
+        .chat-list-item .delete-chat-btn {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background-color 0.2s ease, color 0.2s ease, width 0.2s ease, padding 0.2s ease, border-radius 0.2s ease;
+            flex-shrink: 0; /* Prevent shrinking */
+            margin-left: 10px; /* Space from text */
+            display: flex; /* For centering content */
+            justify-content: center;
+            align-items: center;
+            width: 24px; /* Fixed width for X icon */
+            height: 24px; /* Fixed height for X icon */
+        }
+
+        .chat-list-item .delete-chat-btn:hover {
+            background-color: #555;
+            color: white;
+        }
+
+        /* Confirm delete button (red pill) */
+        .chat-list-item .delete-chat-btn.confirm-delete {
+            background-color: #dc3545; /* Red pill color */
+            color: white;
+            border-radius: 15px; /* Pill shape */
+            padding: 5px 10px; /* Adjust padding for pill shape */
+            font-size: 12px;
+            width: auto; /* Allow width to adjust to text */
+            min-width: 60px; /* Ensure minimum width for "Remove" */
+            text-align: center;
+        }
+
+        .chat-list-item .delete-chat-btn.confirm-delete:hover {
+            background-color: #c82333;
+        }
+
+        /* Tooltip for full summary */
+        .chat-summary-tooltip {
+            position: absolute;
+            left: 100%; /* Position to the right of the list item */
+            top: 50%;
+            transform: translateY(-50%) translateX(10px); /* Adjust for vertical centering and slight offset */
+            background-color: #444;
+            color: #eee;
+            padding: 10px 15px;
+            border-radius: 8px;
+            white-space: normal; /* Allow text to wrap */
+            max-width: 250px; /* Max width for tooltip */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 10; /* Ensure it's above other elements */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            pointer-events: none; /* Allow clicks to pass through */
+        }
+
+        .chat-list-item:hover .chat-summary-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+
+        /*
+         * Fixed User Profile Icon Container
+         * This div now holds either the icon or the letter.
+         */
+        .user-profile-fixed {
+            position: fixed;
+            top: 10px;
+            right: 20px;
+            z-index: 4;
+            cursor: pointer; /* Indicate it's clickable */
+        }
+
+        /* Styling for the avatar display area (circle) */
+        #user-avatar-display {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%; /* Ensures circular shape */
+            border: 2px solid #555;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #444; /* Background for silhouette or letter */
+            color: white; /* Color for silhouette or letter */
+            font-size: 1.2em; /* Size for the letter */
+            font-weight: bold;
+            overflow: hidden; /* Hide overflow if text is too big */
+        }
+
+        /* Styling for the silhouette icon inside the avatar display */
+        #user-avatar-display .fas.fa-user-circle {
+            font-size: 24px; /* Larger size for the silhouette icon */
+            color: #ccc; /* Lighter color for the silhouette */
+        }
+
+
+        /*
+         * Main Content Area
+         * Now uses a darker grey background.
+         */
+        .main-content {
+            width: calc(100% - 60px); /* Adjusted to new trigger strip width */
+            background-color: #222;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease, width 0.3s ease;
+            margin-left: 0;
+            position: relative;
+        }
+
+        /*
+         * Class to push and shrink the main content
+         * Added by JavaScript to expand the sidebar.
+         */
+        .main-content.pushed {
+            margin-left: 250px;
+            width: calc(100% - 60px - 250px); /* Adjusted to new trigger strip width */
+        }
+
+        /*
+         * Header Section
+         * Background color matches the new main content background.
+         */
+        .header {
+            height: 60px;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 0 15px; /* Reduced padding for compactness */
+            color: white;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1;
+            background-color: #222;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Keyframes for the gradient animation (reused for logo) */
+        @keyframes gradient-move {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; } /* Move to end */
+            100% { background-position: 0% 50%; } /* Move back to start */
+        }
+
+        /* Styling for the 'Ai' part of the logo */
+        .ai-gradient {
+            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); /* Include start color at end for seamless loop */
+            background-size: 200% 100%; /* Make the gradient wider for smoother back-and-forth */
+            -webkit-background-clip: text; /* Clip background to text shape for Webkit browsers */
+            background-clip: text; /* Clip background to text shape */
+            color: transparent; /* Make text transparent to show background */
+            animation: gradient-move 8s linear infinite; /* Apply animation, using linear for consistent speed */
+        }
+
+
+        /*
+         * Chat Area
+         * Padding reduced for compactness.
+         */
+        .chat-area {
+            flex-grow: 1;
+            padding: 70px 15px 15px; /* Reduced top and horizontal padding */
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Custom Scrollbar for chat area */
+        .chat-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-area::-webkit-scrollbar-thumb {
+            background-color: #555;
+            border-radius: 4px;
+        }
+
+        /* Gradient fade at the top of the chat area */
+        .chat-area::before {
+            content: '';
+            position: absolute;
+            top: 60px;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to bottom, #222, transparent);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /*
+         * Individual Message Styling
+         */
+        .message {
+            max-width: 75%; /* Slightly increased max-width for messages */
+            padding: 8px 12px; /* Reduced padding for compactness */
+            border-radius: 15px;
+            margin-bottom: 12px; /* Increased margin-bottom for better spacing */
+            line-height: 1.6; /* Increased line-height for better readability */
+            display: flex; /* Added flex to align icon and text */
+            align-items: flex-start; /* Align items to the top */
+        }
+
+        .message.sent {
+            align-self: flex-end;
+            background-color: #333;
+            color: white;
+            border-bottom-right-radius: 5px;
+            min-width: 80px; /* Minimum width for sent messages */
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background-color: transparent; /* Changed to transparent */
+            color: white; /* White text for received messages */
+            border-bottom-left-radius: 5px;
+        }
+
+        /* Styling for the icon within received messages (animated gradient) */
+        .message-sender-icon {
+            font-size: 20px; /* Size of the icon */
+            margin-right: 8px; /* Space between icon and text */
+            flex-shrink: 0; /* Prevent icon from shrinking */
+            padding-top: 2px; /* Small adjustment for vertical alignment with text */
+
+            /* Gradient properties for smoother animation */
+            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); /* Include start color at end for seamless loop */
+            background-size: 200% 100%; /* Smaller background size for smoother back-and-forth */
+            -webkit-background-clip: text; /* Clip background to text shape for Webkit browsers */
+            background-clip: text; /* Clip background to text shape */
+            color: transparent; /* Make text transparent to show background */
+            animation: gradient-move 8s linear infinite; /* Apply animation, using ease-in-out for smoother transition */
+        }
+
+        /* Styling for paragraphs within messages for better text wrapping */
+        .message p {
+            white-space: pre-wrap; /* Ensures text wraps naturally */
+            word-wrap: break-word; /* Breaks long words */
+            margin: 0; /* Remove default paragraph margin */
+        }
+
+        /* Styling for code blocks within messages */
+        .message pre {
+            background-color: #1a1a1a; /* Darker background for code */
+            padding: 10px;
+            border-radius: 8px;
+            overflow-x: auto; /* Enable horizontal scroll for long lines */
+            width: 100%; /* Take full width of message container */
+            box-sizing: border-box;
+            margin: 0; /* Remove default pre margin */
+        }
+
+        .message pre code {
+            font-family: 'Consolas', 'Monaco', monospace; /* Monospaced font for code */
+            font-size: 0.9em;
+            color: #e0e0e0; /* Lighter color for code text */
+            display: block; /* Ensure code block respects padding */
+            white-space: pre-wrap; /* Wrap long lines if necessary */
+            word-break: break-all; /* Break words to prevent overflow */
+        }
+
+        /*
+         * Input Area
+         * Padding reduced for compactness.
+         */
+        .input-area {
+            display: flex;
+            flex-direction: column;
+            padding: 8px 12px; /* Reduced padding for compactness */
+            background-color: transparent;
+            border: 1px solid white;
+            border-radius: 25px;
+            max-width: 700px;
+            margin: 2px auto 10px auto; /* Reduced bottom margin for compactness */
+            width: 100%;
+            box-sizing: border-box;
+            transition: opacity 0.3s ease, pointer-events 0.3s ease; /* For disabling */
+        }
+
+        /*
+         * Chat Input (contenteditable div)
+         * Adjusted for dynamic height and wrapping.
+         */
+        #chat-input {
+            flex-grow: 1;
+            border: none;
+            border-radius: 0;
+            padding: 5px;
+            font-size: 16px;
+            line-height: 1.5; /* Ensure single line height is consistent */
+            resize: none; /* Not applicable to contenteditable, but good to keep for consistency */
+            min-height: 24px; /* Default height for one line of text (16px font-size * 1.5 line-height) */
+            max-height: 120px; /* Max height before scrollbar appears */
+            overflow-y: auto; /* Enables vertical scrollbar if text overflows */
+            background-color: transparent;
+            color: white;
+            box-sizing: border-box;
+            width: 100%;
+            white-space: pre-wrap; /* Ensures text wraps naturally */
+            word-wrap: break-word; /* Breaks long words */
+            outline: none; /* Remove default focus outline */
+        }
+
+        /* Placeholder for contenteditable div */
+        #chat-input:empty::before {
+            content: attr(data-placeholder);
+            color: #aaa; /* Lighter grey for placeholder */
+            pointer-events: none; /* Ensure placeholder doesn't block clicks */
+            display: block; /* Ensure placeholder takes up space */
+        }
+
+        #chat-input:focus:empty::before {
+            content: ''; /* Hide placeholder on focus */
+        }
+
+        /* Custom Scrollbar for contenteditable div */
+        #chat-input::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #chat-input::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #chat-input::-webkit-scrollbar-thumb {
+            background-color: #666;
+            border-radius: 3px;
+        }
+
+        /*
+         * Send Button Styling
+         */
+        #send-btn {
+            background-color: transparent;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            cursor: pointer;
+            align-self: flex-end;
+            margin-top: 5px;
+            transition: color 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        #send-btn:hover {
+            color: #007bff;
+        }
+
+        /* Styling for the fixed welcome message */
+        #welcome-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em; /* Large size */
+            font-weight: bold;
+            text-align: center;
+            z-index: 0; /* Behind chat messages */
+            opacity: 1; /* Initially visible */
+            transition: opacity 0.3s ease-out; /* Smooth fade out */
+
+            /* Apply the same gradient animation */
+            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradient-move 8s linear infinite;
+        }
+
+        #welcome-message.hidden {
+            opacity: 0;
+            pointer-events: none; /* Make it unclickable when hidden */
+        }
+
+        /* New LLM feature buttons container */
+        .llm-feature-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* Space between buttons */
+            padding: 10px 0;
+            margin-top: 10px; /* Space from input area */
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            transition: opacity 0.3s ease, pointer-events 0.3s ease; /* For disabling */
+        }
+
+        .llm-feature-buttons button {
+            background-color: #444;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .llm-feature-buttons button:hover {
+            background-color: #555;
+            border-color: #777;
+        }
+
+        /* Style for login prompt message */
+        #login-prompt-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5em;
+            color: #ccc;
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            z-index: 3; /* Above chat area, below header */
+            display: none; /* Hidden by default */
+        }
+        #login-prompt-message.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar-trigger-strip">
+            <button class="hamburger-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <button class="new-chat-btn"> <i class="fas fa-plus-circle"></i> </button>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-header"> <i class="fas fa-search search-icon-in-sidebar"></i>
+            </div>
+            <div class="sidebar-content">
+                <ul>
+                    </ul>
+            </div>
+        </div>
+
+        <div class="user-profile-fixed" id="user-profile-icon">
+            <div id="user-avatar-display" class="user-avatar">
+                <i class="fas fa-user-circle"></i> </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <div class="logo">Wobble<span class="ai-gradient">Ai</span></div>
+            </div>
+
+            <div class="chat-area">
+                <div id="welcome-message">Hello!</div>
+                <div id="login-prompt-message">Please sign in to start chatting!</div>
+            </div>
+
+            <div class="input-area">
+                <div id="chat-input" contenteditable="true" data-placeholder="Ask me anything..."></div>
+                <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+            <div class="llm-feature-buttons">
+                <button id="summarizeChatBtn">Summarize Chat ✨</button>
+                <button id="suggestQuestionsBtn">Suggest Next Questions ✨</button>
+                <button id="generateCodeBtn">Generate Code 💻</button>
+                <button id="rephraseTextBtn">Rephrase Text ✨</button>
+                <button id="brainstormIdeasBtn">Brainstorm Ideas 💡</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ensures the DOM is fully loaded before running the script
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get references to the DOM elements
+            const hamburgerBtn = document.querySelector('.hamburger-btn');
+            const newChatBtn = document.querySelector('.new-chat-btn');
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarTriggerStrip = document.querySelector('.sidebar-trigger-strip');
+            const mainContent = document.querySelector('.main-content');
+            const chatInput = document.getElementById('chat-input'); // This is now the contenteditable div
+            const sendBtn = document.getElementById('send-btn'); // Get send button reference
+            const chatArea = document.querySelector('.chat-area');
+            const sidebarChatList = document.querySelector('.sidebar-content ul'); // Reference to the UL for chat list
+            const welcomeMessage = document.getElementById('welcome-message'); // Reference to the welcome message
+            const loginPromptMessage = document.getElementById('login-prompt-message'); // Login prompt message
+
+            // Profile Elements
+            const userProfileIcon = document.getElementById('user-profile-icon');
+            const userAvatarDisplay = document.getElementById('user-avatar-display');
+
+            // LLM Feature Buttons
+            const summarizeChatBtn = document.getElementById('summarizeChatBtn');
+            const suggestQuestionsBtn = document.getElementById('suggestQuestionsBtn');
+            const generateCodeBtn = document.getElementById('generateCodeBtn'); // New button reference
+            const rephraseTextBtn = document.getElementById('rephraseTextBtn'); // New button
+            const brainstormIdeasBtn = document.getElementById('brainstormIdeasBtn'); // New button
+            const llmFeatureButtonsContainer = document.querySelector('.llm-feature-buttons'); // Container for buttons
+
+            let isSidebarLockedOpenByClick = false; // State to track if sidebar is locked open by click
+            let hoverOpenTimeout = null; // To manage the hover delay for opening
+            let hoverCloseTimeout = null; // To manage the hover delay for closing
+
+            const ACTIVE_CHAT_STORAGE_KEY = 'wobbleAiActiveChatMessages'; // Key for currently active chat messages
+            const CHAT_LIST_STORAGE_KEY = 'wobbleAiChatList'; // Key for the list of saved chats
+            const USER_AVATAR_STORAGE_KEY = 'wobbleAiUserAvatar'; // Key for user avatar (random alphabet)
+            const CURRENT_CHAT_ID_STORAGE_KEY = 'wobbleAiCurrentChatId'; // New key for tracking current chat ID
+            const SESSION_TOKEN_KEY = 'wobbleAiSessionToken'; // Key for session token
+
+            let currentChatId = null; // Variable to hold the ID of the currently loaded chat
+            let currentActiveChatMessages = []; // In-memory array for current chat messages
+            let userMessageCount = 0; // Counter for user messages in current active chat for auto-save
+
+            // Object to store pending delete timeouts for each chat ID
+            const pendingDeleteTimeouts = {};
+
+            // Function to open the sidebar
+            function openSidebar() {
+                sidebar.classList.add('open');
+                mainContent.classList.add('pushed');
+                newChatBtn.classList.add('visible');
+            }
+
+            // Function to close the sidebar visuals (called when logic determines it should close)
+            function closeSidebarVisuals() {
+                sidebar.classList.remove('open');
+                mainContent.classList.remove('pushed');
+                newChatBtn.classList.remove('visible');
+            }
+
+            // Function to add a message to the chat area and update in-memory active chat
+            function addMessageToChat(text, type, isCode = false) {
+                // Hide welcome message if a user message is sent
+                // This condition ensures it hides only on the very first message sent in an empty chat
+                if (welcomeMessage && !welcomeMessage.classList.contains('hidden')) {
+                    welcomeMessage.classList.add('hidden');
+                }
+
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', type);
+
+                if (type === 'received') {
+                    const icon = document.createElement('i');
+                    icon.classList.add('fas', 'fa-star', 'message-sender-icon'); // Star icon
+                    messageDiv.appendChild(icon);
+                }
+
+                if (isCode) {
+                    const pre = document.createElement('pre');
+                    const code = document.createElement('code');
+                    code.textContent = text;
+                    pre.appendChild(code);
+                    messageDiv.appendChild(pre);
+                } else {
+                    const p = document.createElement('p');
+                    p.textContent = text;
+                    messageDiv.appendChild(p);
+                }
+
+                chatArea.appendChild(messageDiv);
+
+                // Add message to in-memory active chat messages, including isCode flag
+                // Ensure the text stored is clean of prefixes for future LLM calls
+                const cleanedTextForStorage = text.replace(/^(User:|AI:|WobbleAi:)\s*/i, '').trim();
+                currentActiveChatMessages.push({ type, text: cleanedTextForStorage, isCode });
+
+                // Scroll to the bottom of the chat area
+                chatArea.scrollTop = chatArea.scrollHeight;
+
+                // Save active chat messages to local storage after every message update
+                saveActiveChatMessages();
+            }
+
+            // Function to save current active chat messages (from in-memory array) to local storage
+            function saveActiveChatMessages() {
+                localStorage.setItem(ACTIVE_CHAT_STORAGE_KEY, JSON.stringify(currentActiveChatMessages));
+            }
+
+            // Function to clear only chat messages from DOM, leaving welcome message
+            function clearChatMessagesFromDOM() {
+                Array.from(chatArea.children).forEach(child => {
+                    if (child.classList.contains('message')) { // Only remove elements with 'message' class
+                        chatArea.removeChild(child);
+                    }
+                });
+            }
+
+            // Function to load active chat messages from local storage into DOM and in-memory array
+            function loadActiveChatMessages() {
+                const storedMessages = localStorage.getItem(ACTIVE_CHAT_STORAGE_KEY);
+                currentActiveChatMessages = []; // Clear in-memory array
+                clearChatMessagesFromDOM(); // Clear only messages from DOM
+
+                if (storedMessages) {
+                    const messages = JSON.parse(storedMessages);
+                    messages.forEach(msg => {
+                        // Add to DOM (this will automatically hide welcome if first message is user's)
+                        // Directly append to DOM and push to currentActiveChatMessages, without calling addMessageToChat
+                        const messageDiv = document.createElement('div');
+                        messageDiv.classList.add('message', msg.type);
+                        if (msg.type === 'received') {
+                            const icon = document.createElement('i');
+                            icon.classList.add('fas', 'fa-star', 'message-sender-icon');
+                            messageDiv.appendChild(icon);
+                        }
+                        // Handle code vs plain text when loading
+                        if (msg.isCode) {
+                            const pre = document.createElement('pre');
+                            const code = document.createElement('code');
+                            code.textContent = msg.text;
+                            pre.appendChild(code);
+                            messageDiv.appendChild(pre);
+                        } else {
+                            const p = document.createElement('p');
+                            p.textContent = msg.text;
+                            messageDiv.appendChild(p);
+                        }
+                        chatArea.appendChild(messageDiv);
+
+                        currentActiveChatMessages.push(msg); // Add to in-memory array (including isCode)
+                    });
+
+                    // After loading, check if any messages were loaded. If so, hide welcome.
+                    if (currentActiveChatMessages.length > 0) {
+                        welcomeMessage.classList.add('hidden');
+                    } else {
+                        welcomeMessage.classList.remove('hidden');
+                    }
+                } else {
+                    // If no active chat, show "Hello!"
+                    welcomeMessage.classList.remove('hidden');
+                }
+                chatInput.textContent = ''; // Clear input
+                chatInput.style.height = chatInput.scrollHeight + 'px'; // Reset input height
+                chatArea.scrollTop = chatArea.scrollHeight; // Scroll to bottom
+            }
+
+            // Function to save the list of chat sessions to local storage
+            function saveChatList(chatList) {
+                localStorage.setItem(CHAT_LIST_STORAGE_KEY, JSON.stringify(chatList));
+            }
+
+            // Function to load the list of chat sessions from local storage
+            function loadChatList() {
+                const storedChatList = localStorage.getItem(CHAT_LIST_STORAGE_KEY);
+                return storedChatList ? JSON.parse(storedChatList) : [];
+            }
+
+            // Function to render the chat list in the sidebar
+            function renderChatList() {
+                sidebarChatList.innerHTML = ''; // Clear existing list items
+                const chatList = loadChatList();
+
+                chatList.forEach(chat => {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('chat-list-item'); // Add class for styling
+                    
+                    const chatPreviewText = document.createElement('span');
+                    chatPreviewText.textContent = chat.preview;
+                    chatPreviewText.style.flexGrow = '1'; // Allow text to take available space
+                    chatPreviewText.style.overflow = 'hidden';
+                    chatPreviewText.style.textOverflow = 'ellipsis';
+                    chatPreviewText.style.whiteSpace = 'nowrap';
+                    chatPreviewText.style.marginRight = '10px'; // Space from delete button
+
+                    listItem.appendChild(chatPreviewText);
+                    listItem.dataset.chatId = chat.id; // Store chat ID for loading
+                    listItem.addEventListener('click', () => {
+                        loadSpecificChat(chat.id);
+                        // Optional: close sidebar after clicking a chat
+                        if (isSidebarLockedOpenByClick) { // Only close if it was locked open
+                            closeSidebarVisuals();
+                            isSidebarLockedOpenByClick = false;
+                        }
+                    });
+
+                    // Add delete button
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.classList.add('delete-chat-btn');
+                    deleteBtn.innerHTML = '<i class="fas fa-times"></i>'; // Initial X icon
+                    deleteBtn.dataset.chatId = chat.id; // Link button to chat ID
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent listItem click from firing
+                        handleDeleteChatClick(e, chat.id, deleteBtn);
+                    });
+                    listItem.appendChild(deleteBtn);
+
+                    // Add tooltip for full summary
+                    if (chat.fullSummary) {
+                        const tooltip = document.createElement('div');
+                        tooltip.classList.add('chat-summary-tooltip');
+                        tooltip.textContent = chat.fullSummary;
+                        listItem.appendChild(tooltip);
+                    }
+
+                    sidebarChatList.appendChild(listItem);
+                });
+            }
+
+            // Function to handle delete button clicks (double confirmation)
+            function handleDeleteChatClick(event, chatId, buttonElement) {
+                if (buttonElement.classList.contains('confirm-delete')) {
+                    // Second click: Confirm deletion
+                    deleteChat(chatId);
+                    clearTimeout(pendingDeleteTimeouts[chatId]); // Clear timeout
+                    delete pendingDeleteTimeouts[chatId]; // Remove from tracking
+                } else {
+                    // First click: Show "Remove" button
+                    buttonElement.textContent = 'Remove';
+                    buttonElement.classList.add('confirm-delete');
+
+                    // Clear any existing timeout for this button
+                    if (pendingDeleteTimeouts[chatId]) {
+                        clearTimeout(pendingDeleteTimeouts[chatId]);
+                    }
+
+                    // Set a new timeout to revert if no second click
+                    pendingDeleteTimeouts[chatId] = setTimeout(() => {
+                        buttonElement.innerHTML = '<i class="fas fa-times"></i>';
+                        buttonElement.classList.remove('confirm-delete');
+                        delete pendingDeleteTimeouts[chatId];
+                    }, 3000); // 3 seconds to confirm
+                }
+            }
+
+            // Function to delete a chat session
+            function deleteChat(chatIdToDelete) {
+                let chatList = loadChatList();
+                const initialLength = chatList.length;
+                chatList = chatList.filter(chat => chat.id !== chatIdToDelete);
+
+                if (chatList.length < initialLength) { // If a chat was actually removed
+                    saveChatList(chatList);
+                    renderChatList(); // Re-render the sidebar
+
+                    // If the deleted chat was the currently active one, start a new chat
+                    if (currentChatId === chatIdToDelete) {
+                        startNewChat(); // Start a fresh chat
+                    }
+                }
+            }
+
+            // Function to load a specific chat from the chat list
+            function loadSpecificChat(chatId) {
+                const chatList = loadChatList();
+                const selectedChat = chatList.find(chat => chat.id === chatId);
+
+                clearChatMessagesFromDOM(); // Clear only messages from DOM
+
+                if (selectedChat) {
+                    currentActiveChatMessages = []; // Clear in-memory array for new chat
+                    selectedChat.messages.forEach(msg => {
+                        // Add to DOM
+                        const messageDiv = document.createElement('div');
+                        messageDiv.classList.add('message', msg.type);
+                        if (msg.type === 'received') {
+                            const icon = document.createElement('i');
+                            icon.classList.add('fas', 'fa-star', 'message-sender-icon');
+                            messageDiv.appendChild(icon);
+                        }
+                        // Handle code vs plain text when loading
+                        if (msg.isCode) {
+                            const pre = document.createElement('pre');
+                            const code = document.createElement('code');
+                            code.textContent = msg.text;
+                            pre.appendChild(code);
+                            messageDiv.appendChild(pre);
+                        } else {
+                            const p = document.createElement('p');
+                            p.textContent = msg.text;
+                            messageDiv.appendChild(p);
+                        }
+                        chatArea.appendChild(messageDiv);
+
+                        currentActiveChatMessages.push(msg); // Add to in-memory array (including isCode)
+                    });
+                    currentChatId = chatId; // Set current chat ID
+                    localStorage.setItem(CURRENT_CHAT_ID_STORAGE_KEY, chatId); // Save to local storage
+                    saveActiveChatMessages(); // Save the loaded chat as the new active chat
+                    welcomeMessage.classList.add('hidden'); // Hide welcome message if chat history exists
+                } else {
+                    // This case should ideally not happen if chat ID is valid
+                    console.warn("Attempted to load non-existent chat:", chatId);
+                    welcomeMessage.classList.remove('hidden'); // Show welcome if chat not found
+                }
+                chatInput.textContent = ''; // Clear input
+                chatInput.style.height = chatInput.scrollHeight + 'px'; // Reset input height
+                chatArea.scrollTop = chatArea.scrollHeight; // Scroll to bottom
+            }
+
+            // Function to send prompt to Gemini API
+            async function sendPromptToGemini(messageContent, llmFeatureType = 'text', callback = null) {
+                let typingMessageDiv;
+                // Only show typing indicator for AI replies, not for summary/question/code feature responses
+                if (llmFeatureType === 'text' || llmFeatureType === 'code' || llmFeatureType === 'auto_summary_request' || llmFeatureType === 'rephrase' || llmFeatureType === 'brainstorm') {
+                    typingMessageDiv = document.createElement('div');
+                    typingMessageDiv.classList.add('message', 'received');
+                    typingMessageDiv.innerHTML = '<i class="fas fa-star message-sender-icon"></i> <p>WobbleAi is typing...</p>';
+                    chatArea.appendChild(typingMessageDiv);
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                }
+
+                try {
+                    // Prepare chat history for the LLM
+                    let chatHistory = currentActiveChatMessages.map(msg => ({
+                        role: msg.type === 'sent' ? 'user' : 'model',
+                        // Ensure only the pure text content is sent to the LLM
+                        parts: [{ text: msg.text.replace(/^(User:|AI:|WobbleAi:)\s*/i, '').trim() }]
+                    }));
+
+                    let promptToSend;
+                    let payload = { contents: chatHistory };
+
+                    if (llmFeatureType === 'summary') {
+                        promptToSend = `Summarize the following conversation:\n\n${messageContent}\n\nSummary:`;
+                        payload.contents.push({ role: "user", parts: [{ text: promptToSend }] });
+                    } else if (llmFeatureType === 'questions') {
+                        promptToSend = `Based on the following recent conversation, suggest 3 concise follow-up questions. Format them as a numbered list.\n\n${messageContent}\n\nSuggested Questions:`;
+                        payload.contents.push({ role: "user", parts: [{ text: promptToSend }] });
+                    } else if (llmFeatureType === 'code') {
+                        promptToSend = `Provide the code for the following request. Format the response as a markdown code block, including the language specifier (e.g., \`\`\`javascript\n...\n\`\`\`):\n\n${messageContent}`;
+                        payload.contents.push({ role: "user", parts: [{ text: promptToSend }] });
+                    } else if (llmFeatureType === 'rephrase') {
+                        // messageContent for rephrase will be an object { text: "...", tone: "..." }
+                        promptToSend = `Rephrase the following text in a ${messageContent.tone} tone: "${messageContent.text}"`;
+                        payload.contents.push({ role: "user", parts: [{ text: promptToSend }] });
+                    } else if (llmFeatureType === 'brainstorm') {
+                        // messageContent for brainstorm will be a string (the topic)
+                        promptToSend = `Brainstorm ideas related to "${messageContent}". Provide a list of at least 5 distinct ideas.`;
+                        payload.contents.push({ role: "user", parts: [{ text: promptToSend }] });
+                    } else if (llmFeatureType === 'auto_summary_request') {
+                        // For auto-summary, we want a structured response
+                        payload.contents.push({ role: "user", parts: [{ text: `Provide a very concise, one-sentence summary (max 15 words) of the following conversation for a chat list preview, and then a more detailed, full summary (max 100 words). Return as JSON with keys "preview" and "fullSummary".\n\nConversation:\n${messageContent}` }] });
+                        payload.generationConfig = {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    "preview": { "type": "STRING" },
+                                    "fullSummary": { "type": "STRING" }
+                                },
+                                propertyOrdering: ["preview", "fullSummary"]
+                            }
+                        };
+                    } else {
+                        // For 'text' type, the userMessageContent is already the last user message, so no need to push again.
+                    }
+
+                    const apiKey = ""; // Canvas will provide this
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    if (typingMessageDiv) {
+                        chatArea.removeChild(typingMessageDiv); // Remove typing indicator
+                    }
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        
+                        if (llmFeatureType === 'auto_summary_request') {
+                            try {
+                                const parsedJson = JSON.parse(result.candidates[0].content.parts[0].text);
+                                if (callback) {
+                                    callback(parsedJson.preview, parsedJson.fullSummary);
+                                }
+                            } catch (jsonError) {
+                                console.error('Failed to parse auto-summary JSON:', jsonError);
+                                addMessageToChat('Error: Could not generate auto-summary.', 'received');
+                            }
+                        } else {
+                            let aiResponseFullText = result.candidates[0].content.parts[0].text;
+                            // Clean AI response from any leading "User:", "AI:", or "WobbleAi:" prefixes
+                            let cleanAiResponseText = aiResponseFullText.replace(/^(User:|AI:|WobbleAi:)\s*/i, '').trim();
+
+                            let isCodeResponse = false;
+                            let codeContent = '';
+                            let explanationContent = '';
+
+                            // Regex to find a markdown code block and capture its content and anything before/after it
+                            const codeBlockRegex = /^(.*?)(```(?:\w+)?\n([\s\S]*?)\n```)([\s\S]*)$/m;
+                            const match = cleanAiResponseText.match(codeBlockRegex); // Use clean text for matching
+
+                            if (match) {
+                                const textBefore = match[1].trim();
+                                codeContent = match[3].trim();
+                                const textAfter = match[4].trim();
+
+                                if (textBefore && textAfter) {
+                                    explanationContent = textBefore + '\n\n' + textAfter;
+                                } else if (textBefore) {
+                                    explanationContent = textBefore;
+                                } else if (textAfter) {
+                                    explanationContent = textAfter;
+                                }
+                                isCodeResponse = true;
+
+                                addMessageToChat(codeContent, 'received', true);
+                                if (explanationContent) {
+                                    addMessageToChat(explanationContent, 'received', false);
+                                }
+
+                            } else {
+                                addMessageToChat(cleanAiResponseText, 'received', false);
+                            }
+                        }
+                    } else {
+                        addMessageToChat('Error: Could not get a response from AI. Please try again.', 'received');
+                        console.error('Gemini API returned unexpected structure:', result);
+                    }
+                } catch (error) {
+                    if (typingMessageDiv) {
+                        chatArea.removeChild(typingMessageDiv); // Remove typing indicator on error
+                    }
+                    addMessageToChat('Error: Failed to connect to AI. Please check your network.', 'received');
+                    console.error('Error calling Gemini API:', error);
+                }
+            }
+
+            // Function to handle auto-saving the current chat
+            async function autoSaveCurrentChat() {
+                if (currentActiveChatMessages.length === 0) {
+                    return; // Don't save empty chats
+                }
+
+                // Prepare conversation text for summary, ensuring messages are clean
+                const conversationText = currentActiveChatMessages.map(msg => {
+                    const prefix = msg.type === 'sent' ? 'User:' : 'AI:';
+                    return `${prefix} ${msg.text.replace(/^(User:|AI:|WobbleAi:)\s*/i, '').trim()}`; // Clean before sending
+                }).join('\n');
+                
+                // Request summary from Gemini
+                await sendPromptToGemini(conversationText, 'auto_summary_request', (preview, fullSummary) => {
+                    const chatData = {
+                        id: currentChatId || Date.now(), // Use existing ID or generate new
+                        preview: preview || "New Chat", // Use LLM summary, fallback to "New Chat"
+                        fullSummary: fullSummary || "No detailed summary available.", // Store full summary
+                        messages: currentActiveChatMessages // Save the in-memory messages
+                    };
+
+                    let chatList = loadChatList();
+                    const existingChatIndex = chatList.findIndex(chat => chat.id === chatData.id);
+                    if (existingChatIndex !== -1) {
+                        chatList[existingChatIndex] = chatData; // Update existing chat
+                    } else {
+                        chatList.unshift(chatData); // Add new chat to the beginning
+                    }
+                    saveChatList(chatList);
+                    renderChatList(); // Update sidebar list
+                });
+            }
+
+            // Function to start a new chat with "Hello!"
+            function startNewChat() {
+                clearChatMessagesFromDOM(); // Clear only messages from DOM
+                welcomeMessage.classList.remove('hidden'); // Show "Hello!"
+                localStorage.removeItem(ACTIVE_CHAT_STORAGE_KEY); // Clear active chat
+                currentActiveChatMessages = []; // Reset in-memory array for new chat
+                currentChatId = null; // No specific chat loaded
+                localStorage.removeItem(CURRENT_CHAT_ID_STORAGE_KEY); // Clear current chat ID from storage
+                chatInput.textContent = ''; // Clear input
+                chatInput.style.height = chatInput.scrollHeight + 'px'; // Reset input height
+                userMessageCount = 0; // Reset user message count for new chat
+            }
+
+            // Event listener for the hamburger button click (toggles and locks)
+            hamburgerBtn.addEventListener('click', (event) => {
+                event.stopPropagation(); // Prevent document click listener from immediately closing it
+
+                if (sidebar.classList.contains('open') && isSidebarLockedOpenByClick) {
+                    closeSidebarVisuals();
+                    isSidebarLockedOpenByClick = false;
+                } else {
+                    openSidebar();
+                    isSidebarLockedOpenByClick = true;
+                }
+                clearTimeout(hoverOpenTimeout);
+                clearTimeout(hoverCloseTimeout);
+            });
+
+            // Event listener for mouse entering the sidebar trigger strip (initiates hover-open)
+            sidebarTriggerStrip.addEventListener('mouseenter', () => {
+                if (!isSidebarLockedOpenByClick && !sidebar.classList.contains('open')) {
+                    clearTimeout(hoverCloseTimeout);
+                    hoverOpenTimeout = setTimeout(openSidebar, 1000);
+                }
+            });
+
+            // Event listener for mouse leaving the sidebar trigger strip
+            sidebarTriggerStrip.addEventListener('mouseleave', (event) => {
+                clearTimeout(hoverOpenTimeout);
+                // Only start close timeout if mouse is not over the sidebar itself
+                if (!isSidebarLockedOpenByClick && sidebar.classList.contains('open') && !sidebar.contains(event.relatedTarget)) {
+                    hoverCloseTimeout = setTimeout(closeSidebarVisuals, 200);
+                }
+            });
+
+            // Event listener for mouse entering the sidebar itself (cancels pending hover-close)
+            sidebar.addEventListener('mouseenter', () => {
+                clearTimeout(hoverCloseTimeout);
+            });
+
+            // Event listener for mouse leaving the sidebar (initiates hover-close if not locked)
+            sidebar.addEventListener('mouseleave', () => {
+                if (!isSidebarLockedOpenByClick) {
+                    hoverCloseTimeout = setTimeout(closeSidebarVisuals, 200);
+                }
+            });
+
+            // Event listener for clicks anywhere on the document (to close if locked and clicked outside)
+            document.addEventListener('click', (event) => {
+                const isClickOutsideSidebar = !sidebar.contains(event.target);
+                const isClickOutsideTriggerStrip = !sidebarTriggerStrip.contains(event.target);
+                
+                // Close sidebar if locked and click is outside sidebar/trigger strip
+                if (isSidebarLockedOpenByClick && isClickOutsideSidebar && isClickOutsideTriggerStrip) {
+                    closeSidebarVisuals();
+                    isSidebarLockedOpenByClick = false;
+                }
+            });
+
+            // Event listener for auto-resizing the contenteditable div
+            chatInput.addEventListener('input', () => {
+                chatInput.style.height = 'auto';
+                chatInput.style.height = chatInput.scrollHeight + 'px';
+            });
+
+            // Event listener for send button click
+            sendBtn.addEventListener('click', async () => {
+                const messageText = chatInput.textContent.trim();
+                if (messageText) {
+                    addMessageToChat(messageText, 'sent');
+                    userMessageCount++; // Increment user message count
+                    chatInput.textContent = ''; // Clear contenteditable div
+                    chatInput.style.height = chatInput.scrollHeight + 'px'; // Reset height to min-height
+                    await sendPromptToGemini(messageText, 'text'); // Send user message to Gemini
+
+                    // Check for auto-save after AI replies
+                    if (userMessageCount >= 3) {
+                        await autoSaveCurrentChat();
+                        userMessageCount = 0; // Reset count after auto-save
+                    }
+                }
+            });
+
+            // Event listener for Enter key press in contenteditable div
+            chatInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' && !event.shiftKey) { // Allow Shift+Enter for new line
+                    event.preventDefault(); // Prevent default Enter behavior (new line)
+                    sendBtn.click(); // Trigger send button click
+                }
+            });
+
+            // Event listener for "New Chat" button click
+            newChatBtn.addEventListener('click', async () => {
+                // Only save the current chat if it has user-sent messages (i.e., currentActiveChatMessages.length > 0)
+                if (currentActiveChatMessages.length > 0) {
+                    // Manually save current chat with summary before starting new
+                    await autoSaveCurrentChat(); // This will save with summary and update sidebar
+                }
+
+                // Always start a new chat with "Hello!" after clicking "New Chat"
+                startNewChat();
+            });
+
+            // --- LLM Feature Button Logic ---
+            summarizeChatBtn.addEventListener('click', () => {
+                if (currentActiveChatMessages.length > 0) {
+                    // Pass the raw messages to sendPromptToGemini, it will clean them for the LLM
+                    const conversationText = currentActiveChatMessages.map(msg => `${msg.type === 'sent' ? 'User' : 'AI'}: ${msg.text}`).join('\n');
+                    sendPromptToGemini(conversationText, 'summary'); // Send as a summary request
+                } else {
+                    addMessageToChat('No conversation to summarize!', 'received');
+                }
+            });
+
+            suggestQuestionsBtn.addEventListener('click', () => {
+                if (currentActiveChatMessages.length > 0) {
+                    // Pass the raw messages to sendPromptToGemini, it will clean them for the LLM
+                    const lastFewMessages = currentActiveChatMessages.slice(-5).map(msg => `${msg.type === 'sent' ? 'User' : 'AI'}: ${msg.text}`).join('\n');
+                    sendPromptToGemini(lastFewMessages, 'questions'); // Send as a question suggestion request
+                } else {
+                    addMessageToChat('Start a conversation to get question suggestions!', 'received');
+                }
+            });
+
+            generateCodeBtn.addEventListener('click', () => {
+                const codeRequestText = chatInput.textContent.trim();
+                if (codeRequestText) {
+                    addMessageToChat(codeRequestText, 'sent'); // Add user's request as a sent message
+                    chatInput.textContent = ''; // Clear input
+                    chatInput.style.height = chatInput.scrollHeight + 'px'; // Reset input height
+                    sendPromptToGemini(codeRequestText, 'code'); // Send as a code generation request
+                } else {
+                    addMessageToChat('Please enter your code request in the input box!', 'received');
+                }
+            });
+
+            rephraseTextBtn.addEventListener('click', async () => {
+                let textToRephrase = chatInput.textContent.trim();
+                if (!textToRephrase && currentActiveChatMessages.length > 0) {
+                    // If input is empty, try to rephrase the last user message
+                    const lastUserMessage = currentActiveChatMessages.slice().reverse().find(msg => msg.type === 'sent');
+                    if (lastUserMessage) {
+                        textToRephrase = lastUserMessage.text;
+                    }
+                }
+
+                if (textToRephrase) {
+                    const tone = prompt('Enter desired tone (e.g., formal, casual, professional, empathetic):');
+                    if (tone) {
+                        addMessageToChat(`Rephrasing "${textToRephrase}" in a ${tone} tone...`, 'sent');
+                        chatInput.textContent = '';
+                        chatInput.style.height = chatInput.scrollHeight + 'px';
+                        await sendPromptToGemini({ text: textToRephrase, tone: tone }, 'rephrase');
+                    }
+                } else {
+                    addMessageToChat('Please type a message or ensure there is a previous message to rephrase.', 'received');
+                }
+            });
+
+            brainstormIdeasBtn.addEventListener('click', async () => {
+                const topic = prompt('What topic would you like to brainstorm ideas for?');
+                if (topic) {
+                    addMessageToChat(`Brainstorming ideas for "${topic}"...`, 'sent');
+                    chatInput.textContent = '';
+                    chatInput.style.height = chatInput.scrollHeight + 'px';
+                    await sendPromptToGemini(topic, 'brainstorm');
+                } else {
+                    addMessageToChat('Please provide a topic for brainstorming.', 'received');
+                }
+            });
+
+
+            // --- Profile Picture and Sign-in Logic ---
+
+            // Function to generate a random uppercase letter
+            function getRandomAlphabet() {
+                const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                return alphabet[Math.floor(Math.random() * alphabet.length)];
+            }
+
+            // Function to update the user avatar display
+            function updateUserAvatar(avatarContent) {
+                userAvatarDisplay.innerHTML = ''; // Clear current content
+                if (avatarContent === 'silhouette') {
+                    const icon = document.createElement('i');
+                    icon.classList.add('fas', 'fa-user-circle');
+                    userAvatarDisplay.appendChild(icon);
+                } else {
+                    userAvatarDisplay.textContent = avatarContent;
+                }
+                // Update sessionStorage, not localStorage, for avatar
+                sessionStorage.setItem(USER_AVATAR_STORAGE_KEY, avatarContent); 
+            }
+
+            // Function to control UI elements based on authentication status
+            function checkAuthAndSetUI() {
+                const storedAvatar = sessionStorage.getItem(USER_AVATAR_STORAGE_KEY);
+                const storedToken = sessionStorage.getItem(SESSION_TOKEN_KEY);
+
+                if (storedAvatar && storedToken) {
+                    // User is signed in
+                    updateUserAvatar(storedAvatar);
+                    chatInput.style.pointerEvents = 'auto';
+                    chatInput.style.opacity = '1';
+                    sendBtn.style.pointerEvents = 'auto';
+                    sendBtn.style.opacity = '1';
+                    llmFeatureButtonsContainer.style.pointerEvents = 'auto';
+                    llmFeatureButtonsContainer.style.opacity = '1';
+                    loginPromptMessage.classList.remove('visible'); // Hide prompt
+                } else {
+                    // User is NOT signed in
+                    updateUserAvatar('silhouette'); // Show default silhouette
+                    chatInput.style.pointerEvents = 'none';
+                    chatInput.style.opacity = '0.5';
+                    sendBtn.style.pointerEvents = 'none';
+                    sendBtn.style.opacity = '0.5';
+                    llmFeatureButtonsContainer.style.pointerEvents = 'none';
+                    llmFeatureButtonsContainer.style.opacity = '0.5';
+                    loginPromptMessage.classList.add('visible'); // Show prompt
+                }
+            }
+
+            // Event listener for clicking the profile icon
+            if (userProfileIcon) { // Ensure element exists before adding listener
+                userProfileIcon.addEventListener('click', () => {
+                    const storedToken = sessionStorage.getItem(SESSION_TOKEN_KEY);
+                    if (!storedToken) {
+                        // Only redirect to login if NOT signed in
+                        window.location.href = 'login.html';
+                    }
+                    // If signed in, do nothing (or implement logout if desired)
+                });
+            } else {
+                console.error('User profile icon element not found!');
+            }
+            
+            // Initial check for login status on page load
+            const storedToken = sessionStorage.getItem(SESSION_TOKEN_KEY);
+            if (!storedToken) {
+                // If no token, redirect to login page
+                window.location.href = 'login.html';
+                return; // Stop further execution of this script
+            } 
+
+            // If a token exists, proceed with setting up the UI
+            checkAuthAndSetUI();
+
+            // Initial setup on page load (only if logged in)
+            renderChatList(); // Render chat list first
+
+            // Try to load the last active chat, otherwise start a new one
+            const lastActiveChatId = localStorage.getItem(CURRENT_CHAT_ID_STORAGE_KEY);
+            if (lastActiveChatId) {
+                loadSpecificChat(parseInt(lastActiveChatId)); // Load it if it exists
+            } else {
+                startNewChat(); // Otherwise, start a fresh one
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WobbleAi - Sign In</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .login-container {
+            background-color: #333;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 350px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            display: inline-block; /* To apply gradient to text */
+        }
+
+        @keyframes gradient-move {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .ai-gradient {
+            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradient-move 8s linear infinite;
+        }
+
+        .login-container h2 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #eee;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: calc(100% - 20px); /* Account for padding */
+            padding: 12px 10px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            background-color: #444;
+            color: white;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .button-group {
+            margin-top: 25px;
+        }
+
+        .button-group button {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .button-group button i {
+            margin-right: 10px;
+        }
+
+        .button-group button.primary-btn {
+            background-color: #007bff;
+        }
+
+        .button-group button.primary-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .button-group button.google-btn {
+            background-color: #db4437; /* Google Red */
+        }
+
+        .button-group button.google-btn:hover {
+            background-color: #c23321;
+            transform: translateY(-2px);
+        }
+
+        .button-group button.facebook-btn {
+            background-color: #4267b2; /* Facebook Blue */
+        }
+
+        .button-group button.facebook-btn:hover {
+            background-color: #365899;
+            transform: translateY(-2px);
+        }
+
+        .button-group button.secondary-btn {
+            background-color: #555;
+        }
+
+        .button-group button.secondary-btn:hover {
+            background-color: #666;
+            transform: translateY(-2px);
+        }
+
+        .message-box {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border: 1px solid #f5c6cb;
+            display: none; /* Hidden by default */
+        }
+
+        .message-box.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">Wobble<span class="ai-gradient">Ai</span></div>
+        <h2>Sign In / Sign Up</h2>
+
+        <div class="input-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="Enter your email">
+        </div>
+        <div class="input-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password">
+        </div>
+
+        <div class="button-group">
+            <button class="primary-btn" id="loginBtn">Login</button>
+            <button class="secondary-btn" id="signUpBtn">Sign Up</button>
+            <hr style="border-color: #555; margin: 20px 0;">
+            <button class="google-btn" id="googleSignInBtn">
+                <i class="fab fa-google"></i> Sign in with Google
+            </button>
+            <button class="facebook-btn" id="facebookSignInBtn">
+                <i class="fab fa-facebook"></i> Sign in with Facebook
+            </button>
+        </div>
+        <div class="message-box" id="messageBox"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const loginBtn = document.getElementById('loginBtn');
+            const signUpBtn = document.getElementById('signUpBtn');
+            const googleSignInBtn = document.getElementById('googleSignInBtn');
+            const facebookSignInBtn = document.getElementById('facebookSignInBtn');
+            const messageBox = document.getElementById('messageBox');
+
+            const USER_AVATAR_STORAGE_KEY = 'wobbleAiUserAvatar'; // Key for user avatar (random alphabet)
+            const SESSION_TOKEN_KEY = 'wobbleAiSessionToken'; // Key for session token
+
+            // Function to display messages in the message box
+            function showMessage(message, type = 'error') {
+                messageBox.textContent = message;
+                messageBox.className = 'message-box visible'; // Reset classes and show
+                if (type === 'success') {
+                    messageBox.style.backgroundColor = '#d4edda';
+                    messageBox.style.color = '#155724';
+                    messageBox.style.borderColor = '#c3e6cb';
+                } else { // error
+                    messageBox.style.backgroundColor = '#f8d7da';
+                    messageBox.style.color = '#721c24';
+                    messageBox.style.borderColor = '#f5c6cb';
+                }
+                setTimeout(() => {
+                    messageBox.classList.remove('visible');
+                }, 3000); // Hide after 3 seconds
+            }
+
+            // Function to generate a random uppercase letter
+            function getRandomAlphabet() {
+                const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                return alphabet[Math.floor(Math.random() * alphabet.length)];
+            }
+
+            // Function to simulate login/signup
+            function simulateLogin(method) {
+                const email = emailInput.value.trim();
+                const password = passwordInput.value.trim();
+
+                if (method === 'email' && (!email || !password)) {
+                    showMessage('Please enter both email and password.');
+                    return;
+                }
+
+                // Simulate success
+                const randomLetter = getRandomAlphabet();
+                const sessionToken = crypto.randomUUID(); // Generate a unique session token
+
+                sessionStorage.setItem(USER_AVATAR_STORAGE_KEY, randomLetter);
+                sessionStorage.setItem(SESSION_TOKEN_KEY, sessionToken); // Save the session token
+
+                showMessage(`Successfully signed in with ${method}! Redirecting...`, 'success');
+                // Redirect to the main chat page
+                window.location.href = 'index.html'; // Assuming your main chat page is index.html
+            }
+
+            loginBtn.addEventListener('click', () => simulateLogin('email'));
+            signUpBtn.addEventListener('click', () => simulateLogin('email'));
+            googleSignInBtn.addEventListener('click', () => simulateLogin('Google'));
+            facebookSignInBtn.addEventListener('click', () => simulateLogin('Facebook'));
+
+            // Check if already logged in on page load (both avatar and token must exist)
+            const storedAvatar = sessionStorage.getItem(USER_AVATAR_STORAGE_KEY);
+            const storedToken = sessionStorage.getItem(SESSION_TOKEN_KEY);
+
+            if (storedAvatar && storedToken) {
+                // If both exist, user is considered logged in, redirect to main chat
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
