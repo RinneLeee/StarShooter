@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Floor Planner - Wall Splitting & Refinements v3</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    <style>
+        /* --- Global Styles & Resets --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden; /* Prevent body scrollbars */
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        /* --- Main Content Area --- */
+        main {
+            display: flex;
+            flex: 1; /* Fill remaining vertical space */
+            overflow: hidden; /* Prevent scrollbars on main if children are too big */
+            padding-top: 5px; 
+        }
+
+        /* --- Toolbar --- */
+        #toolbar {
+            width: 200px; 
+            background-color: #ffffff;
+            padding: 0.75rem; 
+            border-right: 1px solid #d1d5db; 
+            box-shadow: 1px 0 3px rgba(0,0,0,0.05);
+            overflow-y: hidden; 
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0; 
+        }
+
+        #toolbar h2 {
+            font-size: 1rem; 
+            color: #35495e;
+            margin-bottom: 0.4rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .toolbar-section {
+            margin-bottom: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+
+        #toolbar button, #toolbar select, #toolbar input[type="color"] {
+            width: 100%;
+            padding: 0.5rem 0.6rem; 
+            background-color: #42b883; 
+            color: white;
+            border: none;
+            border-radius: 5px; 
+            cursor: pointer;
+            font-size: 0.85rem; 
+            text-align: left;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #toolbar button:hover, #toolbar select:hover {
+            background-color: #3aa070; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        #toolbar button.active {
+            background-color: #2c7a58; 
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+            font-weight: bold;
+        }
+        
+        #toolbar .sub-options {
+            padding-left: 8px; 
+            border-left: 2px solid #e0e0e0;
+            margin-top: -3px; 
+            margin-bottom: 3px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem; 
+        }
+        #toolbar .sub-options label {
+            font-size: 0.8rem; 
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+        }
+         #toolbar .sub-options input[type="radio"] {
+            margin-right: 5px;
+            transform: scale(0.85); 
+        }
+
+
+        #toolbar label { 
+            display: block;
+            margin-top: 0.4rem;
+            margin-bottom: 0.2rem;
+            font-size: 0.8rem; 
+            font-weight: 500;
+            color: #4b5563; 
+        }
+
+        #toolbar input[type="color"] {
+            height: 34px; 
+            border: 1px solid #d1d5db;
+        }
+        #toolbar input[type="text"] {
+            width: 100%;
+            padding: 0.4rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* --- Layers Panel Styles --- */
+        #layersSection {
+            flex-grow: 1; 
+            display: flex;
+            flex-direction: column;
+            min-height: 100px; 
+        }
+        #layersListContainer {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 0.25rem;
+            background-color: #f9fafb;
+        }
+        #layersList {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        #layersList li {
+            padding: 0.3rem 0.5rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f2f5;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-radius: 3px;
+        }
+        #layersList li:last-child {
+            border-bottom: none;
+        }
+        #layersList li:hover {
+            background-color: #e9ecef;
+        }
+        #layersList li.layer-selected {
+            background-color: #42b883; 
+            color: white;
+            font-weight: 500;
+        }
+
+
+        /* --- Viewport (3D Canvas Area) --- */
+        #viewportContainer { 
+            flex: 1;
+            position: relative;
+            display: flex; 
+            overflow: hidden;
+        }
+        #viewport {
+            flex: 1; 
+            position: relative; 
+            background-color: #a0c4ff; 
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; 
+            transition: margin-right 0.3s ease-in-out; 
+        }
+        
+        #viewport canvas {
+            display: block; 
+            width: 100% !important; 
+            height: 100% !important; 
+        }
+        
+        /* --- Message Box --- */
+        #messageBox {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none; 
+        }
+
+        #messageBox.visible {
+            opacity: 1;
+        }
+
+
+        /* --- Properties Panel --- */
+        #propertiesPanel {
+            width: 280px; 
+            flex-basis: 280px; 
+            flex-shrink: 0; 
+            background-color: #ffffff;
+            padding: 1rem;
+            border-left: 1px solid #d1d5db;
+            box-shadow: -1px 0 3px rgba(0,0,0,0.05);
+            overflow-y: auto; 
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            position: relative; 
+            transition: flex-basis 0.3s ease-in-out, padding 0.3s ease-in-out, width 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            z-index: 5; 
+        }
+        #propertiesPanel.collapsed {
+            width: 0;
+            flex-basis: 0px;
+            padding-left: 0;
+            padding-right: 0;
+            overflow: hidden;
+            border-left: none;
+            opacity: 0;
+        }
+
+
+        #propertiesPanelToggle {
+            position: absolute;
+            left: -28px; 
+            top: 10px;
+            width: 28px; 
+            height: 80px; 
+            background-color: #35495e;
+            color: white;
+            border: none;
+            border-top-left-radius: 6px; 
+            border-bottom-left-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem; 
+            writing-mode: vertical-rl; 
+            text-orientation: mixed;
+            z-index: 6;
+            box-shadow: -2px 1px 3px rgba(0,0,0,0.1);
+            padding: 5px 0;
+        }
+         #propertiesPanel.collapsed #propertiesPanelToggle {
+            left: -28px; 
+             background-color: #42b883; 
+        }
+
+
+        #propertiesPanel h2 {
+            font-size: 1.1rem;
+            color: #35495e;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        #propertiesPanel div {
+            margin-bottom: 0.5rem;
+        }
+
+        #propertiesPanel label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+            color: #4b5563;
+        }
+
+        #propertiesPanel input[type="number"],
+        #propertiesPanel input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        #propertiesPanel input:focus {
+            outline: none;
+            border-color: #42b883;
+            box-shadow: 0 0 0 2px rgba(66, 184, 131, 0.3);
+        }
+        #propertiesPanel #deleteSelectedObjBtn,
+        #propertiesPanel #addWallsToFloorBtn,
+        #propertiesPanel #toggleDoorBtn { 
+            background-color: #e53e3e; 
+            color: white;
+            margin-top: 1rem; 
+            padding: 0.6rem 0.75rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-align: center;
+            transition: background-color 0.2s ease;
+        }
+        #propertiesPanel #addWallsToFloorBtn {
+            background-color: #3182ce; 
+        }
+        #propertiesPanel #toggleDoorBtn {
+            background-color: #ecc94b; 
+            color: #1a202c; 
+        }
+        #propertiesPanel #addWallsToFloorBtn:hover {
+            background-color: #2b6cb0;
+        }
+        #propertiesPanel #toggleDoorBtn:hover {
+            background-color: #d69e2e;
+        }
+        #propertiesPanel #deleteSelectedObjBtn:hover {
+            background-color: #c53030; 
+        }
+
+
+        /* --- Footer --- */
+        footer {
+            background-color: #2c3e50; 
+            color: #bdc3c7; 
+            text-align: center;
+            padding: 0.6rem 1rem;
+            font-size: 0.8rem;
+            z-index: 10;
+        }
+        
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column; 
+            }
+
+            #toolbar {
+                width: 100%; 
+                max-height: none; 
+            }
+             #layersSection {
+                max-height: 150px; 
+            }
+
+
+            #viewportContainer {
+                flex-direction: column-reverse; 
+            }
+            #propertiesPanel {
+                width: 100%; 
+                flex-basis: auto; 
+                max-height: 200px; 
+                border-left: none;
+                border-top: 1px solid #d1d5db;
+            }
+             #propertiesPanel.collapsed {
+                max-height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+                border-top: none;
+            }
+            #propertiesPanelToggle { 
+                left: 50%;
+                transform: translateX(-50%);
+                top: -25px; 
+                width: 100px; 
+                height: 25px;
+                border-radius: 5px 5px 0 0;
+                writing-mode: horizontal-tb; 
+                text-orientation: mixed;
+            }
+             #propertiesPanel.collapsed #propertiesPanelToggle {
+                left: 50%;
+                top: -25px;
+            }
+
+
+            #viewport {
+                min-height: 250px; 
+            }
+        }
+
+        @media (max-width: 480px) {
+            #toolbar {
+                padding: 0.5rem;
+            }
+             #toolbar h2 {
+                font-size: 0.9rem;
+                 width: 100%; 
+                 margin-bottom: 0.2rem;
+            }
+            #toolbar button {
+                padding: 0.4rem 0.5rem;
+                font-size: 0.8rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main>
+        <div id="toolbar">
+            <div class="toolbar-section">
+                <h2>Tools</h2>
+                <button id="selectBtn">Select & Manipulate</button>
+                 <div id="transformModeOptions" class="sub-options" style="display: none;">
+                    <label><input type="radio" name="transformMode" value="translate" checked> Move</label>
+                    <label><input type="radio" name="transformMode" value="rotate"> Rotate</label>
+                    <label><input type="radio" name="transformMode" value="scale"> Scale</label>
+                 </div>
+                <button id="addWallBtn">Add Wall</button>
+                <button id="addFloorBtn">Add Floor</button>
+                 <div id="floorTypeOptions" class="sub-options" style="display: none;">
+                    <label><input type="radio" name="floorType" value="square" checked> Square</label>
+                    <label><input type="radio" name="floorType" value="circle"> Circle</label>
+                    </div>
+                <button id="addArchwayBtn">Add Archway</button> 
+                <button id="addDoorBtn">Add Door</button>
+                <button id="addWindowBtn">Add Window</button>
+            </div>
+            <div class="toolbar-section">
+                <h2>View</h2>
+                <button id="resetViewBtn">Reset View</button>
+            </div>
+            <div id="layersSection" class="toolbar-section">
+                <h2>Layers</h2>
+                <div id="layersListContainer">
+                    <ul id="layersList">
+                        </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="viewportContainer">
+            <div id="viewport">
+                <div id="messageBox"></div> 
+            </div>
+            <div id="propertiesPanel">
+                <button id="propertiesPanelToggle">Hide Panel</button>
+                <h2>Properties</h2>
+                <div id="selectedObjectName">No object selected</div>
+                <div>
+                    <label for="objName">Name:</label>
+                    <input type="text" id="objName" placeholder="Object Name">
+                </div>
+                <div>
+                    <label for="objPosX">Position X:</label>
+                    <input type="number" id="objPosX" step="0.1">
+                </div>
+                <div>
+                    <label for="objPosY">Position Y (Elevation/Center):</label>
+                    <input type="number" id="objPosY" step="0.05">
+                </div>
+                <div>
+                    <label for="objPosZ">Position Z:</label>
+                    <input type="number" id="objPosZ" step="0.1">
+                </div>
+                <div id="dimensionProps">
+                    <div>
+                        <label for="objWidth">Width:</label>
+                        <input type="number" id="objWidth" step="0.1" min="0.1">
+                    </div>
+                    <div>
+                        <label for="objHeight">Height:</label>
+                        <input type="number" id="objHeight" step="0.1" min="0.1">
+                    </div>
+                    <div>
+                        <label for="objDepth">Depth (Thickness):</label>
+                        <input type="number" id="objDepth" step="0.1" min="0.1">
+                    </div>
+                </div>
+                <div id="floorDimensionProps" style="display:none;">
+                     <div>
+                        <label for="floorWidth">Floor Width (X):</label>
+                        <input type="number" id="floorWidth" step="0.1" min="0.1">
+                    </div>
+                    <div>
+                        <label for="floorDepth">Floor Depth (Z):</label>
+                        <input type="number" id="floorDepth" step="0.1" min="0.1">
+                    </div>
+                     <div>
+                        <label for="floorRadius">Floor Radius:</label>
+                        <input type="number" id="floorRadius" step="0.1" min="0.1">
+                    </div>
+                    <div>
+                        <label for="floorThickness">Floor Thickness (Y):</label>
+                        <input type="number" id="floorThickness" step="0.05" min="0.05">
+                    </div>
+                </div>
+                 <div id="archwayDimensionProps" style="display:none;">
+                    <div>
+                        <label for="archwayWidth">Archway Width:</label>
+                        <input type="number" id="archwayWidth" step="0.1" min="0.1">
+                    </div>
+                    <div>
+                        <label for="archwayHeight">Archway Height:</label>
+                        <input type="number" id="archwayHeight" step="0.1" min="0.1">
+                    </div>
+                </div>
+
+
+                 <div>
+                    <label for="objRotationY">Rotation Y (degrees):</label>
+                    <input type="number" id="objRotationY" step="1">
+                </div>
+                <div>
+                    <label for="objColor">Color:</label>
+                    <input type="color" id="objColor">
+                </div>
+                <button id="toggleDoorBtn" style="display: none;">Open/Close Door</button>
+                <button id="addWallsToFloorBtn" style="display: none;">Add Walls to Perimeter</button>
+                <button id="deleteSelectedObjBtn" style="display: none;">Delete Selected</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Floor Planner. Orbit (LMB drag), Zoom (scroll), Pan (RMB drag). Place (MMB click). WASD to move.</p>
+    </footer>
+
+    <script>
+        // --- Three.js Scene Setup ---
+        let scene, camera, renderer, orbitControls, transformControls, raycaster, mouse;
+        let viewportElement;
+        const objects = []; 
+        let selectedObjects = []; 
+        let currentTool = 'select'; 
+        let groundPlane; 
+        let gridHelper, sunMesh; 
+        
+        const snapMarkers = []; 
+        let snapMarkerMaterial, snapMarkerGeometry;
+
+        const pressedKeys = {}; 
+
+
+        let wallCreationState = {
+            active: false,
+            startPoint: null,
+            previewWall: null,
+            snappingThreshold: 0.5 
+        };
+
+        // Default dimensions
+        const DEFAULT_WALL_HEIGHT = 2.5;
+        const DEFAULT_WALL_THICKNESS = 0.2;
+        const DEFAULT_DOOR_WIDTH = 0.8;
+        const DEFAULT_DOOR_HEIGHT = 2.0;
+        const DEFAULT_DOOR_FRAME_DEPTH = DEFAULT_WALL_THICKNESS; 
+        const DEFAULT_DOOR_PANEL_THICKNESS = 0.05; 
+        const DEFAULT_WINDOW_WIDTH = 1.2;
+        const DEFAULT_WINDOW_HEIGHT = 1.0;
+        const DEFAULT_WINDOW_FRAME_DEPTH = DEFAULT_WALL_THICKNESS; 
+        const DEFAULT_WINDOW_GLASS_THICKNESS = 0.02;
+        const DEFAULT_ARCHWAY_WIDTH = 1.5;
+        const DEFAULT_ARCHWAY_HEIGHT = 2.2; 
+        const FRAME_THICKNESS = 0.05; 
+        const DEFAULT_CIRCLE_WALL_SEGMENTS = 16; 
+
+        const DEFAULT_FLOOR_WIDTH = 2; 
+        const DEFAULT_FLOOR_DEPTH = 2; 
+        const DEFAULT_FLOOR_RADIUS = 1; 
+        const DEFAULT_FLOOR_THICKNESS = 0.1; 
+        const DEFAULT_FLOOR_ELEVATION = 0.05; 
+
+
+        // DOM Elements
+        const selectBtn = document.getElementById('selectBtn');
+        const addWallBtn = document.getElementById('addWallBtn');
+        const addFloorBtn = document.getElementById('addFloorBtn');
+        const addArchwayBtn = document.getElementById('addArchwayBtn');
+        const addDoorBtn = document.getElementById('addDoorBtn');
+        const addWindowBtn = document.getElementById('addWindowBtn');
+        const resetViewBtn = document.getElementById('resetViewBtn');
+        const transformModeOptionsUI = document.getElementById('transformModeOptions');
+        const floorTypeOptionsUI = document.getElementById('floorTypeOptions');
+        const deleteSelectedObjBtn = document.getElementById('deleteSelectedObjBtn');
+        const addWallsToFloorBtn = document.getElementById('addWallsToFloorBtn');
+        const toggleDoorBtn = document.getElementById('toggleDoorBtn');
+        const propertiesPanelUI = document.getElementById('propertiesPanel');
+        const propertiesPanelToggleUI = document.getElementById('propertiesPanelToggle');
+        const layersListUI = document.getElementById('layersList'); // Layers UL element
+
+        
+        const messageBox = document.getElementById('messageBox');
+
+        // Properties Panel UI
+        const selectedObjectNameUI = document.getElementById('selectedObjectName');
+        const objNameUI = document.getElementById('objName');
+        const objPosXUI = document.getElementById('objPosX');
+        const objPosYUI = document.getElementById('objPosY');
+        const objPosZUI = document.getElementById('objPosZ');
+        // General Dimensions
+        const dimensionPropsUI = document.getElementById('dimensionProps');
+        const objWidthUI = document.getElementById('objWidth');
+        const objHeightUI = document.getElementById('objHeight');
+        const objDepthUI = document.getElementById('objDepth');
+        // Floor Specific Dimensions
+        const floorDimensionPropsUI = document.getElementById('floorDimensionProps');
+        const floorWidthUI = document.getElementById('floorWidth');
+        const floorDepthUI = document.getElementById('floorDepth');
+        const floorRadiusUI = document.getElementById('floorRadius');
+        const floorThicknessUI = document.getElementById('floorThickness');
+        // Archway Specific Dimensions
+        const archwayDimensionPropsUI = document.getElementById('archwayDimensionProps');
+        const archwayWidthUI = document.getElementById('archwayWidth');
+        const archwayHeightUI = document.getElementById('archwayHeight');
+
+
+        const objRotationYUI = document.getElementById('objRotationY');
+        const objColorUI = document.getElementById('objColor');
+
+
+        function init() {
+            viewportElement = document.getElementById('viewport');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xa0c4ff); // Sky blue
+
+            camera = new THREE.PerspectiveCamera(60, viewportElement.clientWidth / viewportElement.clientHeight, 0.1, 1000);
+            resetCameraPosition();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(viewportElement.clientWidth, viewportElement.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
+            viewportElement.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); 
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8); 
+            directionalLight.position.set(50, 80, 30); 
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048; 
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 200; 
+            directionalLight.shadow.camera.left = -50;
+            directionalLight.shadow.camera.right = 50;
+            directionalLight.shadow.camera.top = 50;
+            directionalLight.shadow.camera.bottom = -50;
+            scene.add(directionalLight);
+            
+            const planeGeometry = new THREE.PlaneGeometry(100, 100);
+            const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x55aa55, side: THREE.DoubleSide }); 
+            groundPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            groundPlane.rotation.x = -Math.PI / 2;
+            groundPlane.receiveShadow = true;
+            groundPlane.name = "GroundPlane"; 
+            scene.add(groundPlane);
+
+            gridHelper = new THREE.GridHelper(100, 100, 0x888888, 0xcccccc); 
+            gridHelper.position.y = 0.01; 
+            scene.add(gridHelper);
+
+            const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
+            const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 }); 
+            sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+            sunMesh.position.copy(directionalLight.position).normalize().multiplyScalar(300); 
+            scene.add(sunMesh);
+
+
+            orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+            orbitControls.enableDamping = true;
+            orbitControls.dampingFactor = 0.05;
+            orbitControls.screenSpacePanning = true; 
+            orbitControls.minDistance = 1;
+            orbitControls.maxDistance = 300; 
+            orbitControls.maxPolarAngle = Math.PI / 2 - 0.01; 
+            orbitControls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+
+
+            transformControls = new THREE.TransformControls(camera, renderer.domElement);
+            transformControls.addEventListener('dragging-changed', function (event) {
+                orbitControls.enabled = !event.value; 
+            });
+            transformControls.addEventListener('mouseUp', () => { // Save on mouseUp after transform
+                if (transformControls.object) {
+                    saveScene();
+                }
+            });
+            transformControls.addEventListener('objectChange', () => {
+                if (transformControls.object) { 
+                    updatePropertiesPanel([transformControls.object]); 
+                    if (transformControls.object.userData.isWall) {
+                        transformControls.object.userData.endpoints = calculateWallEndpoints(transformControls.object);
+                        if (currentTool === 'wall') { 
+                            updateWallSnapMarkers();
+                        }
+                    }
+                }
+            });
+            scene.add(transformControls);
+
+            snapMarkerGeometry = new THREE.SphereGeometry(0.12, 12, 12); 
+            snapMarkerMaterial = new THREE.MeshBasicMaterial({ color: 0xff8800, transparent: true, opacity: 0.7, depthTest: false });
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            window.addEventListener('resize', onWindowResize);
+            viewportElement.addEventListener('pointerdown', onPointerDown);
+            viewportElement.addEventListener('pointermove', onPointerMove);
+            document.addEventListener('keydown', (event) => { 
+                pressedKeys[event.key.toLowerCase()] = true; 
+                if (['w', 'a', 's', 'd', ' '].includes(event.key.toLowerCase())) {
+                    if (document.activeElement.tagName !== "INPUT") {
+                        event.preventDefault();
+                    }
+                }
+                 if (event.key === "Escape") { // Deselect all on Escape
+                    deselectAllObjects();
+                }
+            });
+            document.addEventListener('keyup', (event) => { pressedKeys[event.key.toLowerCase()] = false; });
+            
+            selectBtn.addEventListener('click', () => setCurrentTool('select'));
+            addWallBtn.addEventListener('click', () => setCurrentTool('wall'));
+            addFloorBtn.addEventListener('click', () => setCurrentTool('floor'));
+            addArchwayBtn.addEventListener('click', () => setCurrentTool('archway'));
+            addDoorBtn.addEventListener('click', () => setCurrentTool('door'));
+            addWindowBtn.addEventListener('click', () => setCurrentTool('window'));
+            resetViewBtn.addEventListener('click', resetCameraPosition);
+            deleteSelectedObjBtn.addEventListener('click', deleteSelectedObjects); 
+            addWallsToFloorBtn.addEventListener('click', addWallsToSelectedFloor);
+            toggleDoorBtn.addEventListener('click', toggleSelectedDoor);
+            propertiesPanelToggleUI.addEventListener('click', togglePropertiesPanel);
+
+
+            document.querySelectorAll('input[name="transformMode"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (transformControls && transformControls.object) transformControls.setMode(e.target.value);
+                });
+            });
+             document.querySelectorAll('input[name="floorType"]').forEach(radio => {
+                radio.addEventListener('change', (e) => { });
+            });
+
+
+            objNameUI.addEventListener('change', (e) => updateSelectedObjectsProperty('name', e.target.value));
+            objPosXUI.addEventListener('change', (e) => updateSelectedObjectsProperty('position.x', parseFloat(e.target.value)));
+            objPosYUI.addEventListener('change', (e) => updateSelectedObjectsProperty('position.y', parseFloat(e.target.value)));
+            objPosZUI.addEventListener('change', (e) => updateSelectedObjectsProperty('position.z', parseFloat(e.target.value)));
+            
+            objWidthUI.addEventListener('change', (e) => updateSelectedObjectsDimension('width', parseFloat(e.target.value)));
+            objHeightUI.addEventListener('change', (e) => updateSelectedObjectsDimension('height', parseFloat(e.target.value)));
+            objDepthUI.addEventListener('change', (e) => updateSelectedObjectsDimension('depth', parseFloat(e.target.value)));
+
+            floorWidthUI.addEventListener('change', (e) => updateFloorDimension('width', parseFloat(e.target.value)));
+            floorDepthUI.addEventListener('change', (e) => updateFloorDimension('depth', parseFloat(e.target.value)));
+            floorRadiusUI.addEventListener('change', (e) => updateFloorDimension('radius', parseFloat(e.target.value)));
+            floorThicknessUI.addEventListener('change', (e) => updateFloorDimension('thickness', parseFloat(e.target.value)));
+
+            archwayWidthUI.addEventListener('change', (e) => updateArchwayDimension('width', parseFloat(e.target.value)));
+            archwayHeightUI.addEventListener('change', (e) => updateArchwayDimension('height', parseFloat(e.target.value)));
+
+
+            objRotationYUI.addEventListener('change', (e) => updateSelectedObjectsProperty('rotation.y', THREE.MathUtils.degToRad(parseFloat(e.target.value))));
+            objColorUI.addEventListener('input', (e) => updateSelectedObjectsProperty('material.color', new THREE.Color(e.target.value)));
+
+
+            loadScene(); // Load scene from local storage if available
+            setCurrentTool('select'); 
+            updatePropertiesPanel([]); 
+            updateLayersPanel(); 
+            animate();
+            if (objects.length === 0) { // Only show welcome if no objects were loaded
+                 showMessage("Welcome! Select a tool to begin.", 3000);
+            }
+        }
+
+        function togglePropertiesPanel() {
+            propertiesPanelUI.classList.toggle('collapsed');
+            const isCollapsed = propertiesPanelUI.classList.contains('collapsed');
+            propertiesPanelToggleUI.textContent = isCollapsed ? 'Show Panel' : 'Hide Panel';
+            setTimeout(() => window.dispatchEvent(new Event('resize')), 310); 
+        }
+
+
+        function resetCameraPosition() {
+            camera.position.set(10, 15, 20);
+            camera.lookAt(0, 0, 0);
+            if (orbitControls) orbitControls.update();
+        }
+        
+        function showMessage(text, duration = 2000) {
+            messageBox.textContent = text;
+            messageBox.classList.add('visible');
+            setTimeout(() => {
+                messageBox.classList.remove('visible');
+            }, duration);
+        }
+
+        function onWindowResize() {
+            if (!renderer || !camera || !viewportElement) return;
+            const newWidth = viewportElement.clientWidth;
+            const newHeight = viewportElement.clientHeight;
+            
+            camera.aspect = newWidth / newHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(newWidth, newHeight);
+        }
+
+        function handleCameraMovement() {
+            if (!orbitControls) return; 
+            if (document.activeElement.tagName === "INPUT") return;
+
+            const moveSpeed = 0.1;
+            const strafeSpeed = 0.08;
+            const direction = new THREE.Vector3();
+            const strafeDirection = new THREE.Vector3();
+
+            camera.getWorldDirection(direction);
+            direction.y = 0; 
+            direction.normalize();
+
+            strafeDirection.crossVectors(new THREE.Vector3(0,1,0), direction).normalize(); 
+
+            if (pressedKeys['w']) {
+                camera.position.addScaledVector(direction, moveSpeed);
+                orbitControls.target.addScaledVector(direction, moveSpeed);
+            }
+            if (pressedKeys['s']) {
+                camera.position.addScaledVector(direction, -moveSpeed);
+                orbitControls.target.addScaledVector(direction, -moveSpeed);
+            }
+            if (pressedKeys['a']) { 
+                camera.position.addScaledVector(strafeDirection, strafeSpeed); 
+                orbitControls.target.addScaledVector(strafeDirection, strafeSpeed);
+            }
+            if (pressedKeys['d']) { 
+                camera.position.addScaledVector(strafeDirection, -strafeSpeed); 
+                orbitControls.target.addScaledVector(strafeDirection, -strafeSpeed);
+            }
+        }
+
+
+        function animate() {
+            requestAnimationFrame(animate);
+            handleCameraMovement(); 
+            orbitControls.update(); 
+            renderer.render(scene, camera);
+        }
+
+        function setCurrentTool(toolName) {
+            currentTool = toolName;
+            wallCreationState.active = false; 
+            if (wallCreationState.previewWall) {
+                scene.remove(wallCreationState.previewWall);
+                wallCreationState.previewWall = null;
+            }
+            if (toolName !== 'select' || selectedObjects.length !== 1) { 
+                 transformControls.detach();
+            } else if (toolName === 'select' && selectedObjects.length === 1) {
+                transformControls.attach(selectedObjects[0]);
+            }
+
+
+            document.querySelectorAll('#toolbar button').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(toolName + 'Btn');
+            if (activeBtn) activeBtn.classList.add('active');
+
+            transformModeOptionsUI.style.display = (toolName === 'select') ? 'block' : 'none';
+            floorTypeOptionsUI.style.display = (toolName === 'floor') ? 'block' : 'none';
+            
+            if (toolName === 'wall') {
+                updateWallSnapMarkers();
+            } else {
+                clearWallSnapMarkers();
+            }
+            
+            showMessage(`Tool: ${toolName.charAt(0).toUpperCase() + toolName.slice(1)}`, 1500);
+            if (toolName !== 'select') deselectAllObjects(); 
+        }
+        
+        function updateWallSnapMarkers() {
+            clearWallSnapMarkers();
+            objects.forEach(obj => {
+                if (obj.userData.isWall && obj.userData.endpoints) {
+                    obj.userData.endpoints.forEach(endpoint => {
+                        const marker = new THREE.Mesh(snapMarkerGeometry, snapMarkerMaterial);
+                        marker.position.copy(endpoint);
+                        marker.userData.isSnapMarker = true;
+                        marker.userData.snapToPoint = endpoint.clone(); 
+                        scene.add(marker);
+                        snapMarkers.push(marker);
+                    });
+                }
+            });
+        }
+
+        function clearWallSnapMarkers() {
+            snapMarkers.forEach(marker => scene.remove(marker));
+            snapMarkers.length = 0; 
+        }
+
+
+        function getMouseIntersection(event, targetObjectsArray = [groundPlane]) {
+            const rect = viewportElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            
+            const intersects = raycaster.intersectObjects(targetObjectsArray, true); 
+            if (intersects.length > 0) return intersects[0];
+            return null;
+        }
+
+        function onPointerMove(event) {
+            if (transformControls.dragging && transformControls.axis) {
+                return;
+            }
+            if (currentTool === 'wall' && wallCreationState.active && wallCreationState.startPoint) {
+                const intersectTargets = [groundPlane].concat(snapMarkers).concat(objects.filter(o => o.userData.isFloor));
+                const intersectData = getMouseIntersection(event, intersectTargets); 
+                if (intersectData) {
+                    let endPoint;
+                    if (intersectData.object.userData.isSnapMarker) {
+                        endPoint = intersectData.object.userData.snapToPoint.clone();
+                        endPoint.y = wallCreationState.startPoint.y;
+                    } else if (intersectData.object.userData.isFloor) {
+                        const floor = intersectData.object;
+                        const floorThickness = floor.geometry.parameters.height * floor.scale.y;
+                        endPoint = intersectData.point.clone();
+                        endPoint.y = floor.position.y + floorThickness / 2; 
+                    }
+                     else { 
+                        endPoint = intersectData.point.clone();
+                        endPoint.y = wallCreationState.startPoint.y; 
+                    }
+
+                    const snappedEndpointGeneral = findSnapPoint(endPoint, wallCreationState.startPoint);
+                    if (snappedEndpointGeneral) {
+                        endPoint.copy(snappedEndpointGeneral);
+                        endPoint.y = wallCreationState.startPoint.y; 
+                    }
+
+                    if (!wallCreationState.previewWall) {
+                        const geometry = new THREE.BoxGeometry(1, DEFAULT_WALL_HEIGHT, DEFAULT_WALL_THICKNESS); 
+                        const material = new THREE.MeshStandardMaterial({ color: 0x00cc00, transparent: true, opacity: 0.6 });
+                        wallCreationState.previewWall = new THREE.Mesh(geometry, material);
+                        wallCreationState.previewWall.castShadow = true; 
+                        scene.add(wallCreationState.previewWall);
+                    }
+                    updateWallMesh(wallCreationState.previewWall, wallCreationState.startPoint, endPoint);
+                }
+            }
+        }
+
+        function onPointerDown(event) {
+            if (transformControls.dragging && transformControls.axis) {
+                return;
+            }
+
+            const clickType = event.button; 
+
+            let allRaycastTargets = objects.concat(groundPlane); 
+            if (currentTool === 'wall') { 
+                allRaycastTargets = allRaycastTargets.concat(snapMarkers).concat(objects.filter(o => o.userData.isFloor));
+            } else if (currentTool === 'floor') {
+                allRaycastTargets = [groundPlane].concat(objects.filter(o => o.userData.isFloor));
+                if (allRaycastTargets.length === 0) allRaycastTargets = [groundPlane]; 
+            }
+            
+            const intersectData = getMouseIntersection(event, allRaycastTargets.filter(obj => obj.visible));
+            
+            if (currentTool === 'select') {
+                if (clickType === 0) { // Left click for selection
+                    if (intersectData && intersectData.object !== groundPlane && !intersectData.object.userData.isSnapMarker) {
+                        let objectToSelect = intersectData.object;
+                        if (objectToSelect.parent && objectToSelect.parent.userData.isWallFeature) {
+                            objectToSelect = objectToSelect.parent;
+                        }
+                        handleSelection(objectToSelect, event.shiftKey);
+                    } else if (!transformControls.axis) { 
+                        deselectAllObjects();
+                    }
+                }
+            } else if (currentTool === 'wall') {
+                if (clickType === 1) { 
+                    event.preventDefault(); 
+                    let clickPoint;
+                    let startFromSnapMarker = false;
+
+                    if (intersectData && intersectData.object.userData.isSnapMarker) {
+                        clickPoint = intersectData.object.userData.snapToPoint.clone();
+                        startFromSnapMarker = true;
+                        showMessage("Snapped to wall endpoint.", 1000);
+                    } else if (intersectData && intersectData.object === groundPlane) {
+                        clickPoint = intersectData.point.clone();
+                        clickPoint.y = DEFAULT_FLOOR_ELEVATION; 
+                    } else if (intersectData && intersectData.object.userData.isFloor) { 
+                        const floor = intersectData.object;
+                        const floorThickness = floor.geometry.parameters.height * floor.scale.y;
+                        clickPoint = intersectData.point.clone();
+                        clickPoint.y = floor.position.y + floorThickness / 2; 
+                    }
+                     else {
+                        showMessage("Middle-click on ground, a floor, or a wall endpoint marker.", 2000);
+                        return;
+                    }
+
+                    if (!wallCreationState.active) { 
+                        wallCreationState.active = true;
+                        wallCreationState.startPoint = clickPoint; 
+                        
+                        if (!startFromSnapMarker) {
+                             const snappedStartPointGeneral = findSnapPoint(clickPoint);
+                             if(snappedStartPointGeneral) {
+                                 wallCreationState.startPoint.copy(snappedStartPointGeneral);
+                                 wallCreationState.startPoint.y = clickPoint.y; 
+                             }
+                        }
+                        
+                        showMessage("Wall Start: Middle-click to set end point.", 2000);
+                        if (wallCreationState.previewWall) { 
+                            scene.remove(wallCreationState.previewWall);
+                            wallCreationState.previewWall = null;
+                        }
+                    } else { 
+                        let endPointToUse = clickPoint; 
+                        if (!startFromSnapMarker) {
+                            const snappedEndPointGeneral = findSnapPoint(clickPoint, wallCreationState.startPoint);
+                            if(snappedEndPointGeneral) {
+                                endPointToUse.copy(snappedEndPointGeneral);
+                                endPointToUse.y = clickPoint.y; 
+                            }
+                        }
+                        endPointToUse.y = wallCreationState.startPoint.y;
+
+
+                        createWall(wallCreationState.startPoint, endPointToUse);
+                        wallCreationState.active = false;
+                        wallCreationState.startPoint = null;
+                        if (wallCreationState.previewWall) {
+                            scene.remove(wallCreationState.previewWall);
+                            wallCreationState.previewWall = null;
+                        }
+                        showMessage("Wall created.", 1500);
+                        updateWallSnapMarkers(); 
+                    }
+                }
+            } else if (currentTool === 'floor') {
+                if (clickType === 1) { 
+                    event.preventDefault();
+                    if (intersectData) { 
+                        const floorType = document.querySelector('input[name="floorType"]:checked').value;
+                        createFloorObject(floorType, intersectData.point);
+                    } else {
+                        showMessage("Middle-click on the ground or an existing floor to place a new floor.", 2000);
+                    }
+                }
+            } else if (currentTool === 'door' || currentTool === 'window' || currentTool === 'archway') {
+                 if (clickType === 1) { 
+                    event.preventDefault();
+                    if (intersectData && intersectData.object.userData.isWall) {
+                        createObjectOnWall(intersectData.point, intersectData.object, currentTool);
+                    } else { 
+                        showMessage(`Middle-click on a wall to place ${currentTool}.`, 2000);
+                    }
+                }
+            }
+        }
+        
+        function findSnapPoint(currentPoint, excludePoint = null) {
+            for (const obj of objects) {
+                if (obj.userData.isWall && obj.userData.endpoints) {
+                    for (const endpoint of obj.userData.endpoints) {
+                        if (excludePoint && endpoint.distanceTo(excludePoint) < 0.01) continue; 
+                        const xzCurrent = new THREE.Vector2(currentPoint.x, currentPoint.z);
+                        const xzEndpoint = new THREE.Vector2(endpoint.x, endpoint.z);
+                        if (xzCurrent.distanceTo(xzEndpoint) < wallCreationState.snappingThreshold) {
+                            const snapped = endpoint.clone();
+                            snapped.y = currentPoint.y; 
+                            return snapped; 
+                        }
+                    }
+                }
+            }
+            return null; 
+        }
+
+        function calculateWallEndpoints(wallMesh) {
+            const halfLength = wallMesh.geometry.parameters.width / 2;
+            const localStart = new THREE.Vector3(-halfLength, -DEFAULT_WALL_HEIGHT / 2, 0); 
+            const localEnd = new THREE.Vector3(halfLength, -DEFAULT_WALL_HEIGHT / 2, 0);   
+
+            wallMesh.updateMatrixWorld(true); 
+
+            const worldStart = localStart.clone().applyMatrix4(wallMesh.matrixWorld);
+            const worldEnd = localEnd.clone().applyMatrix4(wallMesh.matrixWorld);
+            
+            return [worldStart, worldEnd];
+        }
+        
+        function updateWallMesh(wallMesh, startPoint, endPoint) {
+            const xzStart = new THREE.Vector2(startPoint.x, startPoint.z);
+            const xzEnd = new THREE.Vector2(endPoint.x, endPoint.z);
+            const xzLength = xzStart.distanceTo(xzEnd);
+
+
+            if (xzLength < 0.01) { 
+                wallMesh.visible = false;
+                return;
+            }
+            wallMesh.visible = true;
+
+            if (wallMesh.geometry) wallMesh.geometry.dispose();
+            wallMesh.geometry = new THREE.BoxGeometry(xzLength, DEFAULT_WALL_HEIGHT, DEFAULT_WALL_THICKNESS);
+            
+            const centerPoint = new THREE.Vector3().addVectors(startPoint, endPoint).multiplyScalar(0.5);
+            wallMesh.position.set(centerPoint.x, startPoint.y + DEFAULT_WALL_HEIGHT / 2, centerPoint.z);
+            
+            const dx = endPoint.x - startPoint.x;
+            const dz = endPoint.z - startPoint.z;
+            wallMesh.rotation.y = Math.atan2(dz, dx); 
+
+            if (wallMesh.userData.isWall) { 
+                 wallMesh.userData.endpoints = calculateWallEndpoints(wallMesh);
+            }
+        }
+
+
+        function createWall(startPoint, endPoint, materialColor = 0xaaaaaa) {
+            const xzStart = new THREE.Vector2(startPoint.x, startPoint.z);
+            const xzEnd = new THREE.Vector2(endPoint.x, endPoint.z);
+            const length = xzStart.distanceTo(xzEnd);
+
+            if (length < 0.01) { 
+                return null; 
+            }
+            
+            const wallGeometry = new THREE.BoxGeometry(length, DEFAULT_WALL_HEIGHT, DEFAULT_WALL_THICKNESS);
+            const wallMaterial = new THREE.MeshStandardMaterial({ color: materialColor }); 
+            const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+            wall.castShadow = true;
+            wall.receiveShadow = true;
+            wall.name = "Wall_" + (objects.filter(obj => obj.userData.isWall).length + 1);
+            wall.userData.isWall = true;
+            wall.userData.originalStartPoint = startPoint.clone(); 
+            wall.userData.originalEndPoint = endPoint.clone();   
+            
+            const commonY = startPoint.y; 
+            const flatStartPoint = startPoint.clone(); flatStartPoint.y = commonY;
+            const flatEndPoint = endPoint.clone(); flatEndPoint.y = commonY;
+
+            updateWallMesh(wall, flatStartPoint, flatEndPoint); 
+
+            scene.add(wall);
+            objects.push(wall);
+            updateLayersPanel(); 
+            saveScene();
+            return wall; 
+        }
+
+        function createFloorObject(type, clickPoint) {
+            let geometry;
+            let namePrefix = "Floor";
+            const material = new THREE.MeshStandardMaterial({ color: 0xdddddd, side: THREE.DoubleSide }); 
+            
+            let floorW = DEFAULT_FLOOR_WIDTH;   
+            let floorH = DEFAULT_FLOOR_THICKNESS; 
+            let floorD = DEFAULT_FLOOR_DEPTH;   
+            let floorRadius = DEFAULT_FLOOR_RADIUS;
+
+            if (type === 'square') {
+                geometry = new THREE.BoxGeometry(floorW, floorH, floorD);
+                namePrefix = "SquareFloor";
+            } else if (type === 'circle') {
+                geometry = new THREE.CylinderGeometry(floorRadius, floorRadius, floorH, 32);
+                namePrefix = "CircleFloor";
+            } else {
+                showMessage("Unknown floor type selected.", 1500);
+                return;
+            }
+
+            const floor = new THREE.Mesh(geometry, material);
+            floor.name = namePrefix + "_" + (objects.filter(o => o.userData.isFloor && o.userData.floorType === type).length + 1);
+            floor.userData.isFloor = true;
+            floor.userData.floorType = type;
+            
+            if (type === 'square') {
+                floor.userData.designWidth = geometry.parameters.width; 
+                floor.userData.designDepth = geometry.parameters.depth; 
+                floor.userData.designThickness = geometry.parameters.height;
+            } else if (type === 'circle') { 
+                floor.userData.designRadius = geometry.parameters.radiusTop; 
+                floor.userData.designThickness = geometry.parameters.height;
+            }
+
+            let targetTopY = clickPoint.y;
+            if (Math.abs(clickPoint.y - 0.0) < 0.01) { 
+                targetTopY = DEFAULT_FLOOR_ELEVATION;
+            }
+            floor.position.set(clickPoint.x, targetTopY - floorH / 2, clickPoint.z);
+
+
+            floor.receiveShadow = true; 
+            floor.castShadow = true; 
+
+            scene.add(floor);
+            objects.push(floor);
+            updateLayersPanel();
+            showMessage(`${namePrefix} added.`, 1500);
+            handleSelection(floor, false); 
+            saveScene();
+        }
+        
+        function createObjectOnWall(clickPosition, wall, type) {
+            const originalWallStart = wall.userData.originalStartPoint.clone();
+            const originalWallEnd = wall.userData.originalEndPoint.clone();
+            const wallMaterialColor = wall.material.color.getHex();
+            const wallBaseY = wall.position.y - DEFAULT_WALL_HEIGHT / 2;
+
+            let featureWidth, featureHeight, featureTypeSpecificHeight, namePrefix;
+            let createFrameAndPanel; 
+
+            if (type === 'door') {
+                featureWidth = DEFAULT_DOOR_WIDTH;
+                featureHeight = DEFAULT_DOOR_HEIGHT; 
+                featureTypeSpecificHeight = DEFAULT_DOOR_HEIGHT; 
+                namePrefix = "Door";
+                createFrameAndPanel = (group, fw, fh, frameDepth) => { 
+                    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x5c3a0d });
+                    const topFrameGeo = new THREE.BoxGeometry(fw, FRAME_THICKNESS, frameDepth);
+                    const topFrame = new THREE.Mesh(topFrameGeo, frameMaterial);
+                    topFrame.position.y = fh / 2 - FRAME_THICKNESS / 2;
+                    group.add(topFrame);
+
+                    const sideFrameGeo = new THREE.BoxGeometry(FRAME_THICKNESS, fh - FRAME_THICKNESS, frameDepth);
+                    const leftFrame = new THREE.Mesh(sideFrameGeo, frameMaterial);
+                    leftFrame.position.x = -fw / 2 + FRAME_THICKNESS / 2;
+                    group.add(leftFrame);
+                    const rightFrame = new THREE.Mesh(sideFrameGeo, frameMaterial);
+                    rightFrame.position.x = fw / 2 - FRAME_THICKNESS / 2;
+                    group.add(rightFrame);
+
+                    const panelGeo = new THREE.BoxGeometry(fw - 2 * FRAME_THICKNESS, fh - FRAME_THICKNESS, DEFAULT_DOOR_PANEL_THICKNESS);
+                    panelGeo.translate((fw - 2 * FRAME_THICKNESS) / 2, 0, 0);
+                    const panelMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+                    const panelMesh = new THREE.Mesh(panelGeo, panelMaterial);
+                    panelMesh.position.x = -fw / 2 + FRAME_THICKNESS;
+                    panelMesh.position.y = -FRAME_THICKNESS / 2;
+                    panelMesh.userData.isDoorPanel = true; panelMesh.userData.isOpen = false; panelMesh.castShadow = true;
+                    group.add(panelMesh);
+                    group.userData.panel = panelMesh;
+                };
+            } else if (type === 'window') {
+                featureWidth = DEFAULT_WINDOW_WIDTH;
+                featureHeight = DEFAULT_WINDOW_HEIGHT; 
+                featureTypeSpecificHeight = DEFAULT_WINDOW_HEIGHT; 
+                namePrefix = "Window";
+                createFrameAndPanel = (group, fw, fh, frameDepth) => {
+                    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
+                    const topBottomFrameGeo = new THREE.BoxGeometry(fw, FRAME_THICKNESS, frameDepth);
+                    const topFrame = new THREE.Mesh(topBottomFrameGeo, frameMaterial);
+                    topFrame.position.y = fh / 2 - FRAME_THICKNESS / 2;
+                    group.add(topFrame);
+                    const bottomFrame = new THREE.Mesh(topBottomFrameGeo, frameMaterial);
+                    bottomFrame.position.y = -fh / 2 + FRAME_THICKNESS / 2;
+                    group.add(bottomFrame);
+
+                    const sideFrameGeo = new THREE.BoxGeometry(FRAME_THICKNESS, fh - 2 * FRAME_THICKNESS, frameDepth);
+                    const leftFrame = new THREE.Mesh(sideFrameGeo, frameMaterial);
+                    leftFrame.position.x = -fw / 2 + FRAME_THICKNESS / 2;
+                    group.add(leftFrame);
+                    const rightFrame = new THREE.Mesh(sideFrameGeo, frameMaterial);
+                    rightFrame.position.x = fw / 2 - FRAME_THICKNESS / 2;
+                    group.add(rightFrame);
+
+                    const glassGeo = new THREE.BoxGeometry(fw - 2 * FRAME_THICKNESS, fh - 2 * FRAME_THICKNESS, DEFAULT_WINDOW_GLASS_THICKNESS);
+                    const glassMaterial = new THREE.MeshStandardMaterial({ color: 0xADD8E6, transparent: true, opacity: 0.5 });
+                    const panelMesh = new THREE.Mesh(glassGeo, glassMaterial);
+                    panelMesh.userData.isWindowGlass = true;
+                    group.add(panelMesh);
+                    group.userData.panel = panelMesh;
+                };
+            } else if (type === 'archway') {
+                featureWidth = DEFAULT_ARCHWAY_WIDTH;
+                featureHeight = DEFAULT_ARCHWAY_HEIGHT; 
+                featureTypeSpecificHeight = DEFAULT_ARCHWAY_HEIGHT; 
+                namePrefix = "Archway";
+                createFrameAndPanel = (group, fw, fh, frameDepth) => { 
+                    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0xB0A090 }); 
+                    const topFrameGeo = new THREE.BoxGeometry(fw, FRAME_THICKNESS, frameDepth);
+                    const topFrame = new THREE.Mesh(topFrameGeo, frameMaterial);
+                    topFrame.position.y = fh / 2 - FRAME_THICKNESS / 2; 
+                    group.add(topFrame);
+
+                    const sideFrameGeo = new THREE.BoxGeometry(FRAME_THICKNESS, fh - FRAME_THICKNESS, frameDepth);
+                    const leftFrame = new THREE.Mesh(sideFrameGeo, frameMaterial);
+                    leftFrame.position.x = -fw / 2 + FRAME_THICKNESS / 2;
+                    group.add(leftFrame);
+                    const rightFrame = new THREE.Mesh(sideFrameGeo, frameMaterial);
+                    rightFrame.position.x = fw / 2 - FRAME_THICKNESS / 2;
+                    group.add(rightFrame);
+                };
+            } else { return; }
+
+
+            const wallDir = new THREE.Vector3().subVectors(originalWallEnd, originalWallStart).normalize();
+            const wallLength = originalWallStart.distanceTo(originalWallEnd);
+            const clickOnLine = new THREE.Vector3();
+            const tempVec = new THREE.Vector3().subVectors(clickPosition, originalWallStart);
+            const projectedLength = Math.max(0, Math.min(wallLength, tempVec.dot(wallDir))); 
+            clickOnLine.copy(originalWallStart).addScaledVector(wallDir, projectedLength);
+
+            const halfFeatureWidth = featureWidth / 2;
+            let openingStartDist = projectedLength - halfFeatureWidth;
+            let openingEndDist = projectedLength + halfFeatureWidth;
+
+            if (openingStartDist < 0) {
+                openingEndDist += -openingStartDist; 
+                openingStartDist = 0;
+            }
+            if (openingEndDist > wallLength) {
+                openingStartDist -= (openingEndDist - wallLength); 
+                openingEndDist = wallLength;
+            }
+            const actualFeatureWidth = openingEndDist - openingStartDist;
+            if (actualFeatureWidth < 0.1) { showMessage("Opening too small or out of bounds.", 1500); return; }
+
+
+            const openingStartPoint = originalWallStart.clone().addScaledVector(wallDir, openingStartDist);
+            const openingEndPoint = originalWallStart.clone().addScaledVector(wallDir, openingEndDist);
+            const openingCenter = new THREE.Vector3().addVectors(openingStartPoint, openingEndPoint).multiplyScalar(0.5);
+
+            if (transformControls.object === wall) transformControls.detach();
+            scene.remove(wall);
+            const wallIndex = objects.indexOf(wall);
+            if (wallIndex > -1) objects.splice(wallIndex, 1);
+            if (wall.geometry) wall.geometry.dispose();
+            if (wall.material) wall.material.dispose();
+
+            if (openingStartDist > 0.01) { 
+                createWall(originalWallStart, openingStartPoint, wallMaterialColor);
+            }
+            if (wallLength - openingEndDist > 0.01) { 
+                createWall(openingEndPoint, originalWallEnd, wallMaterialColor);
+            }
+            
+            const overallGroup = new THREE.Group();
+            overallGroup.name = namePrefix + "_" + (objects.filter(obj => obj.name.startsWith(namePrefix)).length + 1);
+            overallGroup.userData.isWallFeature = true;
+            overallGroup.userData.featureType = type;
+            overallGroup.userData.actualFeatureWidth = actualFeatureWidth; // Store for saving/loading
+            overallGroup.userData.actualFeatureHeight = featureTypeSpecificHeight; // Store for saving/loading
+            overallGroup.castShadow = true;
+            overallGroup.receiveShadow = true;
+
+            const frameDepthForFeature = (type === 'archway') ? DEFAULT_WALL_THICKNESS : (type === 'door' ? DEFAULT_DOOR_FRAME_DEPTH : DEFAULT_WINDOW_FRAME_DEPTH);
+            createFrameAndPanel(overallGroup, actualFeatureWidth, featureTypeSpecificHeight, frameDepthForFeature); 
+
+            let featureBaseY; 
+             if (type === 'door' || type === 'archway') {
+                featureBaseY = wallBaseY; 
+            } else { 
+                let sillHeight = (DEFAULT_WALL_HEIGHT - featureTypeSpecificHeight) / 2;
+                if (sillHeight < 0.3) sillHeight = 0.3; 
+                featureBaseY = wallBaseY + sillHeight;
+            }
+            overallGroup.position.copy(openingCenter);
+            overallGroup.position.y = featureBaseY + featureTypeSpecificHeight / 2; 
+
+            const originalWallRotationY = Math.atan2(originalWallEnd.z - originalWallStart.z, originalWallEnd.x - originalWallStart.x);
+            overallGroup.rotation.y = originalWallRotationY;
+            
+            scene.add(overallGroup);
+            objects.push(overallGroup);
+
+            const lintelHeight = DEFAULT_WALL_HEIGHT - (featureBaseY + featureTypeSpecificHeight - wallBaseY);
+            if (lintelHeight > 0.01) {
+                const lintelGeo = new THREE.BoxGeometry(actualFeatureWidth, lintelHeight, DEFAULT_WALL_THICKNESS);
+                const lintelMaterial = new THREE.MeshStandardMaterial({ color: wallMaterialColor });
+                const lintelMesh = new THREE.Mesh(lintelGeo, lintelMaterial);
+                lintelMesh.position.set(0, featureTypeSpecificHeight / 2 + lintelHeight / 2 - FRAME_THICKNESS /2, 0); // Adjusted Y
+                lintelMesh.name = namePrefix + "_Lintel";
+                lintelMesh.castShadow = true; lintelMesh.receiveShadow = true;
+                overallGroup.add(lintelMesh); 
+            }
+
+            if (type === 'window' && featureBaseY > wallBaseY + 0.01) {
+                const sillHeight = featureBaseY - wallBaseY;
+                 if (sillHeight > 0.01) {
+                    const sillGeo = new THREE.BoxGeometry(actualFeatureWidth, sillHeight, DEFAULT_WALL_THICKNESS);
+                    const sillMaterial = new THREE.MeshStandardMaterial({ color: wallMaterialColor });
+                    const sillMesh = new THREE.Mesh(sillGeo, sillMaterial);
+                    sillMesh.position.set(0, -featureTypeSpecificHeight/2 - sillHeight/2 + FRAME_THICKNESS/2, 0); // Adjusted Y
+                    sillMesh.name = namePrefix + "_Sill";
+                    sillMesh.castShadow = true; sillMesh.receiveShadow = true;
+                    overallGroup.add(sillMesh); 
+                }
+            }
+
+            updateLayersPanel();
+            updateWallSnapMarkers();
+            showMessage(`${namePrefix} placed in wall.`, 1500);
+            saveScene();
+        }
+        
+        function handleSelection(object, isShiftSelect) {
+            if (isShiftSelect) {
+                const index = selectedObjects.indexOf(object);
+                if (index > -1) { 
+                    setObjectEmissive(object, false);
+                    selectedObjects.splice(index, 1);
+                } else { 
+                    selectedObjects.push(object);
+                    setObjectEmissive(object, true);
+                }
+            } else { 
+                deselectAllObjects(true); 
+                selectedObjects = [object];
+                setObjectEmissive(object, true);
+            }
+
+            if (selectedObjects.length === 1) {
+                transformControls.attach(selectedObjects[0]);
+            } else {
+                transformControls.detach();
+            }
+            updatePropertiesPanel(selectedObjects);
+            updateLayerSelectionVisuals();
+        }
+
+        function setObjectEmissive(object, isSelected) {
+            if (object.isGroup) {
+                object.traverse(child => {
+                    if (child.isMesh && child.material) {
+                        if (isSelected) {
+                            if (child.userData.originalEmissive === undefined) child.userData.originalEmissive = child.material.emissive.getHex();
+                            child.material.emissive.setHex(0x444400);
+                        } else {
+                            if (child.userData.originalEmissive !== undefined) child.material.emissive.setHex(child.userData.originalEmissive);
+                            else child.material.emissive.setHex(0x000000);
+                        }
+                    }
+                });
+            } else if (object.material) {
+                if (isSelected) {
+                    if (object.userData.originalEmissive === undefined) object.userData.originalEmissive = object.material.emissive.getHex();
+                    object.material.emissive.setHex(0x444400);
+                } else {
+                    if (object.userData.originalEmissive !== undefined) object.material.emissive.setHex(object.userData.originalEmissive);
+                    else object.material.emissive.setHex(0x000000);
+                }
+            }
+        }
+
+
+        function deselectAllObjects(keepCurrentTransform = false) {
+            selectedObjects.forEach(obj => setObjectEmissive(obj, false));
+            selectedObjects = [];
+            if (!keepCurrentTransform) {
+                transformControls.detach();
+            }
+            updatePropertiesPanel([]);
+            updateLayerSelectionVisuals();
+        }
+
+        function deleteSelectedObjects() {
+            if (selectedObjects.length === 0) {
+                showMessage("No object selected to delete.", 1500);
+                return;
+            }
+            
+            const objectsToDelete = [...selectedObjects];
+            let deletedCount = 0;
+
+            objectsToDelete.forEach(obj => {
+                if (obj === groundPlane) {
+                    showMessage("Cannot delete the ground plane.", 1500);
+                    return; 
+                }
+
+                if (transformControls.object === obj) {
+                    transformControls.detach();
+                }
+                
+                if (obj.isGroup) {
+                    obj.traverse(child => {
+                        if (child.isMesh) {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) {
+                                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                                else child.material.dispose();
+                            }
+                        }
+                    });
+                } else { 
+                    if (obj.geometry) obj.geometry.dispose();
+                    if (obj.material) {
+                        if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+                        else obj.material.dispose();
+                    }
+                }
+                scene.remove(obj);
+                const indexInSceneObjects = objects.indexOf(obj);
+                if (indexInSceneObjects > -1) {
+                    objects.splice(indexInSceneObjects, 1);
+                }
+                deletedCount++;
+            });
+            
+            if (objectsToDelete.some(obj => obj.userData.isWall)) {
+                updateWallSnapMarkers(); 
+            }
+
+            selectedObjects = []; 
+            updatePropertiesPanel([]); 
+            updateLayersPanel(); 
+            if (deletedCount > 0) {
+                showMessage(`${deletedCount} object(s) deleted.`, 1500);
+            }
+            saveScene();
+        }
+        
+        function addWallsToSelectedFloor() {
+            if (selectedObjects.length !== 1 || !selectedObjects[0].userData.isFloor) {
+                 showMessage("Select a single floor to add perimeter walls.", 2000);
+                return;
+            }
+            const floor = selectedObjects[0];
+
+            if (floor.userData.floorType === 'square') {
+                floor.updateMatrixWorld(true); 
+                const originalWidth = floor.geometry.parameters.width;
+                const originalDepth = floor.geometry.parameters.depth;
+                const originalThickness = floor.geometry.parameters.height; 
+                const visualThickness = originalThickness * floor.scale.y;
+                const topY = floor.position.y + visualThickness / 2;
+                const halfW = originalWidth / 2; 
+                const halfD = originalDepth / 2;
+
+                const cornersLocal = [
+                    new THREE.Vector3(-halfW, 0, -halfD), 
+                    new THREE.Vector3( halfW, 0, -halfD), 
+                    new THREE.Vector3( halfW, 0,  halfD), 
+                    new THREE.Vector3(-halfW, 0,  halfD)  
+                ];
+                const cornersWorld = cornersLocal.map(corner => {
+                    const worldCorner = corner.clone().applyMatrix4(floor.matrixWorld);
+                    worldCorner.y = topY; 
+                    return worldCorner;
+                });
+                for (let i = 0; i < cornersWorld.length; i++) {
+                    const start = cornersWorld[i].clone();
+                    start.userData = { fromFloorAutomation: true }; 
+                    const end = cornersWorld[(i + 1) % cornersWorld.length].clone(); 
+                    createWall(start, end, 0x3366cc); 
+                }
+            } else if (floor.userData.floorType === 'circle') {
+                floor.updateMatrixWorld(true);
+                const radius = floor.geometry.parameters.radiusTop * floor.scale.x; 
+                const visualThickness = floor.geometry.parameters.height * floor.scale.y;
+                const topY = floor.position.y + visualThickness / 2;
+                const center = floor.position.clone();
+                center.y = topY; 
+
+                const segments = DEFAULT_CIRCLE_WALL_SEGMENTS;
+                const points = [];
+                for (let i = 0; i < segments; i++) {
+                    const angle = (i / segments) * Math.PI * 2;
+                    const x = center.x + radius * Math.cos(angle);
+                    const z = center.z + radius * Math.sin(angle);
+                    points.push(new THREE.Vector3(x, topY, z));
+                }
+                for (let i = 0; i < segments; i++) {
+                    const start = points[i].clone();
+                    start.userData = { fromFloorAutomation: true };
+                    const end = points[(i + 1) % segments].clone();
+                    createWall(start, end, 0x3399cc); 
+                }
+            } else {
+                 showMessage("Select a square or circle floor to add perimeter walls.", 2000);
+                 return;
+            }
+            updateWallSnapMarkers();
+            showMessage("Perimeter walls added to floor.", 2000);
+            saveScene();
+        }
+
+        function toggleSelectedDoor() {
+            if (selectedObjects.length !== 1 || !selectedObjects[0].userData.isWallFeature || selectedObjects[0].userData.featureType !== 'door' || !selectedObjects[0].userData.panel) {
+                showMessage("Select a single door to open/close.", 1500);
+                return;
+            }
+            const doorPanel = selectedObjects[0].userData.panel;
+            doorPanel.userData.isOpen = !doorPanel.userData.isOpen;
+            const targetRotationY = doorPanel.userData.isOpen ? Math.PI / 2 : 0; 
+
+            doorPanel.rotation.y = targetRotationY;
+            showMessage(doorPanel.userData.isOpen ? "Door opened." : "Door closed.", 1000);
+            saveScene();
+        }
+
+
+        // --- Properties Panel Logic ---
+        function updatePropertiesPanel(selObjectsArray) { 
+            dimensionPropsUI.style.display = 'none';
+            floorDimensionPropsUI.style.display = 'none';
+            archwayDimensionPropsUI.style.display = 'none'; 
+            floorWidthUI.parentElement.style.display = 'none';
+            floorDepthUI.parentElement.style.display = 'none';
+            floorRadiusUI.parentElement.style.display = 'none';
+            floorThicknessUI.parentElement.style.display = 'none';
+            addWallsToFloorBtn.style.display = 'none';
+            toggleDoorBtn.style.display = 'none'; 
+
+            if (selObjectsArray.length > 0) {
+                const firstObj = selObjectsArray[0];
+                let allSameType = true;
+                let commonType = firstObj.userData.isFloor ? 'floor' : (firstObj.userData.isWall ? 'wall' : (firstObj.userData.isWallFeature ? firstObj.userData.featureType : 'unknown'));
+                
+                for(let i = 1; i < selObjectsArray.length; i++) {
+                    let currentObjType = selObjectsArray[i].userData.isFloor ? 'floor' : (selObjectsArray[i].userData.isWall ? 'wall' : (selObjectsArray[i].userData.isWallFeature ? selObjectsArray[i].userData.featureType : 'unknown'));
+                    if (currentObjType !== commonType) {
+                        allSameType = false;
+                        break;
+                    }
+                    if (commonType === 'floor' && selObjectsArray[i].userData.floorType !== firstObj.userData.floorType) {
+                        allSameType = false; 
+                        break;
+                    }
+                }
+
+                if (selObjectsArray.length === 1) {
+                    selectedObjectNameUI.textContent = firstObj.name || "Unnamed Object";
+                    objNameUI.value = firstObj.name || "";
+                    objPosXUI.value = firstObj.position.x.toFixed(2);
+                    objPosYUI.value = firstObj.position.y.toFixed(2); 
+                    objPosZUI.value = firstObj.position.z.toFixed(2);
+                    objRotationYUI.value = THREE.MathUtils.radToDeg(firstObj.rotation.y).toFixed(1);
+                } else { 
+                    selectedObjectNameUI.textContent = `${selObjectsArray.length} objects selected`;
+                    objNameUI.value = "Multiple Values";
+                    objPosXUI.value = ""; objPosYUI.value = ""; objPosZUI.value = ""; 
+                    objRotationYUI.value = ""; 
+                }
+
+                const box = new THREE.Box3().setFromObject(firstObj); 
+                const size = new THREE.Vector3();
+                box.getSize(size);
+
+                objNameUI.disabled = selObjectsArray.length > 1;
+                [objPosXUI, objPosYUI, objPosZUI, objRotationYUI].forEach(input => input.disabled = selObjectsArray.length > 1);
+
+
+                if (allSameType) {
+                    if (commonType === 'floor') {
+                        floorDimensionPropsUI.style.display = 'block';
+                        floorThicknessUI.parentElement.style.display = 'block';
+                        floorThicknessUI.disabled = false;
+                        floorThicknessUI.value = (selObjectsArray.length === 1) ? size.y.toFixed(2) : ""; 
+
+                        if (firstObj.userData.floorType === 'square') {
+                            floorWidthUI.parentElement.style.display = 'block';
+                            floorDepthUI.parentElement.style.display = 'block';
+                            floorWidthUI.disabled = false; floorDepthUI.disabled = false;
+                            floorWidthUI.value = (selObjectsArray.length === 1) ? size.x.toFixed(2) : "";
+                            floorDepthUI.value = (selObjectsArray.length === 1) ? size.z.toFixed(2) : "";
+                            if(selObjectsArray.length === 1) addWallsToFloorBtn.style.display = 'block';
+                        } else if (firstObj.userData.floorType === 'circle') {
+                            floorRadiusUI.parentElement.style.display = 'block';
+                            floorRadiusUI.disabled = false;
+                            floorRadiusUI.value = (selObjectsArray.length === 1) ? (size.x / 2).toFixed(2) : "";
+                             if(selObjectsArray.length === 1) addWallsToFloorBtn.style.display = 'block'; 
+                        }
+                    } else if (commonType === 'wall') {
+                        dimensionPropsUI.style.display = 'block';
+                        [objWidthUI, objHeightUI, objDepthUI].forEach(input => input.disabled = false); 
+                        objWidthUI.value = (selObjectsArray.length === 1) ? size.x.toFixed(2) : "";
+                        objHeightUI.value = (selObjectsArray.length === 1) ? size.y.toFixed(2) : "";
+                        objDepthUI.value = (selObjectsArray.length === 1) ? size.z.toFixed(2) : ""; 
+                    } else if (commonType === 'door' || commonType === 'window' || commonType === 'archway') {
+                        dimensionPropsUI.style.display = 'block'; 
+                        [objWidthUI, objHeightUI, objDepthUI].forEach(input => input.disabled = (selObjectsArray.length > 1)); 
+                        objWidthUI.value = (selObjectsArray.length === 1) ? size.x.toFixed(2) : "";
+                        objHeightUI.value = (selObjectsArray.length === 1) ? size.y.toFixed(2) : "";
+                        objDepthUI.value = (selObjectsArray.length === 1) ? size.z.toFixed(2) : ""; 
+                        if (commonType === 'door' && selObjectsArray.length === 1) {
+                            toggleDoorBtn.style.display = 'block';
+                        }
+                        if (commonType === 'archway' && selObjectsArray.length === 1) {
+                             archwayDimensionPropsUI.style.display = 'block';
+                             archwayWidthUI.value = size.x.toFixed(2); 
+                             archwayHeightUI.value = size.y.toFixed(2); 
+                             archwayWidthUI.disabled = false; archwayHeightUI.disabled = false;
+                        }
+                    }
+                    objColorUI.disabled = false; 
+                    if (selObjectsArray.length === 1) {
+                         let targetMaterialObject = firstObj;
+                         if (firstObj.isGroup && firstObj.userData.panel && firstObj.userData.panel.material) {
+                             targetMaterialObject = firstObj.userData.panel;
+                         } else if (firstObj.isGroup && firstObj.userData.featureType === 'archway') {
+                            targetMaterialObject = firstObj.children.find(c => c.isMesh && c.material && !c.name.includes("Lintel")) || firstObj; // Try to get frame color
+                         }
+                         if (targetMaterialObject.material && targetMaterialObject.material.color) {
+                             objColorUI.value = "#" + targetMaterialObject.material.color.getHexString();
+                         }
+                    } else {
+                        objColorUI.value = "#ffffff"; 
+                    }
+
+                } else { 
+                    selectedObjectNameUI.textContent = `${selObjectsArray.length} objects (mixed types)`;
+                    [objNameUI, objPosXUI, objPosYUI, objPosZUI, objWidthUI, objHeightUI, objDepthUI, floorWidthUI, floorDepthUI, floorRadiusUI, floorThicknessUI, archwayWidthUI, archwayHeightUI, objRotationYUI, objColorUI].forEach(input => input.disabled = true);
+                }
+                deleteSelectedObjBtn.style.display = 'block';
+
+            } else { 
+                selectedObjectNameUI.textContent = "No object selected";
+                [objNameUI, objPosXUI, objPosYUI, objPosZUI, objWidthUI, objHeightUI, objDepthUI, floorWidthUI, floorDepthUI, floorRadiusUI, floorThicknessUI, archwayWidthUI, archwayHeightUI, objRotationYUI, objColorUI].forEach(input => {
+                    input.value = ""; input.disabled = true;
+                });
+                objColorUI.value = "#000000";
+                deleteSelectedObjBtn.style.display = 'none';
+            }
+        }
+        
+        function updateSelectedObjectsProperty(path, value) { 
+            if (selectedObjects.length === 0) return;
+            
+            selectedObjects.forEach(obj => {
+                let current = obj;
+                if (path === 'material.color' && obj.isGroup && obj.userData.panel) {
+                    current = obj.userData.panel;
+                } else if (path === 'material.color' && obj.isGroup && obj.userData.featureType === 'archway') {
+                    obj.traverse(child => { // Color all parts of archway frame
+                        if (child.isMesh && child.material && child.material.color && !child.name.includes("Lintel")) { // Exclude lintel
+                            child.material.color.set(value);
+                        }
+                    });
+                    return; 
+                }
+
+
+                const parts = path.split('.');
+                for (let i = 0; i < parts.length - 1; i++) {
+                    current = current[parts[i]];
+                    if (!current) return; 
+                }
+                
+                if (parts[parts.length - 1] === 'color' && current.material) {
+                    current.material[parts[parts.length - 1]].set(value); 
+                } else {
+                    current[parts[parts.length - 1]] = value;
+                }
+
+                if (path === 'name' && selectedObjects.length === 1) { 
+                    selectedObjectNameUI.textContent = value || "Unnamed Object";
+                }
+                if (path.startsWith('position') || path.startsWith('rotation')) {
+                    obj.updateMatrixWorld(true); 
+                    if (obj.userData.isWall) { 
+                        obj.userData.endpoints = calculateWallEndpoints(obj);
+                        if(currentTool === 'wall') updateWallSnapMarkers(); 
+                    }
+                }
+            });
+            if (selectedObjects.length > 0) updatePropertiesPanel(selectedObjects); 
+            updateLayersPanel(); 
+            saveScene();
+        }
+        
+        function updateFloorDimension(dimension, value) { 
+            if (selectedObjects.length !== 1 || !selectedObjects[0].userData.isFloor || value <= 0) return;
+            const floor = selectedObjects[0];
+            let newGeometry;
+            
+            const boundingBox = new THREE.Box3().setFromObject(floor);
+            const currentVisualSize = new THREE.Vector3();
+            boundingBox.getSize(currentVisualSize);
+
+            let newWidth = currentVisualSize.x;
+            let newDepth = currentVisualSize.z;
+            let newThickness = currentVisualSize.y;
+            let newRadius = currentVisualSize.x / 2; 
+
+            if (floor.userData.floorType === 'square') {
+                if (dimension === 'width') newWidth = value;
+                if (dimension === 'depth') newDepth = value;
+                if (dimension === 'thickness') newThickness = value;
+                newGeometry = new THREE.BoxGeometry(newWidth, newThickness, newDepth);
+                 floor.userData.designWidth = newWidth; 
+                floor.userData.designDepth = newDepth;
+                floor.userData.designThickness = newThickness;
+            } else if (floor.userData.floorType === 'circle') {
+                if (dimension === 'radius') newRadius = value;
+                if (dimension === 'thickness') newThickness = value;
+                newGeometry = new THREE.CylinderGeometry(newRadius, newRadius, newThickness, 32);
+                floor.userData.designRadius = newRadius;
+                floor.userData.designThickness = newThickness;
+            } else { return; }
+
+            const oldTopY = floor.position.y + currentVisualSize.y / 2;
+            if (floor.geometry) floor.geometry.dispose();
+            floor.geometry = newGeometry;
+            floor.scale.set(1,1,1); 
+
+            floor.position.y = oldTopY - newThickness / 2; 
+            
+            floor.updateMatrixWorld(true);
+            updatePropertiesPanel([floor]); 
+            saveScene();
+        }
+
+        function updateArchwayDimension(dimension, value) { 
+            if (selectedObjects.length !== 1 || !selectedObjects[0].userData.isWallFeature || selectedObjects[0].userData.featureType !== 'archway' || value <= 0) return;
+            const archwayGroup = selectedObjects[0];
+            
+            let newArchWidth = archwayGroup.userData.actualFeatureWidth || DEFAULT_ARCHWAY_WIDTH;
+            let newArchHeight = archwayGroup.userData.actualFeatureHeight || DEFAULT_ARCHWAY_HEIGHT;
+
+            if (dimension === 'width') newArchWidth = value;
+            if (dimension === 'height') newArchHeight = value;
+
+            // Reconstruct the archway parts
+            // Clear existing children (frames, lintel)
+            while(archwayGroup.children.length > 0){ 
+                const child = archwayGroup.children[0];
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                    else child.material.dispose();
+                }
+                archwayGroup.remove(child); 
+            }
+
+            createFrameAndPanelForArchway(archwayGroup, newArchWidth, newArchHeight, DEFAULT_WALL_THICKNESS);
+            archwayGroup.userData.actualFeatureWidth = newArchWidth;
+            archwayGroup.userData.actualFeatureHeight = newArchHeight;
+
+            // Recreate Lintel
+            const wallBaseY = archwayGroup.position.y - newArchHeight / 2; // Assuming archway base is at wall base
+            const lintelHeight = DEFAULT_WALL_HEIGHT - newArchHeight;
+             if (lintelHeight > 0.01) {
+                const lintelGeo = new THREE.BoxGeometry(newArchWidth, lintelHeight, DEFAULT_WALL_THICKNESS);
+                const lintelMaterial = new THREE.MeshStandardMaterial({ color: archwayGroup.userData.originalWallColorHex || 0xB0A090 });
+                const lintelMesh = new THREE.Mesh(lintelGeo, lintelMaterial);
+                lintelMesh.position.set(0, newArchHeight / 2 + lintelHeight / 2, 0); 
+                lintelMesh.name = archwayGroup.name + "_Lintel";
+                archwayGroup.add(lintelMesh);
+            }
+            
+            archwayGroup.updateMatrixWorld(true);
+            updatePropertiesPanel([archwayGroup]);
+            showMessage("Archway dimensions updated.", 2000);
+            saveScene();
+        }
+
+
+        function updateSelectedObjectsDimension(dimension, value) { 
+            if (selectedObjects.length === 0 || value <= 0) return;
+
+            selectedObjects.forEach(obj => {
+                if (obj.userData.isFloor) { 
+                    if (selectedObjects.length === 1) updateFloorDimension(dimension,value);
+                    return; 
+                }
+                if (obj.userData.isWallFeature) { 
+                    if (obj.userData.featureType === 'archway' && selectedObjects.length === 1) {
+                        updateArchwayDimension(dimension, value); 
+                        return;
+                    }
+                    const box = new THREE.Box3().setFromObject(obj);
+                    const currentSize = new THREE.Vector3();
+                    box.getSize(currentSize);
+
+                    switch(dimension) { 
+                        case 'width': obj.scale.x *= (currentSize.x > 0.001 ? (value / currentSize.x) : 1); break;
+                        case 'height': obj.scale.y *= (currentSize.y > 0.001 ? (value / currentSize.y) : 1); break;
+                        case 'depth': obj.scale.z *= (currentSize.z > 0.001 ? (value / currentSize.z) : 1); break;
+                    }
+                } else { // For Walls (single meshes)
+                    const params = obj.geometry.parameters;
+                    if (!params || !params.width || !params.height || !params.depth) {
+                        const currentSize = new THREE.Vector3();
+                        new THREE.Box3().setFromObject(obj).getSize(currentSize);
+                        switch(dimension) { 
+                            case 'width': obj.scale.x *= (currentSize.x > 0.001 ? (value / currentSize.x) : 1); break;
+                            case 'height': obj.scale.y *= (currentSize.y > 0.001 ? (value / currentSize.y) : 1); break;
+                            case 'depth': obj.scale.z *= (currentSize.z > 0.001 ? (value / currentSize.z) : 1); break;
+                        }
+                    } else { 
+                        if (dimension === 'depth') { 
+                             obj.scale.z = value / params.depth;
+                        } else {
+                            if (selectedObjects.length === 1) { 
+                                if (dimension === 'width') obj.scale.x = value / params.width;
+                                if (dimension === 'height') obj.scale.y = value / params.height;
+                            }
+                        }
+                    }
+                }
+                obj.updateMatrixWorld(true);
+                if (obj.userData.isWall) { 
+                    obj.userData.endpoints = calculateWallEndpoints(obj);
+                    if(currentTool === 'wall') updateWallSnapMarkers(); 
+                }
+            });
+            if (selectedObjects.length > 0) updatePropertiesPanel(selectedObjects); 
+            saveScene();
+        }
+
+        // --- Layers Panel Functions ---
+        function updateLayersPanel() {
+            layersListUI.innerHTML = ''; 
+            objects.forEach(obj => {
+                if (obj === groundPlane || obj.userData.isSnapMarker) return; 
+
+                const listItem = document.createElement('li');
+                listItem.textContent = obj.name || `Object (ID: ${obj.uuid.substring(0,6)})`;
+                listItem.dataset.objectUuid = obj.uuid;
+
+                if (selectedObjects.includes(obj)) {
+                    listItem.classList.add('layer-selected');
+                }
+
+                listItem.addEventListener('click', (event) => {
+                    const clickedObject = objects.find(o => o.uuid === listItem.dataset.objectUuid);
+                    if (clickedObject) {
+                        handleSelection(clickedObject, event.shiftKey);
+                    }
+                });
+                layersListUI.appendChild(listItem);
+            });
+        }
+
+        function updateLayerSelectionVisuals() {
+            const listItems = layersListUI.getElementsByTagName('li');
+            for (let item of listItems) {
+                if (selectedObjects.some(obj => obj.uuid === item.dataset.objectUuid)) {
+                    item.classList.add('layer-selected');
+                } else {
+                    item.classList.remove('layer-selected');
+                }
+            }
+        }
+
+        // --- Save/Load Scene ---
+        const LOCAL_STORAGE_KEY = 'floorPlanData_v6'; // Incremented version for new save structure
+
+        function saveScene() {
+            const sceneData = objects.map(obj => {
+                if (obj === groundPlane || obj.userData.isSnapMarker) return null;
+
+                const data = {
+                    uuid: obj.uuid,
+                    name: obj.name,
+                    type: '', 
+                    position: { x: obj.position.x, y: obj.position.y, z: obj.position.z },
+                    rotation: { x: obj.rotation.x, y: obj.rotation.y, z: obj.rotation.z },
+                    scale: { x: obj.scale.x, y: obj.scale.y, z: obj.scale.z },
+                    color: null, 
+                    userData: { ...obj.userData }, // Save all userData
+                    childrenData: [] // For groups like doors/windows
+                };
+                
+                // Remove non-serializable parts from userData if any (like THREE.Vector3)
+                if(data.userData.originalStartPoint) data.userData.originalStartPoint = {x: data.userData.originalStartPoint.x, y: data.userData.originalStartPoint.y, z: data.userData.originalStartPoint.z};
+                if(data.userData.originalEndPoint) data.userData.originalEndPoint = {x: data.userData.originalEndPoint.x, y: data.userData.originalEndPoint.y, z: data.userData.originalEndPoint.z};
+                delete data.userData.endpoints; // These are recalculated
+                delete data.userData.panel; // This is a mesh reference, save its state instead
+                delete data.userData.attachedToWall; // This is a mesh reference
+
+                if (obj.userData.isWall) {
+                    data.type = 'wall';
+                    data.color = obj.material.color.getHexString();
+                } else if (obj.userData.isFloor) {
+                    data.type = 'floor';
+                    data.color = obj.material.color.getHexString();
+                    data.userData.designWidth = obj.geometry.parameters.width;
+                    data.userData.designDepth = obj.geometry.parameters.depth;
+                    data.userData.designThickness = obj.geometry.parameters.height;
+                    if(obj.userData.floorType === 'circle') data.userData.designRadius = obj.geometry.parameters.radiusTop;
+
+                } else if (obj.userData.isWallFeature) { 
+                    data.type = obj.userData.featureType; 
+                    // Save children data for wall features (lintels, sills, panels)
+                    obj.children.forEach(child => {
+                        if (child.isMesh) {
+                            data.childrenData.push({
+                                name: child.name,
+                                geometryType: child.geometry.type,
+                                geometryParams: child.geometry.parameters,
+                                position: {x: child.position.x, y: child.position.y, z: child.position.z},
+                                rotation: {x: child.rotation.x, y: child.rotation.y, z: child.rotation.z},
+                                materialColor: child.material.color.getHexString(),
+                                materialOpacity: child.material.opacity,
+                                materialTransparent: child.material.transparent,
+                                userData: {...child.userData} // Save child's userData (e.g., isDoorPanel, isOpen)
+                            });
+                        }
+                    });
+                }
+                return data;
+            }).filter(data => data !== null); 
+
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sceneData));
+            } catch (e) {
+                console.error("Error saving scene:", e);
+                showMessage("Error saving scene. Storage might be full.", 3000);
+            }
+        }
+
+        function loadScene() {
+            const savedDataString = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (!savedDataString) {
+                console.log("No saved scene data found.");
+                return;
+            }
+
+            try {
+                const sceneData = JSON.parse(savedDataString);
+                if (!Array.isArray(sceneData)) { console.error("Invalid scene data."); return; }
+
+                deselectAllObjects();
+                const objectsToRemove = objects.filter(obj => obj !== groundPlane && obj !== gridHelper && obj !== sunMesh && !obj.userData.isSnapMarker);
+                objectsToRemove.forEach(obj => {
+                     if (obj.isGroup) {
+                        obj.traverse(child => {
+                            if (child.isMesh) {
+                                if (child.geometry) child.geometry.dispose();
+                                if (child.material) {
+                                    if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                                    else child.material.dispose();
+                                }
+                            }
+                        });
+                    } else {
+                        if (obj.geometry) obj.geometry.dispose();
+                        if (obj.material) obj.material.dispose();
+                    }
+                    scene.remove(obj);
+                });
+                objects.length = 0; 
+
+                sceneData.forEach(data => {
+                    let loadedObject = null;
+                    if (data.type === 'wall') {
+                        if (data.userData.originalStartPoint && data.userData.originalEndPoint) {
+                            const start = new THREE.Vector3(data.userData.originalStartPoint.x, data.userData.originalStartPoint.y, data.userData.originalStartPoint.z);
+                            const end = new THREE.Vector3(data.userData.originalEndPoint.x, data.userData.originalEndPoint.y, data.userData.originalEndPoint.z);
+                            loadedObject = createWall(start, end, parseInt(data.color, 16));
+                        }
+                    } else if (data.type === 'floor') {
+                        let geometry;
+                        const color = parseInt(data.color, 16) || 0xdddddd;
+                        const material = new THREE.MeshStandardMaterial({ color: color, side: THREE.DoubleSide });
+                        const designThickness = data.userData.designThickness || DEFAULT_FLOOR_THICKNESS;
+
+                        if (data.userData.floorType === 'square') {
+                            geometry = new THREE.BoxGeometry(data.userData.designWidth || DEFAULT_FLOOR_WIDTH, designThickness, data.userData.designDepth || DEFAULT_FLOOR_DEPTH);
+                        } else if (data.userData.floorType === 'circle') {
+                            geometry = new THREE.CylinderGeometry(data.userData.designRadius || DEFAULT_FLOOR_RADIUS, data.userData.designRadius || DEFAULT_FLOOR_RADIUS, designThickness, 32);
+                        }
+                        if (geometry) {
+                            loadedObject = new THREE.Mesh(geometry, material);
+                            loadedObject.userData = {...data.userData}; // Restore all userData
+                            scene.add(loadedObject);
+                            objects.push(loadedObject);
+                        }
+                    } else if (data.type === 'door' || data.type === 'window' || data.type === 'archway') {
+                        const group = new THREE.Group();
+                        group.userData = {...data.userData}; // Restore group's userData
+                        
+                        if (data.childrenData && Array.isArray(data.childrenData)) {
+                            data.childrenData.forEach(childData => {
+                                let childGeo;
+                                if (childData.geometryType === 'BoxGeometry') {
+                                    childGeo = new THREE.BoxGeometry(childData.geometryParams.width, childData.geometryParams.height, childData.geometryParams.depth);
+                                } // Add other geometry types if needed
+                                
+                                if (childGeo) {
+                                    const childMaterial = new THREE.MeshStandardMaterial({
+                                        color: parseInt(childData.materialColor, 16),
+                                        transparent: childData.materialTransparent,
+                                        opacity: childData.materialOpacity
+                                    });
+                                    const childMesh = new THREE.Mesh(childGeo, childMaterial);
+                                    childMesh.name = childData.name;
+                                    childMesh.position.set(childData.position.x, childData.position.y, childData.position.z);
+                                    childMesh.rotation.set(childData.rotation.x, childData.rotation.y, childData.rotation.z);
+                                    childMesh.userData = {...childData.userData}; // Restore child's userData
+                                    group.add(childMesh);
+                                    if (childMesh.userData.isDoorPanel) group.userData.panel = childMesh; // Re-link panel
+                                }
+                            });
+                        }
+                        loadedObject = group;
+                        scene.add(loadedObject);
+                        objects.push(loadedObject);
+                    }
+
+                    if (loadedObject) {
+                        loadedObject.uuid = data.uuid; 
+                        loadedObject.name = data.name;
+                        loadedObject.position.set(data.position.x, data.position.y, data.position.z);
+                        loadedObject.rotation.set(data.rotation.x, data.rotation.y, data.rotation.z);
+                        loadedObject.scale.set(data.scale.x, data.scale.y, data.scale.z);
+                        loadedObject.castShadow = true;
+                        loadedObject.receiveShadow = true;
+                    }
+                });
+                
+                updateLayersPanel();
+                updateWallSnapMarkers();
+                deselectAllObjects(); 
+                showMessage("Scene loaded from local storage.", 2000);
+
+            } catch (e) {
+                console.error("Error loading scene:", e);
+                localStorage.removeItem(LOCAL_STORAGE_KEY); 
+                showMessage("Error loading scene data.", 3000);
+            }
+             // saveScene(); // Avoid saving immediately after load to prevent loops if loading has issues
+        }
+
+
+        // --- Initialization ---
+        init();
+
+    </script>
+</body>
+</html>
