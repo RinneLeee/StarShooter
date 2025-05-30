@@ -14,13 +14,44 @@
             padding-bottom: 100px; 
         }
         .game-container {
-            max-width: 1380px; /* Wider for job market */
+            max-width: 1380px; 
             margin: 20px auto;
             padding: 20px;
             background-color: #f9fafb; 
             border-radius: 16px; 
             box-shadow: 0 15px 30px rgba(0,0,0,0.15); 
         }
+        /* Header Styling for Hide/Reveal */
+        #gameHeader {
+            transition: all 0.3s ease-in-out;
+            overflow: hidden;
+            max-height: 200px; /* Enough for initial view */
+        }
+        #gameHeader.header-hidden {
+            max-height: 10px; /* Shrunk state */
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-bottom: 5px; /* Less margin when shrunk */
+            background-color: #6366f1; /* Visible strip color */
+            cursor: pointer;
+        }
+        #gameHeader.header-hidden h1, 
+        #gameHeader.header-hidden p {
+            display: none; /* Hide text when shrunk */
+        }
+        #gameHeader.header-hidden:hover {
+            max-height: 200px; /* Expand on hover */
+            padding-top: 2rem; /* Restore padding from mb-10 */
+            padding-bottom: 2rem;
+            margin-bottom: 2.5rem; /* Restore original mb-10 */
+            background-color: transparent; /* Or initial header bg if it had one */
+        }
+         #gameHeader.header-hidden:hover h1, 
+         #gameHeader.header-hidden:hover p {
+            display: block; /* Show text on hover */
+        }
+
+
         .card {
             background-color: #ffffff; border-radius: 12px; padding: 20px; margin-bottom: 20px;
             box-shadow: 0 6px 15px rgba(0,0,0,0.1); 
@@ -40,7 +71,7 @@
         .card .price { color: #16a34a; }
         .card .rent-estimate { color: #c026d3; } 
         .card .asking-price { color: #d97706; } 
-        .card .job-salary { color: #2563eb; } /* Blue for job salary */
+        .card .job-salary { color: #2563eb; } 
 
 
         .button {
@@ -66,7 +97,7 @@
         .button-rent:hover { background-color: #d97706; }
         .button-renovate { background-color: #7c3aed; } 
         .button-renovate:hover { background-color: #6d28d9; }
-        .button-apply-job { background-color: #581c87; } /* Purple for Apply Job */
+        .button-apply-job { background-color: #581c87; } 
         .button-apply-job:hover { background-color: #4c1d95; }
         .button-disabled { background-color: #9ca3af; cursor: not-allowed; text-shadow: none; box-shadow: none; }
         .button-disabled:hover { transform: none; }
@@ -75,12 +106,14 @@
             font-size: 1.75rem; font-weight: 700; margin-bottom: 20px; color: #1e293b; 
             border-bottom: 3px solid #6366f1; padding-bottom: 10px;
         }
-        .player-stats { background-color: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        /* Compact Player Stats */
+        .player-stats { background-color: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 2rem; } /* Reduced margin-bottom */
         .player-stats div {
-            background-color: #e0e7ff; padding: 14px; border-radius: 8px; margin-bottom: 10px;
-            font-size: 0.95rem; border-left: 4px solid #4f46e5; 
+            background-color: #e0e7ff; padding: 10px; border-radius: 6px; margin-bottom: 6px; /* Reduced padding and margin */
+            font-size: 0.9rem; border-left: 3px solid #4f46e5;  /* Slightly smaller font, thinner border */
         }
-        .player-stats strong { color: #3730a3; font-weight: 700; }
+        .player-stats strong { color: #3730a3; font-weight: 600; } /* Slightly less bold */
+
         .game-log { background-color: #f8fafc; border-radius: 12px; padding: 10px; }
         .game-log li { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.875rem; }
         .game-log li:last-child { border-bottom: none; }
@@ -152,56 +185,95 @@
         #loanAdModal .modal-content .modal-button.modal-confirm-button:hover { background-color: #ca8a04; }
         #loanAdModal .modal-content .modal-button.modal-cancel-button { background-color: #a16207; }
         #loanAdModal .modal-content .modal-button.modal-cancel-button:hover { background-color: #713f12; }
+
+        /* Game Over Overlay */
+        .game-over-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); /* Darker overlay */
+            z-index: 2000; /* Above other modals */
+            color: white;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column; /* Stack elements vertically */
+        }
+        .game-over-overlay h2 {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .game-over-overlay p {
+            font-size: 1.25rem;
+            margin-bottom: 30px;
+        }
+        .game-over-overlay .button-restart {
+            padding: 15px 30px;
+            font-size: 1.25rem;
+            background-color: #16a34a; /* Green */
+        }
+        .game-over-overlay .button-restart:hover {
+            background-color: #15803d;
+        }
+
     </style>
 </head>
 <body class="p-4 md:p-8">
 
     <div class="game-container">
-        <header class="mb-10 text-center">
+        <header id="gameHeader" class="mb-10 text-center"> 
             <h1 class="text-5xl font-bold text-indigo-700">Property Tycoon</h1>
             <p class="text-xl text-slate-600 mt-2">Your Journey to Real Estate Riches!</p>
         </header>
 
-        <section class="mb-10 player-stats">
+        <section class="player-stats"> 
             <h2 class="section-title">Your Financial Dashboard</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5"> 
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"> 
                 <div><strong>Age:</strong> <span id="player-age">18 years</span></div>
                 <div><strong>Cash:</strong> $<span id="player-cash">20000</span></div>
                 <div><strong>Job:</strong> <span id="player-job-title">Unskilled Labor</span></div>
-                <div><strong>Salary (Monthly):</strong> $<span id="player-salary">1800</span></div>
+                <div><strong>Salary (Monthly):</strong> $<span id="player-salary">1200</span></div> 
                 <div><strong>Net Worth:</strong> $<span id="player-net-worth">20000</span></div>
             </div>
         </section>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-8">
             <section class="lg:col-span-2">
                 <h2 class="section-title">Property Market Listings</h2>
                 <div id="property-listings" class="space-y-5 max-h-[600px] overflow-y-auto p-3 bg-slate-100 rounded-lg">
                     <p class="text-slate-500 text-center py-12">No properties listed this month. Click "Next Month".</p>
                 </div>
             </section>
-            <section class="lg:col-span-1"> 
-                <h2 class="section-title">Job Market</h2>
-                <div id="job-market-listings" class="space-y-5 max-h-[600px] overflow-y-auto p-3 bg-slate-100 rounded-lg">
-                     <p class="text-slate-500 text-center py-12">No job openings this month. Check back later!</p>
-                </div>
+            
+            <section class="lg:col-span-1 space-y-10"> 
+                <section> 
+                    <h2 class="section-title">Activity Log</h2>
+                    <ul id="game-log" class="list-none p-3 bg-slate-100 rounded-lg max-h-56 overflow-y-auto">
+                        <li class="text-slate-500">Game started. Good luck!</li>
+                    </ul>
+                </section>
+
+                <section> 
+                    <h2 class="section-title">Your Portfolio</h2>
+                    <div id="owned-properties" class="grid grid-cols-1 gap-5 max-h-[600px] overflow-y-auto p-3 bg-slate-100 rounded-lg"> 
+                        <p class="text-slate-500 text-center py-12 col-span-full" id="no-owned-properties-msg">You don't own any properties yet.</p> 
+                    </div>
+                </section>
             </section>
         </div>
         
         <section class="mt-10">
-            <h2 class="section-title">Your Portfolio</h2>
-            <div id="owned-properties" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 max-h-[600px] overflow-y-auto p-3 bg-slate-100 rounded-lg">
-                <p class="text-slate-500 text-center py-12 col-span-full" id="no-owned-properties-msg">You don't own any properties yet.</p> 
+            <h2 class="section-title">Job Market</h2>
+            <div id="job-market-listings" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 max-h-[600px] overflow-y-auto p-3 bg-slate-100 rounded-lg">
+                 <p class="text-slate-500 text-center py-12 col-span-full">No job openings this month. Check back later!</p>
             </div>
         </section>
 
-
-        <section class="mt-10">
-            <h2 class="section-title">Activity Log</h2>
-            <ul id="game-log" class="list-none p-3 bg-slate-100 rounded-lg max-h-56 overflow-y-auto">
-                <li class="text-slate-500">Game started. Good luck!</li>
-            </ul>
-        </section>
     </div>
 
     <div class="fixed-action-bar">
@@ -218,8 +290,62 @@
     <div id="externalLoanModal" class="modal"><div class="modal-content"><h2 id="externalLoanModalTitle">Take External Loan</h2><p>Borrow funds at undisclosed high interest rates. Repay over 36 months. This is risky!</p><div><label for="externalLoanAmountInput" class="block mb-1 font-medium">Loan Amount:</label><input type="number" id="externalLoanAmountInput" class="modal-input" placeholder="Enter amount"></div><div class="quick-loan-buttons text-center mb-4"><button class="button button-secondary" onclick="setExternalLoanAmount(10000)">$10,000</button><button class="button button-secondary" onclick="setExternalLoanAmount(50000)">$50,000</button><button class="button button-secondary" onclick="setExternalLoanAmount(100000)">$100,000</button></div><p>Estimated Monthly Payment: $<span id="externalLoanEstPayment">0</span> (approx.)</p><div class="modal-buttons"><button id="confirmExternalLoanBtn" class="modal-button modal-confirm-button">Take Loan</button><button id="cancelExternalLoanBtn" class="modal-button modal-cancel-button">Cancel</button></div></div></div>
     <div id="loanAdModal" class="modal"><div class="modal-content"> <h2 id="loanAdModalTitle">💰 Feeling Lucky? Need Quick Cash? 💰</h2><p id="loanAdModalMessage">A unique opportunity for an external loan has presented itself! Fast cash, fast terms. What could go wrong?</p><div class="modal-buttons"><button id="loanAdTakeLoanBtn" class="modal-button modal-confirm-button">Explore Loan Options!</button><button id="loanAdDismissBtn" class="modal-button modal-cancel-button">No, Thanks</button></div></div></div>
 
+    <div id="jobApplicationConfirmModal" class="modal">
+        <div class="modal-content">
+            <h2 id="jobConfirmModalTitle">Confirm Job Application</h2>
+            <div id="jobConfirmDetails" class="details mb-4">
+                </div>
+            <p>Are you sure you want to apply for this position?</p>
+            <div class="modal-buttons">
+                <button id="confirmJobApplicationBtn" class="modal-button modal-confirm-button">Confirm Application</button>
+                <button id="cancelJobApplicationBtn" class="modal-button modal-cancel-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameOverOverlay" class="game-over-overlay">
+        <div> <h2 id="gameOverTitle">Game Over</h2>
+            <p id="gameOverMessage">Your journey has come to an end.</p>
+            <button id="restartGameBtn" class="button button-restart">Restart Game</button>
+        </div>
+    </div>
+
+
     <script>
-        // --- Game Configuration ---
+        // CORE DATA DEFINITIONS AT THE TOP
+        const PROPERTY_TYPES = [ 
+            { name: "Studio Apartment", basePrice: 80000, priceRange: 70000, baseRentability: 0.7 },
+            { name: "2-Bedroom Condo", basePrice: 150000, priceRange: 150000, baseRentability: 0.8 },
+            { name: "Townhouse", basePrice: 250000, priceRange: 250000, baseRentability: 0.75 },
+            { name: "Detached House", basePrice: 400000, priceRange: 400000, baseRentability: 0.85 },
+            { name: "Luxury Penthouse", basePrice: 750000, priceRange: 1250000, baseRentability: 0.6 }
+        ];
+        const JOB_FIELDS = {
+            UNSKILLED: "General Labor", IT: "Information Technology", HEALTHCARE: "Healthcare",
+            BUSINESS: "Business & Finance", SERVICE: "Service Industry"
+        };
+        const JOBS = [
+            { id: "unskilled0", title: "Unskilled Labor", field: JOB_FIELDS.UNSKILLED, level: 0, salary: 1200, annualIncrementPercent: 0.01, prerequisites: null, promotionChanceMonths: 24, promotionChance: 0.1, promotionTo: "it0" },
+            { id: "it0", title: "IT Intern", field: JOB_FIELDS.IT, level: 0, salary: 2200, annualIncrementPercent: 0.02, prerequisites: null, promotionChanceMonths: 12, promotionChance: 0.3, promotionTo: "it1" },
+            { id: "it1", title: "Junior IT Support", field: JOB_FIELDS.IT, level: 1, salary: 3000, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.IT, minExperienceInFieldMonths: 6 }, promotionChanceMonths: 18, promotionChance: 0.25, promotionTo: "it2" },
+            { id: "it2", title: "IT Support Specialist", field: JOB_FIELDS.IT, level: 2, salary: 4200, annualIncrementPercent: 0.04, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.IT, minExperienceInFieldMonths: 18 }, promotionChanceMonths: 24, promotionChance: 0.2, promotionTo: "it3" },
+            { id: "it3", title: "Senior IT Engineer", field: JOB_FIELDS.IT, level: 3, salary: 6500, annualIncrementPercent: 0.05, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.IT, minExperienceInFieldMonths: 36 }, promotionChanceMonths: 36, promotionChance: 0.15, promotionTo: "it4" }, 
+            { id: "it4", title: "IT Manager", field: JOB_FIELDS.IT, level: 4, salary: 9000, annualIncrementPercent: 0.03, companyAnnualBonusChance: 0.6, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.IT, minExperienceInFieldMonths: 60 } },
+            { id: "health0", title: "Hospital Volunteer", field: JOB_FIELDS.HEALTHCARE, level: 0, salary: 1900, annualIncrementPercent: 0.01, prerequisites: null, promotionChanceMonths: 12, promotionChance: 0.25, promotionTo: "health1"},
+            { id: "health1", title: "Nursing Assistant", field: JOB_FIELDS.HEALTHCARE, level: 1, salary: 2800, annualIncrementPercent: 0.025, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.HEALTHCARE, minExperienceInFieldMonths: 6 }, promotionChanceMonths: 18, promotionChance: 0.2, promotionTo: "health2" },
+            { id: "health2", title: "Registered Nurse", field: JOB_FIELDS.HEALTHCARE, level: 2, salary: 4500, annualIncrementPercent: 0.035, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.HEALTHCARE, minExperienceInFieldMonths: 24 }, promotionChanceMonths: 30, promotionChance: 0.15, promotionTo: "health3" },
+            { id: "health3", title: "Senior Nurse Practitioner", field: JOB_FIELDS.HEALTHCARE, level: 3, salary: 7000, annualIncrementPercent: 0.04, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.HEALTHCARE, minExperienceInFieldMonths: 48 }, promotionChanceMonths: 36, promotionChance: 0.1, promotionTo: "health4" },
+            { id: "health4", title: "Chief Nursing Officer", field: JOB_FIELDS.HEALTHCARE, level: 4, salary: 10000, annualIncrementPercent: 0.02, companyAnnualBonusChance: 0.7, companyAnnualBonusPercent: 0.12, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.HEALTHCARE, minExperienceInFieldMonths: 72 } },
+            { id: "biz0", title: "Office Intern", field: JOB_FIELDS.BUSINESS, level: 0, salary: 2000, annualIncrementPercent: 0.015, prerequisites: null, promotionChanceMonths: 12, promotionChance: 0.3, promotionTo: "biz1" },
+            { id: "biz1", title: "Junior Accountant", field: JOB_FIELDS.BUSINESS, level: 1, salary: 3200, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.BUSINESS, minExperienceInFieldMonths: 12 }, promotionChanceMonths: 24, promotionChance: 0.2, promotionTo: "biz2" },
+            { id: "biz2", title: "Financial Analyst", field: JOB_FIELDS.BUSINESS, level: 2, salary: 5000, annualIncrementPercent: 0.045, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.BUSINESS, minExperienceInFieldMonths: 24 }, promotionChanceMonths: 30, promotionChance: 0.15, promotionTo: "biz3" },
+            { id: "biz3", title: "Finance Manager", field: JOB_FIELDS.BUSINESS, level: 3, salary: 8000, annualIncrementPercent: 0.00, companyAnnualBonusChance: 0.7, companyAnnualBonusPercent: 0.15, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.BUSINESS, minExperienceInFieldMonths: 48 }, promotionChanceMonths: 36, promotionChance: 0.1, promotionTo: "biz4" },
+            { id: "biz4", title: "Chief Financial Officer (CFO)", field: JOB_FIELDS.BUSINESS, level: 4, salary: 12000, annualIncrementPercent: 0.00, companyAnnualBonusChance: 0.8, companyAnnualBonusPercent: 0.20, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.BUSINESS, minExperienceInFieldMonths: 72 } },
+            { id: "serv0", title: "Barista Trainee", field: JOB_FIELDS.SERVICE, level: 0, salary: 2000, annualIncrementPercent: 0.02, prerequisites: null, promotionChanceMonths: 6, promotionChance: 0.4, promotionTo: "serv1" },
+            { id: "serv1", title: "Shift Supervisor", field: JOB_FIELDS.SERVICE, level: 1, salary: 2800, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.SERVICE, minExperienceInFieldMonths: 6 }, promotionChanceMonths: 18, promotionChance: 0.25, promotionTo: "serv2" },
+            { id: "serv2", title: "Store Manager", field: JOB_FIELDS.SERVICE, level: 2, salary: 4000, annualIncrementPercent: 0.00, companyAnnualBonusChance: 0.5, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.SERVICE, minExperienceInFieldMonths: 24 } }
+        ];
+        
         const INITIAL_CASH = 20000;
         const PROPERTY_DOWN_PAYMENT_PERCENTAGE = 0.20;
         const AVAILABLE_LOAN_TERMS = [ { years: 10, months: 120 }, { years: 15, months: 180 }, { years: 20, months: 240 }, { years: 30, months: 360 }];
@@ -268,56 +394,21 @@
         const EXTERNAL_LOAN_TERM_MONTHS = 36; 
         const LOAN_AD_CHANCE = 0.03; 
         const MIN_MONTHS_FOR_LOAN_AD = 6; 
-
-        console.log("Defining PROPERTY_TYPES...");
-        const PROPERTY_TYPES = [ 
-            { name: "Studio Apartment", basePrice: 80000, priceRange: 70000, baseRentability: 0.7 },
-            { name: "2-Bedroom Condo", basePrice: 150000, priceRange: 150000, baseRentability: 0.8 },
-            { name: "Townhouse", basePrice: 250000, priceRange: 250000, baseRentability: 0.75 },
-            { name: "Detached House", basePrice: 400000, priceRange: 400000, baseRentability: 0.85 },
-            { name: "Luxury Penthouse", basePrice: 750000, priceRange: 1250000, baseRentability: 0.6 }
-        ];
-        console.log("PROPERTY_TYPES defined:", typeof PROPERTY_TYPES, PROPERTY_TYPES ? PROPERTY_TYPES.length : 'N/A');
-
-        const JOB_FIELDS = {
-            UNSKILLED: "General Labor", IT: "Information Technology", HEALTHCARE: "Healthcare",
-            BUSINESS: "Business & Finance", SERVICE: "Service Industry"
-        };
-        console.log("Defining JOBS...");
-        const JOBS = [
-            { id: "unskilled0", title: "Unskilled Labor", field: JOB_FIELDS.UNSKILLED, level: 0, salary: 1800, annualIncrementPercent: 0.01, prerequisites: null, promotionChanceMonths: 24, promotionChance: 0.1, promotionTo: "it0" },
-            { id: "it0", title: "IT Intern", field: JOB_FIELDS.IT, level: 0, salary: 2200, annualIncrementPercent: 0.02, prerequisites: null, promotionChanceMonths: 12, promotionChance: 0.3, promotionTo: "it1" },
-            { id: "it1", title: "Junior IT Support", field: JOB_FIELDS.IT, level: 1, salary: 3000, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.IT, minExperienceInFieldMonths: 6 }, promotionChanceMonths: 18, promotionChance: 0.25, promotionTo: "it2" },
-            { id: "it2", title: "IT Support Specialist", field: JOB_FIELDS.IT, level: 2, salary: 4200, annualIncrementPercent: 0.04, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.IT, minExperienceInFieldMonths: 18 }, promotionChanceMonths: 24, promotionChance: 0.2, promotionTo: "it3" },
-            { id: "it3", title: "Senior IT Engineer", field: JOB_FIELDS.IT, level: 3, salary: 6500, annualIncrementPercent: 0.05, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.IT, minExperienceInFieldMonths: 36 }, promotionChanceMonths: 36, promotionChance: 0.15, promotionTo: "it4" }, 
-            { id: "it4", title: "IT Manager", field: JOB_FIELDS.IT, level: 4, salary: 9000, annualIncrementPercent: 0.03, companyAnnualBonusChance: 0.6, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.IT, minExperienceInFieldMonths: 60 } },
-            { id: "health0", title: "Hospital Volunteer", field: JOB_FIELDS.HEALTHCARE, level: 0, salary: 1900, annualIncrementPercent: 0.01, prerequisites: null, promotionChanceMonths: 12, promotionChance: 0.25, promotionTo: "health1"},
-            { id: "health1", title: "Nursing Assistant", field: JOB_FIELDS.HEALTHCARE, level: 1, salary: 2800, annualIncrementPercent: 0.025, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.HEALTHCARE, minExperienceInFieldMonths: 6 }, promotionChanceMonths: 18, promotionChance: 0.2, promotionTo: "health2" },
-            { id: "health2", title: "Registered Nurse", field: JOB_FIELDS.HEALTHCARE, level: 2, salary: 4500, annualIncrementPercent: 0.035, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.HEALTHCARE, minExperienceInFieldMonths: 24 }, promotionChanceMonths: 30, promotionChance: 0.15, promotionTo: "health3" },
-            { id: "health3", title: "Senior Nurse Practitioner", field: JOB_FIELDS.HEALTHCARE, level: 3, salary: 7000, annualIncrementPercent: 0.04, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.HEALTHCARE, minExperienceInFieldMonths: 48 }, promotionChanceMonths: 36, promotionChance: 0.1, promotionTo: "health4" },
-            { id: "health4", title: "Chief Nursing Officer", field: JOB_FIELDS.HEALTHCARE, level: 4, salary: 10000, annualIncrementPercent: 0.02, companyAnnualBonusChance: 0.7, companyAnnualBonusPercent: 0.12, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.HEALTHCARE, minExperienceInFieldMonths: 72 } },
-            { id: "biz0", title: "Office Intern", field: JOB_FIELDS.BUSINESS, level: 0, salary: 2000, annualIncrementPercent: 0.015, prerequisites: null, promotionChanceMonths: 12, promotionChance: 0.3, promotionTo: "biz1" },
-            { id: "biz1", title: "Junior Accountant", field: JOB_FIELDS.BUSINESS, level: 1, salary: 3200, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.BUSINESS, minExperienceInFieldMonths: 12 }, promotionChanceMonths: 24, promotionChance: 0.2, promotionTo: "biz2" },
-            { id: "biz2", title: "Financial Analyst", field: JOB_FIELDS.BUSINESS, level: 2, salary: 5000, annualIncrementPercent: 0.045, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.BUSINESS, minExperienceInFieldMonths: 24 }, promotionChanceMonths: 30, promotionChance: 0.15, promotionTo: "biz3" },
-            { id: "biz3", title: "Finance Manager", field: JOB_FIELDS.BUSINESS, level: 3, salary: 8000, annualIncrementPercent: 0.00, companyAnnualBonusChance: 0.7, companyAnnualBonusPercent: 0.15, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.BUSINESS, minExperienceInFieldMonths: 48 }, promotionChanceMonths: 36, promotionChance: 0.1, promotionTo: "biz4" },
-            { id: "biz4", title: "Chief Financial Officer (CFO)", field: JOB_FIELDS.BUSINESS, level: 4, salary: 12000, annualIncrementPercent: 0.00, companyAnnualBonusChance: 0.8, companyAnnualBonusPercent: 0.20, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.BUSINESS, minExperienceInFieldMonths: 72 } },
-            { id: "serv0", title: "Barista Trainee", field: JOB_FIELDS.SERVICE, level: 0, salary: 2000, annualIncrementPercent: 0.02, prerequisites: null, promotionChanceMonths: 6, promotionChance: 0.4, promotionTo: "serv1" },
-            { id: "serv1", title: "Shift Supervisor", field: JOB_FIELDS.SERVICE, level: 1, salary: 2800, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.SERVICE, minExperienceInFieldMonths: 6 }, promotionChanceMonths: 18, promotionChance: 0.25, promotionTo: "serv2" },
-            { id: "serv2", title: "Store Manager", field: JOB_FIELDS.SERVICE, level: 2, salary: 4000, annualIncrementPercent: 0.00, companyAnnualBonusChance: 0.5, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.SERVICE, minExperienceInFieldMonths: 24 } } // Removed trailing comma
-        ];
-        console.log("JOBS defined:", typeof JOBS, JOBS ? JOBS.length : 'N/A');
-
+        
         const MAX_JOB_LISTINGS = 4;
         const JOB_APPLICATION_BASE_SUCCESS_CHANCE = 0.4;
+        const BANKRUPTCY_THRESHOLD = -10000; // New constant
 
         let player = { 
             ageMonths: 18 * 12, cash: INITIAL_CASH, 
             currentJobId: "unskilled0", 
             experienceInCurrentJobMonths: 0,
             totalExperienceInFieldMonths: 0, 
-            salary: 1800, 
+            salary: 1200, 
             netWorth: INITIAL_CASH, 
-            properties: [], externalLoans: [] 
+            properties: [], externalLoans: [],
+            deathAgeYears: 0, 
+            deathAgeMonths: 0 
         };
         let availableProperties = [];
         let availableJobs = []; 
@@ -326,6 +417,8 @@
         let propertyToManageIndex = -1; 
         let currentOfferForProperty = null; 
         let selectedLoanTermMonths = AVAILABLE_LOAN_TERMS.find(t => t.years === 20).months;
+        let jobToApplyForId = null; 
+        let firstMonthAdvanced = false; // To track first click of "Advance Month"
 
         const ageEl = document.getElementById('player-age');
         const cashEl = document.getElementById('player-cash');
@@ -339,6 +432,7 @@
         const nextMonthBtn = document.getElementById('next-month-btn');
         const externalLoanBtn = document.getElementById('external-loan-btn'); 
         const gameLogEl = document.getElementById('game-log');
+        const gameHeaderEl = document.getElementById('gameHeader'); 
         
         const messageModal = document.getElementById('messageModal');
         const messageModalContentEl = messageModal.querySelector('.modal-content'); 
@@ -392,6 +486,17 @@
         const loanAdTakeLoanBtn = document.getElementById('loanAdTakeLoanBtn');
         const loanAdDismissBtn = document.getElementById('loanAdDismissBtn');
 
+        const jobApplicationConfirmModal = document.getElementById('jobApplicationConfirmModal');
+        const jobConfirmModalTitleEl = document.getElementById('jobConfirmModalTitle');
+        const jobConfirmDetailsEl = document.getElementById('jobConfirmDetails');
+        const confirmJobApplicationBtn = document.getElementById('confirmJobApplicationBtn');
+        const cancelJobApplicationBtn = document.getElementById('cancelJobApplicationBtn');
+
+        const gameOverOverlayEl = document.getElementById('gameOverOverlay');
+        const gameOverTitleEl = document.getElementById('gameOverTitle');
+        const gameOverMessageEl = document.getElementById('gameOverMessage');
+        const restartGameBtn = document.getElementById('restartGameBtn');
+
 
         function formatCurrency(amount) { return Math.round(amount).toLocaleString(); }
         
@@ -419,6 +524,8 @@
             if (event.target == offerModal) offerModal.style.display = "none";
             if (event.target == externalLoanModal) externalLoanModal.style.display = "none";
             if (event.target == loanAdModal) loanAdModal.style.display = "none";
+            if (event.target == jobApplicationConfirmModal) jobApplicationConfirmModal.style.display = "none";
+            // Do not close game over overlay on window click
         }
         function addLogEntry(message) { gameLog.unshift(message); if (gameLog.length > MAX_LOG_ENTRIES) gameLog.pop(); renderGameLog(); }
         function getConditionClass(condition) { if (condition >= 70) return 'condition-good'; if (condition >= 40) return 'condition-fair'; return 'condition-poor'; }
@@ -478,8 +585,8 @@
                     card.className = 'card';
                     let prereqText = "None";
                     if (job.prerequisites) {
-                        const prevJobField = JOBS.find(j => j.level === job.prerequisites.previousJobLevel && j.field === job.prerequisites.field);
-                        prereqText = `${prevJobField ? prevJobField.title : `Level ${job.prerequisites.previousJobLevel} in ${job.prerequisites.field}`} & ${(job.prerequisites.minExperienceInFieldMonths / 12).toFixed(1)} yrs in field`;
+                        const prevJob = JOBS.find(j => j.level === job.prerequisites.previousJobLevel && j.field === job.prerequisites.field);
+                        prereqText = `${prevJob ? prevJob.title : `Level ${job.prerequisites.previousJobLevel} in ${job.prerequisites.field}`} & ${(job.prerequisites.minExperienceInFieldMonths / 12).toFixed(1)} yrs in field`;
                     }
 
                     card.innerHTML = `
@@ -488,8 +595,7 @@
                         <p class="job-salary">Salary: $${formatCurrency(job.salary)}/month</p>
                         <p>Annual Increment: ${(job.annualIncrementPercent * 100).toFixed(1)}% ${job.companyAnnualBonusChance ? `(+ ${ (job.companyAnnualBonusPercent*100).toFixed(0) }% bonus chance)` : ''}</p>
                         <p class="text-xs">Prerequisites: ${prereqText}</p>
-                        <button class="button button-apply-job mt-3 w-full" onclick="applyForJob('${job.id}')">Apply Now</button>
-                    `;
+                        <button class="button button-apply-job mt-3 w-full" onclick="openJobApplicationConfirmModal('${job.id}')">Apply Now</button> `;
                     jobMarketListingsEl.appendChild(card);
                 });
             } catch (e) {
@@ -577,23 +683,17 @@
         }
 
         function generateNewProperties() { 
-            console.log("Attempting to use PROPERTY_TYPES in generateNewProperties. Type:", typeof PROPERTY_TYPES);
             if (typeof PROPERTY_TYPES === 'undefined' || !PROPERTY_TYPES) {
                 console.error("CRITICAL: PROPERTY_TYPES is undefined or null in generateNewProperties!");
-                availableProperties = []; // Ensure it's an empty array to prevent further errors
-                return;
+                availableProperties = []; return;
             }
-
             availableProperties = [];
             const numPropsToGenerate = Math.floor(Math.random() * (PROPERTIES_PER_MONTH_MAX - PROPERTIES_PER_MONTH_MIN + 1)) + PROPERTIES_PER_MONTH_MIN;
             let goldenAppearedThisMonth = false;
             for (let i = 0; i < numPropsToGenerate; i++) {
                 const typeIndex = Math.floor(Math.random() * PROPERTY_TYPES.length);
                 const type = PROPERTY_TYPES[typeIndex];
-                if (!type) { // Safeguard if typeIndex is out of bounds (shouldn't happen with correct PROPERTY_TYPES)
-                    console.error("Error: Could not find property type for index", typeIndex);
-                    continue; 
-                }
+                if (!type) { console.error("Error: Could not find property type for index", typeIndex); continue; }
                 let price, initialCondition, estimatedRent; let isGolden = false;
                 if (!goldenAppearedThisMonth && Math.random() < GOLDEN_OPPORTUNITY_CHANCE) {
                     isGolden = true; goldenAppearedThisMonth = true;
@@ -637,8 +737,7 @@
 
             const potentialJobs = JOBS.filter(job => {
                 if (job.id === player.currentJobId) return false; 
-
-                let meetsPrereqs = true; // Assume true initially for each potential job
+                let meetsPrereqs = true; 
                 if (job.prerequisites) {
                     const currentJobField = currentPlayerJob.field;
                     if (job.prerequisites.field && currentJobField !== job.prerequisites.field && job.level > 0) { 
@@ -656,10 +755,16 @@
                 }
                 if (!meetsPrereqs) return false; 
 
-                if (job.field === currentPlayerJob.field && job.level === currentPlayerJob.level + 1) return true;
+                const salaryLowerBound = player.salary * 0.7;
+                const salaryUpperBound = player.salary * 1.8;
+                const isSalaryRelevant = job.salary >= salaryLowerBound && job.salary <= salaryUpperBound;
+
+                if (job.field === currentPlayerJob.field && job.level === currentPlayerJob.level + 1) return true; 
                 if (job.level === 0 && job.field !== currentPlayerJob.field) return true; 
-                if (job.level === 1 && job.field !== currentPlayerJob.field && player.ageMonths > (18*12 + 24)) return Math.random() < 0.15; 
-                return false; 
+                if (isSalaryRelevant && Math.random() < 0.6) return true; 
+                if (job.level === currentPlayerJob.level && job.field !== currentPlayerJob.field && Math.random() < 0.3) return true; 
+                
+                return Math.random() < 0.1; 
             });
 
             potentialJobs.sort(() => 0.5 - Math.random());
@@ -677,6 +782,11 @@
 
         function advanceMonth() {
             try { 
+                if (!firstMonthAdvanced) {
+                    if (gameHeaderEl) gameHeaderEl.classList.add('header-hidden');
+                    firstMonthAdvanced = true;
+                }
+
                 currentMonth++; player.ageMonths++; player.cash += player.salary;
                 addLogEntry(`Payday! Received $${formatCurrency(player.salary)} salary.`);
                 player.experienceInCurrentJobMonths++;
@@ -842,16 +952,22 @@
                 generateJobOpportunities(); 
                 updateAllUI();
 
-                if (player.cash < 0 && !nextMonthBtn.disabled) {
-                    showModal("Game Over!", `Bankrupt! Final net worth: $${formatCurrency(player.netWorth)}.`, 'error');
-                    addLogEntry("GAME OVER: Bankrupt!");
-                    nextMonthBtn.disabled = true; nextMonthBtn.classList.add('button-disabled'); nextMonthBtn.textContent = "Game Over - Refresh";
+                // Game End Conditions
+                if (player.cash < BANKRUPTCY_THRESHOLD && !nextMonthBtn.disabled) { 
+                    gameOverTitleEl.textContent = "Game Over: Bankruptcy!";
+                    gameOverMessageEl.textContent = `Your cash fell below $${formatCurrency(BANKRUPTCY_THRESHOLD)}! Your final net worth was $${formatCurrency(player.netWorth)}.`;
+                    gameOverOverlayEl.style.display = 'flex';
+                    addLogEntry("GAME OVER: You are bankrupt!");
+                    nextMonthBtn.disabled = true; nextMonthBtn.classList.add('button-disabled'); nextMonthBtn.textContent = "Game Over";
+                } else if (player.ageMonths >= player.deathAgeMonths && !nextMonthBtn.disabled) { 
+                    const finalAgeYears = Math.floor(player.ageMonths / 12);
+                    gameOverTitleEl.textContent = "Time's Up!";
+                    gameOverMessageEl.textContent = `You lived a full life to the age of ${finalAgeYears}! Your final net worth is $${formatCurrency(player.netWorth)}. Thanks for playing!`;
+                    gameOverOverlayEl.style.display = 'flex';
+                    addLogEntry(`GAME ENDED: Reached age ${finalAgeYears}. Final Net Worth: $${formatCurrency(player.netWorth)}`);
+                    nextMonthBtn.disabled = true; nextMonthBtn.classList.add('button-disabled'); nextMonthBtn.textContent = "Game Ended";
                 }
-                if (player.netWorth >= 1000000 && !nextMonthBtn.disabled && player.properties.some(p => p.name.toLowerCase().includes("luxury"))) {
-                    showModal("You Win!", `Property Tycoon! Net worth: $${formatCurrency(player.netWorth)}!`, 'success');
-                    addLogEntry("CONGRATULATIONS: You've won!");
-                    nextMonthBtn.disabled = true; nextMonthBtn.classList.add('button-disabled'); nextMonthBtn.textContent = "You Won! - Refresh";
-                }
+
             } catch (e) {
                 console.error("Critical error in advanceMonth:", e);
                 showModal("Critical Error", "A critical error occurred. Please check the console and consider refreshing.", 'error');
@@ -1099,7 +1215,35 @@
         loanAdTakeLoanBtn.onclick = function() { loanAdModal.style.display = 'none'; externalLoanBtn.click(); };
         loanAdDismissBtn.onclick = function() { loanAdModal.style.display = 'none'; };
 
-        window.applyForJob = function(jobId) {
+        window.openJobApplicationConfirmModal = function(jobId) { 
+            jobToApplyForId = jobId;
+            const targetJob = JOBS.find(j => j.id === jobId);
+            if (!targetJob) {
+                console.error("Target job not found for confirmation:", jobId);
+                return;
+            }
+            jobConfirmModalTitleEl.textContent = `Confirm Application: ${targetJob.title}`;
+            jobConfirmDetailsEl.innerHTML = `
+                <p><strong>Job Title:</strong> ${targetJob.title}</p>
+                <p><strong>Field:</strong> ${targetJob.field}</p>
+                <p><strong>Salary:</strong> $${formatCurrency(targetJob.salary)}/month</p>
+            `;
+            jobApplicationConfirmModal.style.display = 'block';
+        }
+
+        confirmJobApplicationBtn.onclick = function() {
+            if (jobToApplyForId) {
+                processJobApplication(jobToApplyForId);
+            }
+            jobApplicationConfirmModal.style.display = 'none';
+            jobToApplyForId = null;
+        }
+        cancelJobApplicationBtn.onclick = function() {
+            jobApplicationConfirmModal.style.display = 'none';
+            jobToApplyForId = null;
+        }
+
+        function processJobApplication(jobId) { 
             const targetJob = JOBS.find(j => j.id === jobId);
             const currentPlayerJob = JOBS.find(j => j.id === player.currentJobId);
             if (!targetJob || !currentPlayerJob) {
@@ -1178,27 +1322,48 @@
             }
         }
         nextMonthBtn.addEventListener('click', advanceMonth);
+        restartGameBtn.addEventListener('click', () => {
+            gameOverOverlayEl.style.display = 'none';
+            initializeGame();
+        });
+
         function initializeGame() {
             try {
                 const startingJob = JOBS.find(j => j.id === "unskilled0");
+                if (!startingJob) { 
+                    console.error("CRITICAL ERROR: Starting job 'unskilled0' not found in JOBS array!");
+                    alert("CRITICAL ERROR: Starting job definition missing. Game cannot start.");
+                    return;
+                }
+                player.deathAgeYears = 60 + Math.floor(Math.random() * 31); 
+                player.deathAgeMonths = player.deathAgeYears * 12;
+
                 player = { 
                     ageMonths: 18 * 12, cash: INITIAL_CASH, 
                     currentJobId: "unskilled0", experienceInCurrentJobMonths: 0, totalExperienceInFieldMonths: 0,
-                    salary: startingJob ? startingJob.salary : 1800, 
-                    netWorth: INITIAL_CASH, properties: [], externalLoans: [] 
+                    salary: startingJob.salary, 
+                    netWorth: INITIAL_CASH, properties: [], externalLoans: [],
+                    deathAgeYears: player.deathAgeYears, 
+                    deathAgeMonths: player.deathAgeMonths
                 };
                 availableProperties = []; availableJobs = [];
                 gameLog = ["Game started. Good luck!"]; currentMonth = 0;
+                firstMonthAdvanced = false; // Reset for header hiding
                 selectedLoanTermMonths = AVAILABLE_LOAN_TERMS.find(t => t.years === 20).months;
-                propertyToManageIndex = -1; currentOfferForProperty = null;
+                propertyToManageIndex = -1; currentOfferForProperty = null; jobToApplyForId = null;
                 nextMonthBtn.disabled = false; nextMonthBtn.classList.remove('button-disabled'); nextMonthBtn.textContent = "Advance to Next Month";
                 
+                if (gameHeaderEl) { // Ensure header is visible on new game
+                    gameHeaderEl.classList.remove('header-hidden');
+                }
+                gameOverOverlayEl.style.display = 'none'; // Ensure overlay is hidden
+
                 generateNewProperties(); 
                 generateJobOpportunities(); 
                 updateAllUI();
                 
-                const initialJobTitle = startingJob ? startingJob.title : 'Unemployed';
-                addLogEntry(`Welcome to Property Tycoon! Start with $${formatCurrency(INITIAL_CASH)} as ${initialJobTitle}.`);
+                const initialJobTitle = startingJob.title;
+                addLogEntry(`Welcome to Property Tycoon! Start with $${formatCurrency(INITIAL_CASH)} as ${initialJobTitle}. You will live to be ${player.deathAgeYears}.`);
             } catch (e) {
                 console.error("Error during initializeGame:", e);
                 const body = document.querySelector('body');
@@ -1207,9 +1372,8 @@
                 }
             }
         }
-        // Ensure the script runs after the DOM is fully loaded
         window.addEventListener('DOMContentLoaded', (event) => {
-            console.log('DOM fully loaded and parsed');
+            console.log('DOM fully loaded and parsed. Initializing game...');
             initializeGame();
         });
     </script>
