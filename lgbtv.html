@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LGBTV+ - Streaming for Everyone</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #ff3e80;
+            --secondary: #3ea6ff;
+            --accent: #8c52ff;
+            --dark: #141414;
+            --darker: #0a0a0a;
+            --light: #ffffff;
+            --gray: #808080;
+            --card-bg: #1f1f1f;
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            overflow-x: hidden;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            transition: background 0.3s ease;
+        }
+
+        header.scrolled {
+            background: var(--dark);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo i {
+            color: var(--secondary);
+        }
+
+        .login-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .login-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .login-form input {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            color: var(--light);
+            width: 180px;
+        }
+
+        .login-form input::placeholder {
+            color: var(--gray);
+        }
+
+        .login-btn {
+            padding: 8px 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .login-btn:hover {
+            background: #ff1a6a;
+        }
+
+        .user-profile {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .hero {
+            height: 80vh;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), 
+                        url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            padding: 0 50px;
+            margin-top: 0;
+        }
+
+        .hero-content {
+            max-width: 600px;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero-description {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: var(--light);
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ff1a6a;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .content-section {
+            padding: 40px 50px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--secondary);
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 0 30px;
+            scrollbar-width: none;
+        }
+
+        .row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .card {
+            min-width: 250px;
+            height: 150px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s;
+            background: var(--card-bg);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 15px;
+        }
+
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: white;
+        }
+
+        .card-info {
+            display: flex;
+            gap: 10px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .featured-row .card {
+            min-width: 300px;
+            height: 180px;
+        }
+
+        .lgbtq-highlights {
+            background: linear-gradient(90deg, var(--darker), rgba(142, 68, 173, 0.2), var(--darker));
+            border-top: 2px solid var(--accent);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        footer {
+            padding: 40px 50px;
+            background: var(--dark);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .footer-logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-links a {
+            color: var(--gray);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--secondary);
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icons a {
+            color: var(--light);
+            font-size: 1.5rem;
+            transition: color 0.3s;
+        }
+
+        .social-icons a:hover {
+            color: var(--primary);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 20px;
+            }
+            
+            .hero {
+                padding: 0 20px;
+                height: 70vh;
+            }
+            
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .content-section {
+                padding: 30px 20px;
+            }
+            
+            .login-form input {
+                width: 120px;
+            }
+            
+            .card {
+                min-width: 200px;
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header id="main-header">
+        <a href="#" class="logo">
+            <i class="fas fa-tv"></i>
+            <span>LGBTV+</span>
+        </a>
+        <div class="login-container">
+            <div class="login-form" id="login-form">
+                <input type="text" id="username" placeholder="Username">
+                <input type="password" id="password" placeholder="Password">
+                <button class="login-btn" id="login-btn">Login</button>
+            </div>
+            <div class="user-profile" id="user-profile">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <span id="welcome-message">Welcome, User</span>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Pride in Every Story</h1>
+            <p class="hero-description">Stream award-winning LGBTQ+ movies, series, and documentaries. Celebrate diversity with content created by and for the community.</p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary"><i class="fas fa-play"></i> Start Watching</button>
+                <button class="btn btn-secondary"><i class="fas fa-info-circle"></i> Learn More</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="content-section">
+        <h2 class="section-title"><i class="fas fa-fire"></i> Trending Now</h2>
+        <div class="row">
+            <!-- Cards will be generated with JS -->
+        </div>
+    </section>
+
+    <section class="content-section featured-row">
+        <h2 class="section-title"><i class="fas fa-star"></i> Featured Originals</h2>
+        <div class="row">
+            <!-- Cards will be generated with JS -->
+        </div>
+    </section>
+
+    <section class="content-section lgbtq-highlights">
+        <h2 class="section-title"><i class="fas fa-rainbow"></i> Pride Collection</h2>
+        <div class="row">
+            <!-- Cards will be generated with JS -->
+        </div>
+    </section>
+
+    <section class="content-section">
+        <h2 class="section-title"><i class="fas fa-theater-masks"></i> Documentaries</h2>
+        <div class="row">
+            <!-- Cards will be generated with JS -->
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <div class="footer-logo">LGBTV+</div>
+                <p>Streaming platform dedicated to LGBTQ+ stories and creators.</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+            <div>
+                <h3>Navigation</h3>
+                <div class="footer-links">
+                    <a href="#">Home</a>
+                    <a href="#">Movies</a>
+                    <a href="#">Series</a>
+                    <a href="#">New Releases</a>
+                </div>
+            </div>
+            <div>
+                <h3>Support</h3>
+                <div class="footer-links">
+                    <a href="#">Account</a>
+                    <a href="#">Help Center</a>
+                    <a href="#">Contact Us</a>
+                    <a href="#">Gift Cards</a>
+                </div>
+            </div>
+            <div>
+                <h3>Legal</h3>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Use</a>
+                    <a href="#">Cookie Preferences</a>
+                </div>
+            </div>
+        </div>
+        <div class="copyright">
+            &copy; 2023 LGBTV+ Streaming Service. All rights reserved. Celebrating diversity since 2023.
+        </div>
+    </footer>
+
+    <script>
+        // Sample content data
+        const contentData = {
+            trending: [
+                {title: "Love, Simon", year: 2018, genre: "Romance", duration: "1h 50m"},
+                {title: "Moonlight", year: 2016, genre: "Drama", duration: "1h 51m"},
+                {title: "Pose", year: 2018, genre: "Drama", duration: "Series"},
+                {title: "Heartstopper", year: 2022, genre: "Romance", duration: "Series"},
+                {title: "The Half of It", year: 2020, genre: "Comedy", duration: "1h 44m"}
+            ],
+            featured: [
+                {title: "Pride Journey", year: 2023, genre: "Documentary", duration: "Series"},
+                {title: "Queer as Folk", year: 2022, genre: "Drama", duration: "Series"},
+                {title: "Transparent", year: 2014, genre: "Drama", duration: "Series"},
+                {title: "Veneno", year: 2020, genre: "Biography", duration: "Series"},
+                {title: "Euphoria", year: 2019, genre: "Drama", duration: "Series"}
+            ],
+            pride: [
+                {title: "Paris is Burning", year: 1990, genre: "Documentary", duration: "1h 11m"},
+                {title: "Brokeback Mountain", year: 2005, genre: "Drama", duration: "2h 14m"},
+                {title: "Carol", year: 2015, genre: "Romance", duration: "1h 58m"},
+                {title: "The Birdcage", year: 1996, genre: "Comedy", duration: "1h 57m"},
+                {title: "Hedwig and the Angry Inch", year: 2001, genre: "Musical", duration: "1h 35m"}
+            ],
+            documentaries: [
+                {title: "Disclosure", year: 2020, genre: "Documentary", duration: "1h 48m"},
+                {title: "The Death and Life of Marsha P. Johnson", year: 2017, genre: "Documentary", duration: "1h 45m"},
+                {title: "How to Survive a Plague", year: 2012, genre: "Documentary", duration: "1h 49m"},
+                {title: "Circus of Books", year: 2019, genre: "Documentary", duration: "1h 32m"},
+                {title: "A Secret Love", year: 2020, genre: "Documentary", duration: "1h 22m"}
+            ]
+        };
+
+        // Function to generate random placeholder images from Unsplash
+        function getRandomImageUrl() {
+            const tags = ['movie', 'cinema', 'drama', 'theater', 'film', 'romance', 'pride'];
+            const randomTag = tags[Math.floor(Math.random() * tags.length)];
+            return `https://source.unsplash.com/random/300x180/?${randomTag}`;
+        }
+
+        // Function to create card elements
+        function createCard(item) {
+            return `
+                <div class="card">
+                    <img src="${getRandomImageUrl()}" alt="${item.title}" class="card-img">
+                    <div class="card-overlay">
+                        <div class="card-title">${item.title}</div>
+                        <div class="card-info">
+                            <span>${item.year}</span>
+                            <span>•</span>
+                            <span>${item.genre}</span>
+                            <span>•</span>
+                            <span>${item.duration}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Function to populate content rows
+        function populateContent() {
+            const rows = document.querySelectorAll('.row');
+            
+            // Trending row
+            contentData.trending.forEach(item => {
+                rows[0].innerHTML += createCard(item);
+            });
+            
+            // Featured row
+            contentData.featured.forEach(item => {
+                rows[1].innerHTML += createCard(item);
+            });
+            
+            // Pride row
+            contentData.pride.forEach(item => {
+                rows[2].innerHTML += createCard(item);
+            });
+            
+            // Documentaries row
+            contentData.documentaries.forEach(item => {
+                rows[3].innerHTML += createCard(item);
+            });
+        }
+
+        // Login functionality
+        document.getElementById('login-btn').addEventListener('click', function() {
+            const username = document.getElementById('username').value || 'User';
+            const password = document.getElementById('password').value;
+            
+            // Simple validation
+            if (password.length < 3) {
+                alert('Password must be at least 3 characters long');
+                return;
+            }
+            
+            // Update UI for logged in state
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('user-profile').style.display = 'flex';
+            document.getElementById('welcome-message').textContent = `Welcome, ${username}`;
+            document.getElementById('user-avatar').textContent = username.charAt(0).toUpperCase();
+        });
+
+        // Header scroll effect
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('main-header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Initialize the page
+        window.onload = function() {
+            populateContent();
+        };
+    </script>
+</body>
+</html>
