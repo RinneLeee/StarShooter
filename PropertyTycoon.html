@@ -21,37 +21,34 @@
             border-radius: 16px; 
             box-shadow: 0 15px 30px rgba(0,0,0,0.15); 
         }
-        /* Header Styling for Hide/Reveal */
         #gameHeader {
             transition: all 0.3s ease-in-out;
             overflow: hidden;
-            max-height: 200px; /* Enough for initial view */
+            max-height: 200px; 
         }
         #gameHeader.header-hidden {
-            max-height: 10px; /* Shrunk state */
+            max-height: 10px; 
             padding-top: 0;
             padding-bottom: 0;
-            margin-bottom: 5px; /* Less margin when shrunk */
-            background-color: #6366f1; /* Visible strip color */
+            margin-bottom: 5px; 
+            background-color: #6366f1; 
             cursor: pointer;
         }
         #gameHeader.header-hidden h1, 
         #gameHeader.header-hidden p {
-            display: none; /* Hide text when shrunk */
+            display: none; 
         }
         #gameHeader.header-hidden:hover {
-            max-height: 200px; /* Expand on hover */
-            padding-top: 2rem; /* Restore padding from mb-10 */
+            max-height: 200px; 
+            padding-top: 2rem; 
             padding-bottom: 2rem;
-            margin-bottom: 2.5rem; /* Restore original mb-10 */
-            background-color: transparent; /* Or initial header bg if it had one */
+            margin-bottom: 2.5rem; 
+            background-color: transparent; 
         }
          #gameHeader.header-hidden:hover h1, 
          #gameHeader.header-hidden:hover p {
-            display: block; /* Show text on hover */
+            display: block; 
         }
-
-
         .card {
             background-color: #ffffff; border-radius: 12px; padding: 20px; margin-bottom: 20px;
             box-shadow: 0 6px 15px rgba(0,0,0,0.1); 
@@ -72,8 +69,6 @@
         .card .rent-estimate { color: #c026d3; } 
         .card .asking-price { color: #d97706; } 
         .card .job-salary { color: #2563eb; } 
-
-
         .button {
             color: white; padding: 10px 16px; border-radius: 8px; font-weight: 600; 
             cursor: pointer; transition: background-color 0.2s, transform 0.1s ease;
@@ -82,11 +77,12 @@
         }
         .button:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .button:active { transform: translateY(0px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-
         .button-main-action { padding: 12px 24px; font-size: 1.1rem; background-color: #4f46e5; }
         .button-main-action:hover { background-color: #4338ca; }
         .button-external-loan { background-color: #0891b2; }
         .button-external-loan:hover { background-color: #0e7490; }
+        .button-new-life { background-color: #f43f5e; } 
+        .button-new-life:hover { background-color: #e11d48; }
         .button-secondary { background-color: #64748b; } 
         .button-secondary:hover { background-color: #475569; }
         .button-buy { background-color: #16a34a; } 
@@ -101,34 +97,28 @@
         .button-apply-job:hover { background-color: #4c1d95; }
         .button-disabled { background-color: #9ca3af; cursor: not-allowed; text-shadow: none; box-shadow: none; }
         .button-disabled:hover { transform: none; }
-
         .section-title {
             font-size: 1.75rem; font-weight: 700; margin-bottom: 20px; color: #1e293b; 
             border-bottom: 3px solid #6366f1; padding-bottom: 10px;
         }
-        /* Compact Player Stats */
-        .player-stats { background-color: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 2rem; } /* Reduced margin-bottom */
+        .player-stats { background-color: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 2rem; } 
         .player-stats div {
-            background-color: #e0e7ff; padding: 10px; border-radius: 6px; margin-bottom: 6px; /* Reduced padding and margin */
-            font-size: 0.9rem; border-left: 3px solid #4f46e5;  /* Slightly smaller font, thinner border */
+            background-color: #e0e7ff; padding: 10px; border-radius: 6px; margin-bottom: 6px; 
+            font-size: 0.9rem; border-left: 3px solid #4f46e5;  
         }
-        .player-stats strong { color: #3730a3; font-weight: 600; } /* Slightly less bold */
-
+        .player-stats strong { color: #3730a3; font-weight: 600; } 
         .game-log { background-color: #f8fafc; border-radius: 12px; padding: 10px; }
         .game-log li { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.875rem; }
         .game-log li:last-child { border-bottom: none; }
-
         .property-status { font-weight: 600; } 
         .status-rented { color: #16a34a; }
         .status-listed-rent { color: #f59e0b; } 
         .status-vacant { color: #6b7280; }
         .status-delinquent { color: #ef4444; font-weight: 700; } 
         .status-listed-sale { color: #db2777; font-weight: 700; } 
-
         .condition-good { color: #16a34a; }
         .condition-fair { color: #f59e0b; }
         .condition-poor { color: #ef4444; }
-
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(30, 41, 59, 0.6); backdrop-filter: blur(4px);  }
         .modal-content { background-color: #ffffff; margin: 8% auto; padding: 28px; border: 1px solid #cbd5e1; width: 90%; max-width: 550px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.25); }
         .modal-content h2 { font-size: 1.35rem; font-weight: 700; margin-bottom: 20px; text-align: center; }
@@ -138,7 +128,6 @@
         .modal-buttons { display: flex; justify-content: space-around; margin-top: 24px; }
         .modal-button { padding: 12px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background-color 0.2s, transform 0.1s; border: none; font-size: 0.95rem; text-shadow: 0 1px 1px rgba(0,0,0,0.1);}
         .modal-button:hover { transform: translateY(-1px); }
-        
         #messageModal .modal-content.modal-success { background-color: #f0fdf4; border-left: 6px solid #22c55e; }
         #messageModal .modal-content.modal-success h2 { color: #15803d; }
         #messageModal .modal-content.modal-success .modal-button { background-color: #22c55e; }
@@ -155,27 +144,23 @@
         #messageModal .modal-content.modal-info h2 { color: #1d4ed8; }
         #messageModal .modal-content.modal-info .modal-button { background-color: #3b82f6; }
         #messageModal .modal-content.modal-info .modal-button:hover { background-color: #2563eb; }
-
         .modal-accept-offer-button { background-color: #16a34a; color: white; }
         .modal-accept-offer-button:hover { background-color: #15803d; }
         .modal-counter-offer-button { background-color: #f59e0b; color: white; }
         .modal-counter-offer-button:hover { background-color: #d97706; }
         .modal-cancel-button { background-color: #64748b; color: white; } 
         .modal-cancel-button:hover { background-color: #475569; }
-
         .loan-term-option { margin-bottom: 12px; }
         .loan-term-option label { margin-left: 10px; font-size: 0.95rem; }
         #sellModalOfferDetails p { margin-bottom: 8px; }
         .quick-loan-buttons button { margin: 0 5px; }
-
         .fixed-action-bar {
             position: fixed; bottom: 0; left: 0; width: 100%; padding: 15px 0; 
             background-color: rgba(249, 250, 251, 0.9); backdrop-filter: blur(8px); 
             text-align: center; z-index: 1001; border-top: 1px solid #dde2e9;
             box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
         }
-        .fixed-action-bar button { margin-left: 10px; margin-right: 10px; }
-
+        .fixed-action-bar button { margin-left: 8px; margin-right: 8px; } 
         #loanAdModal .modal-content {
             background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%); 
             border: 3px solid #facc15; color: #713f12; 
@@ -185,42 +170,16 @@
         #loanAdModal .modal-content .modal-button.modal-confirm-button:hover { background-color: #ca8a04; }
         #loanAdModal .modal-content .modal-button.modal-cancel-button { background-color: #a16207; }
         #loanAdModal .modal-content .modal-button.modal-cancel-button:hover { background-color: #713f12; }
-
-        /* Game Over Overlay */
         .game-over-overlay {
-            display: none; /* Hidden by default */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.85); /* Darker overlay */
-            z-index: 2000; /* Above other modals */
-            color: white;
-            text-align: center;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column; /* Stack elements vertically */
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); z-index: 2000; 
+            color: white; text-align: center; justify-content: center;
+            align-items: center; flex-direction: column; 
         }
-        .game-over-overlay h2 {
-            font-size: 3rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        .game-over-overlay p {
-            font-size: 1.25rem;
-            margin-bottom: 30px;
-        }
-        .game-over-overlay .button-restart {
-            padding: 15px 30px;
-            font-size: 1.25rem;
-            background-color: #16a34a; /* Green */
-        }
-        .game-over-overlay .button-restart:hover {
-            background-color: #15803d;
-        }
-
+        .game-over-overlay h2 { font-size: 3rem; font-weight: bold; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .game-over-overlay p { font-size: 1.25rem; margin-bottom: 30px; }
+        .game-over-overlay .button-restart { padding: 15px 30px; font-size: 1.25rem; background-color: #16a34a; }
+        .game-over-overlay .button-restart:hover { background-color: #15803d; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -274,11 +233,17 @@
             </div>
         </section>
 
+        <!-- New Life Button Section -->
+        <section class="mt-10 text-center">
+             <button id="new-life-btn" class="button button-new-life">Start New Life</button>
+        </section>
+
     </div>
 
     <div class="fixed-action-bar">
         <button id="next-month-btn" class="button button-main-action">Advance to Next Month</button>
         <button id="external-loan-btn" class="button button-external-loan">External Loans</button>
+        <!-- "Start New Life" button moved from here -->
     </div>
 
 
@@ -289,27 +254,9 @@
     <div id="offerModal" class="modal"><div class="modal-content"><h2 id="offerModalTitle">Offer Received!</h2><div id="offerPropertyInfo" class="details mb-3"></div><div id="offerModalDetails" class="mb-3"><p><strong>Asking:</strong> $<span id="offerAskingPrice">0</span></p><p><strong>Buyer's Offer:</strong> $<span id="offerBuyerOfferValue">0</span></p></div><div id="offerModalCounterOfferSection" class="mb-3"><label for="offerCounterInput" class="block mb-1 font-medium">Your Counter:</label><input type="number" id="offerCounterInput" class="modal-input" placeholder="Counter price"></div><div class="modal-buttons"><button id="acceptOfferBtn" class="modal-button modal-accept-offer-button">Accept</button><button id="submitOfferCounterBtn" class="modal-button modal-counter-offer-button">Counter</button><button id="rejectOfferBtn" class="modal-button modal-cancel-button">Reject</button></div></div></div>
     <div id="externalLoanModal" class="modal"><div class="modal-content"><h2 id="externalLoanModalTitle">Take External Loan</h2><p>Borrow funds at undisclosed high interest rates. Repay over 36 months. This is risky!</p><div><label for="externalLoanAmountInput" class="block mb-1 font-medium">Loan Amount:</label><input type="number" id="externalLoanAmountInput" class="modal-input" placeholder="Enter amount"></div><div class="quick-loan-buttons text-center mb-4"><button class="button button-secondary" onclick="setExternalLoanAmount(10000)">$10,000</button><button class="button button-secondary" onclick="setExternalLoanAmount(50000)">$50,000</button><button class="button button-secondary" onclick="setExternalLoanAmount(100000)">$100,000</button></div><p>Estimated Monthly Payment: $<span id="externalLoanEstPayment">0</span> (approx.)</p><div class="modal-buttons"><button id="confirmExternalLoanBtn" class="modal-button modal-confirm-button">Take Loan</button><button id="cancelExternalLoanBtn" class="modal-button modal-cancel-button">Cancel</button></div></div></div>
     <div id="loanAdModal" class="modal"><div class="modal-content"> <h2 id="loanAdModalTitle">💰 Feeling Lucky? Need Quick Cash? 💰</h2><p id="loanAdModalMessage">A unique opportunity for an external loan has presented itself! Fast cash, fast terms. What could go wrong?</p><div class="modal-buttons"><button id="loanAdTakeLoanBtn" class="modal-button modal-confirm-button">Explore Loan Options!</button><button id="loanAdDismissBtn" class="modal-button modal-cancel-button">No, Thanks</button></div></div></div>
-
-    <div id="jobApplicationConfirmModal" class="modal">
-        <div class="modal-content">
-            <h2 id="jobConfirmModalTitle">Confirm Job Application</h2>
-            <div id="jobConfirmDetails" class="details mb-4">
-                </div>
-            <p>Are you sure you want to apply for this position?</p>
-            <div class="modal-buttons">
-                <button id="confirmJobApplicationBtn" class="modal-button modal-confirm-button">Confirm Application</button>
-                <button id="cancelJobApplicationBtn" class="modal-button modal-cancel-button">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="gameOverOverlay" class="game-over-overlay">
-        <div> <h2 id="gameOverTitle">Game Over</h2>
-            <p id="gameOverMessage">Your journey has come to an end.</p>
-            <button id="restartGameBtn" class="button button-restart">Restart Game</button>
-        </div>
-    </div>
-
+    <div id="jobApplicationConfirmModal" class="modal"><div class="modal-content"><h2 id="jobConfirmModalTitle">Confirm Job Application</h2><div id="jobConfirmDetails" class="details mb-4"></div><p>Are you sure you want to apply for this position?</p><div class="modal-buttons"><button id="confirmJobApplicationBtn" class="modal-button modal-confirm-button">Confirm Application</button><button id="cancelJobApplicationBtn" class="modal-button modal-cancel-button">Cancel</button></div></div></div>
+    <div id="resetConfirmModal" class="modal"><div class="modal-content"><h2 id="resetConfirmModalTitle">Start New Life?</h2><p>All current progress will be reset. Are you sure?</p><div class="modal-buttons"><button id="confirmResetBtn" class="modal-button modal-confirm-button">Yes, Reset</button><button id="cancelResetBtn" class="modal-button modal-cancel-button">No, Cancel</button></div></div></div>
+    <div id="gameOverOverlay" class="game-over-overlay"><div> <h2 id="gameOverTitle">Game Over</h2><p id="gameOverMessage">Your journey has come to an end.</p><button id="restartGameBtn" class="button button-restart">Restart Game</button></div></div>
 
     <script>
         // CORE DATA DEFINITIONS AT THE TOP
@@ -397,7 +344,7 @@
         
         const MAX_JOB_LISTINGS = 4;
         const JOB_APPLICATION_BASE_SUCCESS_CHANCE = 0.4;
-        const BANKRUPTCY_THRESHOLD = -10000; // New constant
+        const BANKRUPTCY_THRESHOLD = -10000; 
 
         let player = { 
             ageMonths: 18 * 12, cash: INITIAL_CASH, 
@@ -418,7 +365,7 @@
         let currentOfferForProperty = null; 
         let selectedLoanTermMonths = AVAILABLE_LOAN_TERMS.find(t => t.years === 20).months;
         let jobToApplyForId = null; 
-        let firstMonthAdvanced = false; // To track first click of "Advance Month"
+        let firstMonthAdvanced = false; 
 
         const ageEl = document.getElementById('player-age');
         const cashEl = document.getElementById('player-cash');
@@ -431,6 +378,7 @@
         const noOwnedPropertiesMsgEl = document.getElementById('no-owned-properties-msg');
         const nextMonthBtn = document.getElementById('next-month-btn');
         const externalLoanBtn = document.getElementById('external-loan-btn'); 
+        const newLifeBtn = document.getElementById('new-life-btn'); 
         const gameLogEl = document.getElementById('game-log');
         const gameHeaderEl = document.getElementById('gameHeader'); 
         
@@ -492,6 +440,10 @@
         const confirmJobApplicationBtn = document.getElementById('confirmJobApplicationBtn');
         const cancelJobApplicationBtn = document.getElementById('cancelJobApplicationBtn');
 
+        const resetConfirmModal = document.getElementById('resetConfirmModal');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+
         const gameOverOverlayEl = document.getElementById('gameOverOverlay');
         const gameOverTitleEl = document.getElementById('gameOverTitle');
         const gameOverMessageEl = document.getElementById('gameOverMessage');
@@ -525,7 +477,7 @@
             if (event.target == externalLoanModal) externalLoanModal.style.display = "none";
             if (event.target == loanAdModal) loanAdModal.style.display = "none";
             if (event.target == jobApplicationConfirmModal) jobApplicationConfirmModal.style.display = "none";
-            // Do not close game over overlay on window click
+            if (event.target == resetConfirmModal) resetConfirmModal.style.display = "none";
         }
         function addLogEntry(message) { gameLog.unshift(message); if (gameLog.length > MAX_LOG_ENTRIES) gameLog.pop(); renderGameLog(); }
         function getConditionClass(condition) { if (condition >= 70) return 'condition-good'; if (condition >= 40) return 'condition-fair'; return 'condition-poor'; }
@@ -785,6 +737,7 @@
                 if (!firstMonthAdvanced) {
                     if (gameHeaderEl) gameHeaderEl.classList.add('header-hidden');
                     firstMonthAdvanced = true;
+                    // saveGame(); // Save after first advance to store header state - moved to end of advanceMonth
                 }
 
                 currentMonth++; player.ageMonths++; player.cash += player.salary;
@@ -951,6 +904,7 @@
                 generateNewProperties(); 
                 generateJobOpportunities(); 
                 updateAllUI();
+                saveGame(); 
 
                 // Game End Conditions
                 if (player.cash < BANKRUPTCY_THRESHOLD && !nextMonthBtn.disabled) { 
@@ -1025,7 +979,7 @@
             addLogEntry(`Bought ${propToBuy.name} for $${formatCurrency(propToBuy.price)} (${chosenTermMonths/12}-yr loan).`);
             showModal("Purchase Successful!", `Bought ${propToBuy.name}! Cash: $${formatCurrency(player.cash)}.`, 'success');
             availableProperties.splice(propertyToManageIndex, 1);
-            loanTermModal.style.display = 'none'; propertyToManageIndex = -1; updateAllUI();
+            loanTermModal.style.display = 'none'; propertyToManageIndex = -1; updateAllUI(); saveGame();
         }
         cancelLoanBtn.onclick = function() { loanTermModal.style.display = 'none'; propertyToManageIndex = -1; }
 
@@ -1038,7 +992,7 @@
             }
             prop.isListedForRent = !prop.isListedForRent;
             addLogEntry(prop.isListedForRent ? `${prop.name} listed for rent.` : `Cancelled rent listing for ${prop.name}.`);
-            updateAllUI();
+            updateAllUI(); saveGame();
         }
         window.openRenovationModal = function(index) { 
             propertyToManageIndex = index; const prop = player.properties[propertyToManageIndex];
@@ -1071,7 +1025,7 @@
             prop.condition = Math.min(100, prop.condition + conditionImproved);
             addLogEntry(`Spent $${formatCurrency(amountSpent)} renovating ${prop.name}. Cond: ${prop.condition.toFixed(1)}%.`);
             showModal("Renovation Complete", `${prop.name} cond: ${prop.condition.toFixed(1)}%.`, 'success');
-            renovationModal.style.display = 'none'; propertyToManageIndex = -1; updateAllUI();
+            renovationModal.style.display = 'none'; propertyToManageIndex = -1; updateAllUI(); saveGame();
         }
         cancelRenovationBtn.onclick = function() { renovationModal.style.display = 'none'; propertyToManageIndex = -1; }
 
@@ -1095,7 +1049,7 @@
             if (prop.isListedForSale) addLogEntry(`Asking price for ${prop.name} changed from $${formatCurrency(prop.askingPrice)} to $${formatCurrency(newAskingPrice)}.`);
             else { addLogEntry(`${prop.name} listed for sale with asking price $${formatCurrency(newAskingPrice)}.`); prop.timeOnMarket = 0; }
             prop.isListedForSale = true; prop.askingPrice = newAskingPrice; prop.isListedForRent = false; 
-            listSaleModal.style.display = 'none'; propertyToManageIndex = -1; updateAllUI();
+            listSaleModal.style.display = 'none'; propertyToManageIndex = -1; updateAllUI(); saveGame();
         }
         cancelListSaleBtn.onclick = function() { listSaleModal.style.display = 'none'; propertyToManageIndex = -1; }
         window.deListProperty = function(index) {
@@ -1104,7 +1058,7 @@
             prop.isListedForSale = false; prop.askingPrice = 0; prop.timeOnMarket = 0;
             addLogEntry(`${prop.name} has been de-listed from the sale market.`);
             showModal("Property De-listed", `${prop.name} is no longer for sale.`, 'info');
-            propertyToManageIndex = -1; updateAllUI();
+            propertyToManageIndex = -1; updateAllUI(); saveGame();
         }
         window.openOfferModal = function(index, buyerOfferAmount) {
             propertyToManageIndex = index; currentOfferForProperty = buyerOfferAmount; 
@@ -1165,7 +1119,7 @@
             player.properties.splice(propertyIndex, 1); 
             propertyToManageIndex = -1; currentOfferForProperty = null;
             listSaleModal.style.display = 'none'; offerModal.style.display = 'none';
-            updateAllUI();
+            updateAllUI(); saveGame();
         }
 
         externalLoanBtn.addEventListener('click', () => {
@@ -1203,7 +1157,7 @@
             player.externalLoans.push(newLoan); player.cash += principal;
             addLogEntry(`RISKY MOVE: Took an external loan of $${formatCurrency(principal)}. Monthly payment: $${formatCurrency(monthlyPayment)} for ${EXTERNAL_LOAN_TERM_MONTHS} months.`);
             showModal("External Loan Acquired", `You borrowed $${formatCurrency(principal)}. Good luck paying it back!`, 'warning');
-            externalLoanModal.style.display = 'none'; updateAllUI();
+            externalLoanModal.style.display = 'none'; updateAllUI(); saveGame();
         }
         cancelExternalLoanBtn.onclick = function() { externalLoanModal.style.display = 'none'; }
 
@@ -1293,7 +1247,78 @@
                 addLogEntry(`Application for ${targetJob.title} was rejected.`);
                 showModal("Application Unsuccessful", `Unfortunately, your application for ${targetJob.title} was not successful this time.`, 'warning');
             }
-            generateJobOpportunities(); updateAllUI();
+            generateJobOpportunities(); updateAllUI(); saveGame();
+        }
+
+        const SAVE_KEY = "propertyTycoonSaveData";
+
+        function saveGame() {
+            try {
+                const gameState = {
+                    player: player,
+                    currentMonth: currentMonth,
+                    gameLog: gameLog,
+                    firstMonthAdvanced: firstMonthAdvanced,
+                    availableProperties: availableProperties, // Save current market listings
+                    availableJobs: availableJobs // Save current job listings
+                };
+                localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+                // console.log("Game Saved!"); // Optional: for debugging
+            } catch (e) {
+                console.error("Error saving game:", e);
+                showModal("Save Error", "Could not save game progress to local storage.", 'error');
+            }
+        }
+
+        function loadGame() {
+            try {
+                const savedData = localStorage.getItem(SAVE_KEY);
+                if (savedData) {
+                    const gameState = JSON.parse(savedData);
+                    
+                    // Restore player object and ensure all nested objects/arrays are present
+                    player = { ...player, ...gameState.player }; // Merge to preserve defaults if new fields added to player later
+                    player.properties = gameState.player.properties || [];
+                    player.externalLoans = gameState.player.externalLoans || [];
+
+                    currentMonth = gameState.currentMonth;
+                    gameLog = gameState.gameLog || ["Game loaded."];
+                    firstMonthAdvanced = gameState.firstMonthAdvanced || false;
+                    
+                    availableProperties = gameState.availableProperties || []; // Restore market
+                    availableJobs = gameState.availableJobs || []; // Restore jobs
+
+                    if (firstMonthAdvanced && gameHeaderEl) {
+                        gameHeaderEl.classList.add('header-hidden');
+                    } else if (gameHeaderEl) {
+                        gameHeaderEl.classList.remove('header-hidden');
+                    }
+
+                    addLogEntry("Game progress loaded successfully.");
+                    console.log("Loaded player data:", JSON.parse(JSON.stringify(player))); // For debugging
+                    return true; 
+                }
+            } catch (e) {
+                console.error("Error loading game:", e);
+                showModal("Load Error", "Could not load saved game. Starting a new game.", 'error');
+                localStorage.removeItem(SAVE_KEY); 
+            }
+            return false; 
+        }
+
+        newLifeBtn.addEventListener('click', () => {
+            resetConfirmModal.style.display = 'block';
+        });
+
+        confirmResetBtn.onclick = function() {
+            localStorage.removeItem(SAVE_KEY);
+            addLogEntry("Progress reset. Starting a new life!");
+            showModal("New Life Started", "Your progress has been reset.", "info");
+            resetConfirmModal.style.display = 'none';
+            initializeGame(true); 
+        }
+        cancelResetBtn.onclick = function() {
+            resetConfirmModal.style.display = 'none';
         }
 
 
@@ -1324,39 +1349,56 @@
         nextMonthBtn.addEventListener('click', advanceMonth);
         restartGameBtn.addEventListener('click', () => {
             gameOverOverlayEl.style.display = 'none';
-            initializeGame();
+            initializeGame(true); 
         });
 
-        function initializeGame() {
+        function initializeGame(forceNew = false) { 
             try {
+                let gameWasLoaded = false;
+                if (!forceNew) {
+                    gameWasLoaded = loadGame();
+                }
+
+                if (gameWasLoaded) {
+                    console.log("Game was loaded. Skipping full new game initialization.");
+                    // Data is already loaded into global variables by loadGame()
+                    // We might still need to refresh dynamic parts of the UI if they weren't saved/loaded
+                    // For instance, if availableJobs and availableProperties were not part of the save, regenerate them:
+                    if (!availableProperties || availableProperties.length === 0) generateNewProperties();
+                    if (!availableJobs || availableJobs.length === 0) generateJobOpportunities();
+                    updateAllUI();
+                    return; 
+                }
+
+                console.log("Initializing a new game...");
                 const startingJob = JOBS.find(j => j.id === "unskilled0");
                 if (!startingJob) { 
                     console.error("CRITICAL ERROR: Starting job 'unskilled0' not found in JOBS array!");
                     alert("CRITICAL ERROR: Starting job definition missing. Game cannot start.");
                     return;
                 }
-                player.deathAgeYears = 60 + Math.floor(Math.random() * 31); 
-                player.deathAgeMonths = player.deathAgeYears * 12;
+                const deathAgeYears = 60 + Math.floor(Math.random() * 31); 
+                const deathAgeMonths = deathAgeYears * 12;
 
                 player = { 
                     ageMonths: 18 * 12, cash: INITIAL_CASH, 
                     currentJobId: "unskilled0", experienceInCurrentJobMonths: 0, totalExperienceInFieldMonths: 0,
                     salary: startingJob.salary, 
                     netWorth: INITIAL_CASH, properties: [], externalLoans: [],
-                    deathAgeYears: player.deathAgeYears, 
-                    deathAgeMonths: player.deathAgeMonths
+                    deathAgeYears: deathAgeYears, 
+                    deathAgeMonths: deathAgeMonths
                 };
                 availableProperties = []; availableJobs = [];
                 gameLog = ["Game started. Good luck!"]; currentMonth = 0;
-                firstMonthAdvanced = false; // Reset for header hiding
+                firstMonthAdvanced = false; 
                 selectedLoanTermMonths = AVAILABLE_LOAN_TERMS.find(t => t.years === 20).months;
                 propertyToManageIndex = -1; currentOfferForProperty = null; jobToApplyForId = null;
                 nextMonthBtn.disabled = false; nextMonthBtn.classList.remove('button-disabled'); nextMonthBtn.textContent = "Advance to Next Month";
                 
-                if (gameHeaderEl) { // Ensure header is visible on new game
+                if (gameHeaderEl) { 
                     gameHeaderEl.classList.remove('header-hidden');
                 }
-                gameOverOverlayEl.style.display = 'none'; // Ensure overlay is hidden
+                gameOverOverlayEl.style.display = 'none'; 
 
                 generateNewProperties(); 
                 generateJobOpportunities(); 
@@ -1364,6 +1406,7 @@
                 
                 const initialJobTitle = startingJob.title;
                 addLogEntry(`Welcome to Property Tycoon! Start with $${formatCurrency(INITIAL_CASH)} as ${initialJobTitle}. You will live to be ${player.deathAgeYears}.`);
+                saveGame(); 
             } catch (e) {
                 console.error("Error during initializeGame:", e);
                 const body = document.querySelector('body');
