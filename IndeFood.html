@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IndeFood</title> <!-- Changed Title -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 
+        IMPORTANT! YOU MUST REPLACE 'YOUR_API_KEY' BELOW WITH YOUR ACTUAL GOOGLE MAPS API KEY.
+        1. Go to Google Cloud Console: https://console.cloud.google.com/
+        2. Create or select a project.
+        3. Enable "Maps JavaScript API" and "Places API" for your project.
+        4. Create an API key and restrict it if necessary (e.g., to your domain).
+        5. Paste your API key in place of 'YOUR_API_KEY' in the script URL below.
+    -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkXk3MuVjovvaVAnl2wt2j_2ES-INLJ0s&libraries=places&callback=initApp"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px; 
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(to right, #ff5e62, #ff9966);
+            color: white;
+            text-align: center;
+            padding: 25px 20px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .progress-container {
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.3);
+            margin-top: 20px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 25%; 
+            background-color: white;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        .step-container {
+            padding: 30px 25px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .step {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .step.active {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .step h2 {
+            color: #ff5e62;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
+            gap: 15px;
+            margin-bottom: 10px; /* Reduced margin to make space for message */
+            flex-grow: 1;
+        }
+
+        .option {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100px; 
+        }
+
+        .option:hover {
+            transform: translateY(-5px);
+            border-color: #ff9966;
+            box-shadow: 0 5px 15px rgba(255, 153, 102, 0.2);
+        }
+
+        .option.selected {
+            background: #fff5f5;
+            border-color: #ff5e62;
+            color: #ff5e62;
+        }
+
+        .option i {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #ff9966;
+        }
+        .option span {
+            font-size: 0.9rem;
+            word-break: break-word; 
+        }
+
+        .option.selected i {
+            color: #ff5e62;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px; /* Reduced margin */
+            justify-content: center; 
+        }
+
+        .checkbox-option {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 50px;
+            padding: 10px 18px; 
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem; 
+        }
+
+        .checkbox-option:hover {
+            border-color: #ff9966;
+        }
+
+        .checkbox-option.selected {
+            background: #fff5f5;
+            border-color: #ff5e62;
+            color: #ff5e62;
+        }
+        .step-message {
+            text-align: center; 
+            color: #ff5e62; 
+            height: 20px; 
+            margin-bottom: 15px; /* Added margin below message */
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: auto;
+        }
+
+        .btn {
+            background: linear-gradient(to right, #ff5e62, #ff9966);
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn i {
+            margin-left: 8px;
+            margin-right: -5px; 
+        }
+        .btn.btn-back i {
+            margin-right: 8px;
+            margin-left: -5px;
+        }
+
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 94, 98, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #ff9966;
+            color: #ff9966;
+        }
+
+        #results-container {
+            display: none;
+            padding: 20px;
+        }
+        #results-container h2 {
+             color: #ff5e62; text-align: center; margin-bottom: 15px; font-size: 1.6rem;
+        }
+
+        #map {
+            height: 300px; 
+            border-radius: 15px;
+            margin-bottom: 20px;
+            background-color: #e9ecef; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-weight: 500;
+            text-align: center;
+        }
+         #map-loading-message {
+            display: block; 
+        }
+         #map-error-message {
+            display: none; 
+            color:red;
+            font-weight: bold;
+            padding: 10px;
+        }
+
+        .restaurant-list {
+            max-height: 350px; 
+            overflow-y: auto;
+            padding-right: 10px; 
+        }
+
+        .restaurant-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            cursor: pointer; 
+            transition: transform 0.2s ease-in-out;
+        }
+        .restaurant-card:hover {
+            transform: scale(1.02);
+        }
+
+        .restaurant-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-right: 15px;
+            background-color: #e0e0e0; 
+            flex-shrink: 0;
+        }
+         .restaurant-photo-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            margin-right: 15px;
+            background-color: #ff9966;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .restaurant-photo-placeholder i {
+            font-size: 2rem;
+            color: white;
+        }
+
+
+        .restaurant-info {
+            flex-grow: 1;
+        }
+
+        .restaurant-info h3 {
+            color: #343a40;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .restaurant-info p {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .restaurant-info p i {
+            margin-right: 6px;
+            color: #ff9966;
+            width: 16px; 
+            text-align: center;
+        }
+
+
+        .rating {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .rating .stars {
+            margin-left: 5px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: #6c757d;
+        }
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ff9966;
+        }
+
+
+        .restart-btn {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+                margin: 10px;
+                padding: 0;
+            }
+            .header h1 {
+                font-size: 1.6rem;
+            }
+            .step h2 {
+                font-size: 1.3rem;
+            }
+            .options-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 10px;
+            }
+            .option {
+                padding: 12px 8px;
+                min-height: 90px;
+            }
+            .option i {
+                font-size: 1.6rem;
+            }
+            .option span {
+                font-size: 0.8rem;
+            }
+            .restaurant-list {
+                max-height: 300px;
+            }
+             #map {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>IndeFood</h1> <!-- Changed Header Title -->
+            <p>Find perfect restaurants based on your preferences</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+        
+        <div class="step-container">
+            <!-- Step 1: Cuisine Selection -->
+            <div class="step active" id="step1">
+                <h2>What type of cuisine are you craving? (Up to 3)</h2>
+                <div class="options-grid">
+                    <div class="option" data-value="Malay food" data-icon="fa-utensils">
+                        <i class="fas fa-utensils"></i>
+                        <span>Malay</span>
+                    </div>
+                    <div class="option" data-value="Chinese food" data-icon="fa-dragon">
+                        <i class="fas fa-dragon"></i>
+                        <span>Chinese</span>
+                    </div>
+                    <div class="option" data-value="Indian food" data-icon="fa-pepper-hot">
+                        <i class="fas fa-pepper-hot"></i>
+                        <span>Indian</span>
+                    </div>
+                     <div class="option" data-value="Mamak stall" data-icon="fa-mug-hot">
+                        <i class="fas fa-mug-hot"></i>
+                        <span>Mamak</span>
+                    </div>
+                    <div class="option" data-value="Western food" data-icon="fa-hamburger">
+                        <i class="fas fa-hamburger"></i>
+                        <span>Western</span>
+                    </div>
+                    <div class="option" data-value="Italian food" data-icon="fa-pizza-slice">
+                        <i class="fas fa-pizza-slice"></i>
+                        <span>Italian</span>
+                    </div>
+                    <div class="option" data-value="Japanese food" data-icon="fa-fish">
+                        <i class="fas fa-fish"></i>
+                        <span>Japanese</span>
+                    </div>
+                    <div class="option" data-value="Korean food" data-icon="fa-seedling">
+                        <i class="fas fa-seedling"></i>
+                        <span>Korean</span>
+                    </div>
+                    <div class="option" data-value="Thai food" data-icon="fa-lemon">
+                        <i class="fas fa-lemon"></i>
+                        <span>Thai</span>
+                    </div>
+                    <div class="option" data-value="Middle Eastern food" data-icon="fa-cloud-meatball">
+                        <i class="fas fa-cloud-meatball"></i>
+                        <span>Middle Eastern</span>
+                    </div>
+                     <div class="option" data-value="Cafe" data-icon="fa-coffee">
+                        <i class="fas fa-coffee"></i>
+                        <span>Cafe</span>
+                    </div>
+                    <div class="option" data-value="Fast food" data-icon="fa-burger"> 
+                        <i class="fas fa-burger"></i>
+                        <span>Fast Food</span>
+                    </div>
+                </div>
+                <p class="step-message" id="step1-message"></p>
+                <div class="btn-container">
+                    <button class="btn btn-back" disabled><i class="fas fa-arrow-left"></i> Back</button>
+                    <button class="btn" id="next1">Next <i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+            
+            <!-- Step 2: Health & Diet -->
+            <div class="step" id="step2">
+                <h2>Any dietary preferences or restrictions?</h2>
+                <div class="checkbox-group">
+                    <div class="checkbox-option" data-value="halal">Halal</div>
+                    <div class="checkbox-option" data-value="vegetarian" data-conflicts-with="">Vegetarian</div>
+                    <div class="checkbox-option" data-value="vegan" data-implies="vegetarian">Vegan</div>
+                    <div class="checkbox-option" data-value="gluten-free">Gluten-Free</div>
+                    <div class="checkbox-option" data-value="spicy" data-conflicts-with="non-spicy">Spicy</div>
+                    <div class="checkbox-option" data-value="non-spicy" data-conflicts-with="spicy">Non-Spicy</div>
+                    <div class="checkbox-option" data-value="healthy">Healthy Options</div>
+                    <div class="checkbox-option" data-value="dairy-free">Dairy-Free</div>
+                </div>
+                 <p class="step-message" id="step2-message"></p>
+                <div class="btn-container">
+                    <button class="btn btn-outline btn-back" id="back2"><i class="fas fa-arrow-left"></i> Back</button>
+                    <button class="btn" id="next2">Next <i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+            
+            <!-- Step 3: Food Types (Keywords for search) -->
+            <div class="step" id="step3">
+                <h2>What specific food are you looking for? (Optional, up to 3)</h2>
+                <div class="options-grid">
+                    <div class="option" data-value="rice" data-icon="fa-bowl-rice">
+                        <i class="fas fa-bowl-rice"></i>
+                        <span>Rice Dishes</span>
+                    </div>
+                    <div class="option" data-value="noodles" data-icon="fa-utensils"> 
+                        <i class="fas fa-utensils"></i>
+                        <span>Noodles</span>
+                    </div>
+                    <div class="option" data-value="bread" data-icon="fa-bread-slice">
+                        <i class="fas fa-bread-slice"></i>
+                        <span>Bread/Roti</span>
+                    </div>
+                    <div class="option" data-value="grilled" data-icon="fa-fire-burner">
+                        <i class="fas fa-fire-burner"></i>
+                        <span>Grilled/BBQ</span>
+                    </div>
+                    <div class="option" data-value="seafood" data-icon="fa-shrimp">
+                        <i class="fas fa-shrimp"></i>
+                        <span>Seafood</span>
+                    </div>
+                     <div class="option" data-value="chicken" data-icon="fa-drumstick-bite">
+                        <i class="fas fa-drumstick-bite"></i>
+                        <span>Chicken</span>
+                    </div>
+                     <div class="option" data-value="beef" data-icon="fa-cow">
+                        <i class="fas fa-cow"></i>
+                        <span>Beef</span>
+                    </div>
+                    <div class="option" data-value="vegetables" data-icon="fa-carrot">
+                        <i class="fas fa-carrot"></i>
+                        <span>Vegetables</span>
+                    </div>
+                    <div class="option" data-value="soup" data-icon="fa-spoon">
+                        <i class="fas fa-spoon"></i>
+                        <span>Soups/Stews</span>
+                    </div>
+                    <div class="option" data-value="dessert" data-icon="fa-ice-cream">
+                        <i class="fas fa-ice-cream"></i>
+                        <span>Desserts</span>
+                    </div>
+                     <div class="option" data-value="coffee" data-icon="fa-mug-saucer">
+                        <i class="fas fa-mug-saucer"></i>
+                        <span>Coffee/Tea</span>
+                    </div>
+                     <div class="option" data-value="pizza" data-icon="fa-pizza-slice">
+                        <i class="fas fa-pizza-slice"></i>
+                        <span>Pizza</span>
+                    </div>
+                </div>
+                <p class="step-message" id="step3-message"></p>
+                <div class="btn-container">
+                    <button class="btn btn-outline btn-back" id="back3"><i class="fas fa-arrow-left"></i> Back</button>
+                    <button class="btn" id="next3">Find Restaurants <i class="fas fa-utensils"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="results-container">
+            <h2>Restaurants Near You</h2>
+            <div id="map">
+                <p id="map-loading-message">Loading map and searching for restaurants...</p>
+                <p id="map-error-message">
+                    Could not load Google Maps. Please ensure you have provided a valid API key in the HTML source and have an internet connection.
+                </p>
+            </div>
+            <div class="restaurant-list" id="restaurant-list">
+                <!-- Restaurant results will be loaded here by JavaScript -->
+            </div>
+            <button class="btn restart-btn" id="restart-btn"><i class="fas fa-redo"></i> Start Over</button>
+        </div>
+    </div>
+
+    <script>
+        // User preferences object
+        const userPreferences = {
+            cuisines: [], // Changed from cuisine: null
+            // cuisineIcon: 'fa-utensils', // Removed, will use a default or first selected
+            diet: [],      
+            foodTypes: [] 
+        };
+
+        // DOM Elements
+        const progressBar = document.getElementById('progress-bar');
+        const steps = document.querySelectorAll('.step');
+        const nextButtons = [null, document.getElementById('next1'), 
+                            document.getElementById('next2'), 
+                            document.getElementById('next3')];
+        const backButtons = [null, document.getElementById('back2'), 
+                            document.getElementById('back3')];
+        const resultsContainer = document.getElementById('results-container');
+        const restaurantList = document.getElementById('restaurant-list');
+        const restartBtn = document.getElementById('restart-btn');
+        const mapElement = document.getElementById('map');
+        const mapLoadingMessage = document.getElementById('map-loading-message');
+        const mapErrorMessage = document.getElementById('map-error-message');
+
+
+        let currentStep = 1;
+        let map;
+        let placesService;
+        let userLocation; 
+        let markers = []; 
+
+        function initApp() {
+            mapErrorMessage.style.display = 'none';
+            mapLoadingMessage.style.display = 'block';
+        }
+        
+        function showStepMessage(stepId, message, duration = 2500) {
+            const messageElement = document.getElementById(`${stepId}-message`);
+            if (messageElement) {
+                messageElement.innerText = message;
+                if (duration > 0) {
+                    setTimeout(() => {
+                        if (messageElement.innerText === message) { 
+                           messageElement.innerText = '';
+                        }
+                    }, duration);
+                }
+            }
+        }
+
+
+        // Initialize option selection for Step 1 (Cuisine - multi-select up to 3) and Step 3 (Food Types - multi-select up to 3)
+        document.querySelectorAll('.options-grid .option').forEach(option => {
+            option.addEventListener('click', function() {
+                const stepElement = this.closest('.step');
+                if (!stepElement) return;
+                const stepId = stepElement.id;
+                const value = this.getAttribute('data-value');
+                // const icon = this.getAttribute('data-icon') || 'fa-utensils'; // Icon not directly stored for multi-select
+
+                if (stepId === 'step1') { // CUISINE - multi-select up to 3 logic
+                    const isSelected = this.classList.contains('selected');
+                    if (isSelected) { 
+                        this.classList.remove('selected');
+                        userPreferences.cuisines = userPreferences.cuisines.filter(c => c !== value);
+                    } else { 
+                        if (userPreferences.cuisines.length < 3) {
+                            this.classList.add('selected');
+                            userPreferences.cuisines.push(value);
+                        } else {
+                            showStepMessage('step1', 'You can select up to 3 cuisine types.');
+                        }
+                    }
+                } else if (stepId === 'step3') { // FOOD TYPES - multi-select up to 3 logic
+                    const isSelected = this.classList.contains('selected');
+                    if (isSelected) { 
+                        this.classList.remove('selected');
+                        userPreferences.foodTypes = userPreferences.foodTypes.filter(ft => ft !== value);
+                    } else { 
+                        if (userPreferences.foodTypes.length < 3) {
+                            this.classList.add('selected');
+                            userPreferences.foodTypes.push(value);
+                        } else {
+                            showStepMessage('step3', 'You can select up to 3 food types.');
+                        }
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('#step2 .checkbox-option').forEach(checkbox => {
+            checkbox.addEventListener('click', function() {
+                const currentValue = this.getAttribute('data-value');
+                const isNowSelected = !this.classList.contains('selected'); 
+
+                if (isNowSelected) {
+                    if (currentValue === 'spicy') deselectDietOption('non-spicy');
+                    else if (currentValue === 'non-spicy') deselectDietOption('spicy');
+                    if (currentValue === 'vegan') selectDietOption('vegetarian');
+                } else { 
+                    if (currentValue === 'vegetarian') deselectDietOption('vegan'); 
+                }
+                
+                this.classList.toggle('selected');
+                updateDietPreference(currentValue, this.classList.contains('selected'));
+            });
+        });
+
+        function updateDietPreference(value, isSelected) {
+            const index = userPreferences.diet.indexOf(value);
+            if (isSelected) {
+                if (index === -1) userPreferences.diet.push(value);
+            } else {
+                if (index !== -1) userPreferences.diet.splice(index, 1);
+            }
+        }
+
+        function selectDietOption(valueToSelect) {
+            const optionElement = document.querySelector(`#step2 .checkbox-option[data-value="${valueToSelect}"]`);
+            if (optionElement && !optionElement.classList.contains('selected')) {
+                optionElement.classList.add('selected');
+                updateDietPreference(valueToSelect, true);
+            }
+        }
+
+        function deselectDietOption(valueToDeselect) {
+            const optionElement = document.querySelector(`#step2 .checkbox-option[data-value="${valueToDeselect}"]`);
+            if (optionElement && optionElement.classList.contains('selected')) {
+                optionElement.classList.remove('selected');
+                updateDietPreference(valueToDeselect, false);
+            }
+        }
+        
+        function updateProgressBar() {
+            let progressPercentage = 25; 
+            if (currentStep === 2) progressPercentage = 50;
+            else if (currentStep === 3) progressPercentage = 75;
+            else if (currentStep > 3) progressPercentage = 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+        nextButtons.forEach((btn) => {
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    if (currentStep === 1 && userPreferences.cuisines.length === 0) { // Check if cuisines array is empty
+                        showTemporaryMessage(btn, 'Please select at least one cuisine type.');
+                        return;
+                    }
+                    
+                    steps.forEach(step => step.classList.remove('active'));
+                    
+                    if (currentStep < 3) {
+                        currentStep++;
+                        document.getElementById(`step${currentStep}`).classList.add('active');
+                    } else {
+                        currentStep++; 
+                        document.querySelector('.step-container').style.display = 'none';
+                        resultsContainer.style.display = 'block';
+                        mapLoadingMessage.style.display = 'block'; 
+                        mapErrorMessage.style.display = 'none'; 
+                        restaurantList.innerHTML = ''; 
+                        clearMarkers(); 
+                        getLocationAndSearch();
+                    }
+                    updateProgressBar();
+                });
+            }
+        });
+
+        backButtons.forEach((btn) => {
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    steps.forEach(step => step.classList.remove('active'));
+                    currentStep--;
+                    document.getElementById(`step${currentStep}`).classList.add('active');
+                    updateProgressBar();
+                });
+            }
+        });
+        
+        restartBtn.addEventListener('click', () => {
+            resultsContainer.style.display = 'none';
+            document.querySelector('.step-container').style.display = 'flex';
+            steps.forEach(step => step.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+            
+            currentStep = 1;
+            updateProgressBar();
+            
+            document.querySelectorAll('.option, .checkbox-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            userPreferences.cuisines = []; // Reset cuisines
+            userPreferences.diet = [];
+            userPreferences.foodTypes = []; 
+
+            restaurantList.innerHTML = '';
+            mapLoadingMessage.innerText = "Loading map and searching for restaurants...";
+            mapLoadingMessage.style.display = 'block';
+            mapErrorMessage.style.display = 'none';
+            mapElement.innerHTML = ''; 
+            mapElement.appendChild(mapLoadingMessage); 
+            mapElement.appendChild(mapErrorMessage);
+
+            clearMarkers();
+            userLocation = null; 
+        });
+
+        function showTemporaryMessage(buttonElement, message) {
+            const originalText = buttonElement.innerHTML;
+            buttonElement.innerHTML = message;
+            buttonElement.disabled = true;
+            setTimeout(() => {
+                buttonElement.innerHTML = originalText;
+                buttonElement.disabled = false;
+            }, 2000);
+        }
+
+        function getLocationAndSearch() {
+            if (typeof google === 'undefined' || typeof google.maps === 'undefined' || typeof google.maps.LatLng === 'undefined') {
+                mapLoadingMessage.style.display = 'none';
+                mapErrorMessage.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Google Maps API did not load. This is likely due to an invalid or missing API key in the HTML source. Please verify your API key and ensure "Maps JavaScript API" and "Places API" are enabled in your Google Cloud Console.';
+                mapErrorMessage.style.display = 'block';
+                console.error("Google Maps API not loaded or LatLng undefined. Check API key and script inclusion.");
+                restaurantList.innerHTML = `<div class="no-results"><i class="fas fa-exclamation-triangle"></i><p>Error: Google Maps could not be loaded. Please check your API key.</p></div>`;
+                return;
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                        initializeMapAndSearch(userLocation);
+                    },
+                    (error) => { 
+                        console.error("Geolocation error:", error);
+                        handleLocationError(`Geolocation failed: ${error.message}.`);
+                    }
+                );
+            } else {
+                handleLocationError("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function handleLocationError(errorMessage) {
+            console.warn("Location Error:", errorMessage); 
+            if (typeof google !== 'undefined' && typeof google.maps !== 'undefined' && typeof google.maps.LatLng !== 'undefined') {
+                userLocation = new google.maps.LatLng(3.1390, 101.6869); // KL Coordinates
+                showTemporaryMessage(document.getElementById('next3') || restartBtn, "Using default location (KL).");
+                initializeMapAndSearch(userLocation);
+            } else {
+                mapLoadingMessage.style.display = 'none';
+                mapErrorMessage.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Google Maps API did not load correctly, and default location cannot be set. Please check your API key.';
+                mapErrorMessage.style.display = 'block';
+            }
+        }
+
+        function initializeMapAndSearch(location) {
+            if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+                mapLoadingMessage.style.display = 'none';
+                mapErrorMessage.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Google Maps API failed to load. This is likely due to an invalid API key in the HTML source. Please verify your API key and ensure "Maps JavaScript API" and "Places API" are enabled in your Google Cloud Console.';
+                mapErrorMessage.style.display = 'block';
+                console.error("Google Maps API not loaded in initializeMapAndSearch. Check API key.");
+                return;
+            }
+
+            mapElement.innerHTML = ''; 
+            mapLoadingMessage.style.display = 'none';
+            mapErrorMessage.style.display = 'none';
+
+            try {
+                map = new google.maps.Map(mapElement, {
+                    center: location,
+                    zoom: 14, 
+                    mapTypeControl: false,
+                    streetViewControl: false,
+                });
+
+                placesService = new google.maps.places.PlacesService(map);
+                searchRestaurants();
+            } catch (e) {
+                console.error("Error initializing Google Map or PlacesService:", e);
+                mapLoadingMessage.style.display = 'none';
+                mapErrorMessage.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error initializing map. This might be due to an API key issue or network problem. Check console for details.';
+                mapErrorMessage.style.display = 'block';
+            }
+        }
+
+        function searchRestaurants() {
+            if (!userLocation || !placesService) {
+                console.error("User location or PlacesService not initialized for search.");
+                restaurantList.innerHTML = `<div class="no-results"><i class="fas fa-map-marker-slash"></i><p>Cannot search: Location or map service not ready.</p></div>`;
+                mapLoadingMessage.style.display = 'none'; 
+                return;
+            }
+            mapLoadingMessage.innerText = "Searching for restaurants..."; 
+            mapLoadingMessage.style.display = 'block';
+
+
+            let queryKeywords = [];
+            if (userPreferences.cuisines.length > 0) queryKeywords.push(...userPreferences.cuisines); 
+            if (userPreferences.foodTypes.length > 0) queryKeywords.push(...userPreferences.foodTypes); 
+            if (userPreferences.diet.length > 0) queryKeywords.push(...userPreferences.diet); 
+            
+            const searchQuery = queryKeywords.join(' ') + " restaurant"; 
+
+            const request = {
+                location: userLocation,
+                radius: '5000', 
+                keyword: searchQuery, 
+            };
+
+            placesService.nearbySearch(request, (results, status) => {
+                mapLoadingMessage.style.display = 'none'; 
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    displayRestaurantResults(results);
+                } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                    restaurantList.innerHTML = `<div class="no-results"><i class="fas fa-ghost"></i><p>No restaurants found matching: "${searchQuery}". Try different options!</p></div>`;
+                } else {
+                    console.error("Places API search failed. Status:", status, "Query:", searchQuery);
+                    restaurantList.innerHTML = `<div class="no-results"><i class="fas fa-exclamation-circle"></i><p>Search failed. (Error: ${status})</p></div>`;
+                    if (status === google.maps.places.PlacesServiceStatus.REQUEST_DENIED) {
+                         mapErrorMessage.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Restaurant search was denied. This often indicates an issue with your Google Maps API key, its restrictions, or billing. Ensure the Places API is enabled and correctly configured.';
+                         mapErrorMessage.style.display = 'block';
+                    }
+                }
+            });
+        }
+
+        function displayRestaurantResults(places) {
+            restaurantList.innerHTML = ''; 
+            clearMarkers(); 
+
+            if (!places || places.length === 0) {
+                 restaurantList.innerHTML = `<div class="no-results"><i class="fas fa-ghost"></i><p>No restaurants found. Try broadening your search!</p></div>`;
+                return;
+            }
+
+            const bounds = new google.maps.LatLngBounds(); 
+
+            places.forEach(place => {
+                if (!place.geometry || !place.geometry.location) return;
+
+                const marker = new google.maps.Marker({
+                    map: map,
+                    position: place.geometry.location,
+                    title: place.name,
+                    animation: google.maps.Animation.DROP,
+                });
+                markers.push(marker);
+                bounds.extend(place.geometry.location);
+
+                const card = document.createElement('div');
+                card.className = 'restaurant-card';
+                
+                // Determine icon for placeholder: use first selected cuisine's icon, or default
+                let placeholderIconClass = 'fa-utensils'; // Default
+                if (userPreferences.cuisines.length > 0) {
+                    const firstCuisineValue = userPreferences.cuisines[0];
+                    const firstCuisineOption = document.querySelector(`#step1 .option[data-value="${firstCuisineValue}"]`);
+                    if (firstCuisineOption) {
+                        placeholderIconClass = firstCuisineOption.getAttribute('data-icon') || 'fa-utensils';
+                    }
+                }
+
+                let photoHtml = `<div class="restaurant-photo-placeholder"><i class="fas ${placeholderIconClass}"></i></div>`;
+                if (place.photos && place.photos.length > 0) {
+                    const photoUrl = place.photos[0].getUrl({'maxWidth': 160, 'maxHeight': 160});
+                    photoHtml = `<img src="${photoUrl}" alt="${place.name}" class="restaurant-photo" onerror="this.parentElement.innerHTML = '<div class=\\'restaurant-photo-placeholder\\'><i class=\\'fas ${placeholderIconClass}\\'></i></div>'; this.remove();">`;
+                }
+
+                const ratingHtml = place.rating ? 
+                    `<p class="rating"><i class="fas fa-star"></i> ${place.rating.toFixed(1)} / 5.0 <span class="stars">${getStarIcons(place.rating)}</span> (${place.user_ratings_total || 'N/A'} reviews)</p>` :
+                    '<p><i class="fas fa-star-half-alt"></i> Rating not available</p>';
+                
+                let openNowText = 'Opening hours not available';
+                if (place.opening_hours) {
+                    openNowText = place.opening_hours.open_now ? '<span style="color: green; font-weight: bold;">Open Now</span>' : '<span style="color: red;">Closed</span>';
+                }
+
+
+                card.innerHTML = `
+                    ${photoHtml}
+                    <div class="restaurant-info">
+                        <h3>${place.name}</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> ${place.vicinity || 'Address not available'}</p>
+                        ${ratingHtml}
+                        <p><i class="fas fa-clock"></i> ${openNowText}</p>
+                        ${place.types ? `<p><i class="fas fa-tags"></i> ${place.types.map(t => t.replace(/_/g, ' ')).filter(t => t !== 'point of interest' && t !== 'establishment').slice(0,3).join(', ')}</p>` : ''}
+                    </div>
+                `;
+                card.addEventListener('click', () => {
+                    map.panTo(place.geometry.location);
+                    map.setZoom(16); 
+                    marker.setAnimation(google.maps.Animation.BOUNCE); 
+                    setTimeout(() => marker.setAnimation(null), 1400); 
+                });
+
+                restaurantList.appendChild(card);
+            });
+            if (places.length > 0) {
+                 map.fitBounds(bounds); 
+                if (places.length === 1) {
+                    map.setCenter(bounds.getCenter());
+                    map.setZoom(15); 
+                }
+            }
+        }
+        
+        function getStarIcons(rating) {
+            if (typeof rating !== 'number') return '';
+            let stars = '';
+            const fullStars = Math.floor(rating);
+            const halfStar = rating % 1 >= 0.5;
+            const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+
+            for (let i = 0; i < fullStars; i++) stars += '<i class="fas fa-star"></i>';
+            if (halfStar) stars += '<i class="fas fa-star-half-alt"></i>';
+            for (let i = 0; i < emptyStars; i++) stars += '<i class="far fa-star"></i>'; 
+            return stars;
+        }
+
+
+        function clearMarkers() {
+            for (let i = 0; i < markers.length; i++) {
+                markers[i].setMap(null);
+            }
+            markers = [];
+        }
+
+        updateProgressBar();
+
+    </script>
+</body>
+</html>
