@@ -16,7 +16,7 @@
             --m2u-dark: #374151;
         }
         .btn {
-            padding: 0.375rem 0.75rem; /* py-1.5 px-3 */
+            padding: 0.375rem 0.75rem;
             border-radius: 0.5rem;
             font-weight: 600;
             transition: background-color 0.3s;
@@ -30,132 +30,180 @@
         .btn-primary:hover {
             background-color: #fbbf24;
         }
-        .btn-secondary {
-            background-color: #e5e7eb;
-            color: #374151;
-        }
-        .btn-secondary:hover {
-            background-color: #d1d5db;
-        }
         .input-field {
             width: 100%;
-            padding: 0.5rem 0.75rem; /* py-2 px-3 */
+            padding: 0.5rem 0.75rem;
             border: 1px solid #d1d5db;
             border-radius: 0.5rem;
-            margin-top: 0.25rem; /* mt-1 */
+            margin-top: 0.25rem;
         }
         .input-field:focus {
             outline: none;
             border-color: var(--m2u-yellow);
             box-shadow: 0 0 0 2px rgba(255, 199, 44, 0.4);
         }
-        .tab-nav {
+        .sub-tab-nav {
             display: flex;
             border-bottom: 2px solid #e5e7eb;
         }
-        .tab-link {
-            padding: 0.75rem 1.25rem; /* py-3 px-5 */
+        .sub-tab-link {
+            padding: 0.5rem 1rem;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 500;
             color: #6b7280;
             border-bottom: 2px solid transparent;
             margin-bottom: -2px;
             transition: color 0.3s, border-color 0.3s;
         }
-        .tab-link.active {
+        .sub-tab-link.active {
             color: var(--m2u-dark);
             border-color: var(--m2u-yellow);
         }
-        .tab-content {
+        .sub-tab-content {
             display: none;
         }
-        .tab-content.active {
+        .sub-tab-content.active {
             display: block;
         }
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 50; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+        .modal-overlay, .sidenav-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); z-index: 40; opacity: 0; visibility: hidden; transition: opacity 0.3s;
         }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-overlay.active, .sidenav-overlay.active { opacity: 1; visibility: visible; }
         .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 90%; max-width: 500px; transform: scale(0.95); transition: transform 0.3s; }
         .modal-overlay.active .modal-content { transform: scale(1); }
-        .toast-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #2d3748; color: white; padding: 1rem 2rem; border-radius: 0.5rem; z-index: 100; opacity: 0; visibility: hidden; transition: opacity 0.5s, visibility 0.5s, transform 0.5s; }
-        .toast-notification.show { opacity: 1; visibility: visible; transform: translate(-50%, -10px); }
-        .pin-btn {
-            cursor: pointer;
-            color: #9ca3af;
+        .toast-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #2d3748; color: white; padding: 1rem 2rem; border-radius: 0.5rem; z-index: 100; opacity: 0; visibility: hidden; transition: opacity 0.5s; }
+        .toast-notification.show { opacity: 1; visibility: visible; }
+        .pin-btn { cursor: pointer; color: #9ca3af; }
+        .pin-btn.pinned { color: var(--m2u-yellow); }
+        .tx-card.pinned { background-color: #fefce8; border-color: var(--m2u-yellow); }
+        #sidenav {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100%;
+            background: #ffffff;
+            z-index: 50;
+            transition: left 0.3s ease-in-out;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
         }
-        .pin-btn.pinned {
-            color: var(--m2u-yellow);
+        #sidenav.active {
+            left: 0;
         }
-        .tx-card.pinned {
+        .main-nav-link.active {
             background-color: #fefce8; /* yellow-50 */
-            border-color: var(--m2u-yellow);
+            color: var(--m2u-dark);
+            border-left: 4px solid var(--m2u-yellow);
         }
     </style>
 </head>
 <body class="text-gray-800">
 
+    <div id="sidenav-overlay" class="sidenav-overlay"></div>
+    <nav id="sidenav">
+        <div class="p-4 border-b">
+            <h2 class="text-xl font-bold text-gray-800">Money Tracker</h2>
+            <p class="text-sm text-gray-500">Your Personal Finance Hub</p>
+        </div>
+        <div class="p-4 border-b bg-gray-50">
+            <p class="text-sm font-medium text-gray-500">Total Balance</p>
+            <p id="sidenav-total-balance" class="text-2xl font-bold text-green-600">RM 0.00</p>
+        </div>
+        <ul class="flex-grow">
+            <li><a href="#" class="main-nav-link active flex items-center gap-3 p-4 font-semibold text-gray-700 hover:bg-gray-100" data-view="accounts">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                Accounts
+            </a></li>
+            <li><a href="#" class="main-nav-link flex items-center gap-3 p-4 font-semibold text-gray-700 hover:bg-gray-100" data-view="dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Dashboard
+            </a></li>
+            <li><a href="#" class="main-nav-link flex items-center gap-3 p-4 font-semibold text-gray-700 hover:bg-gray-100" data-view="transactions">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                Transactions
+            </a></li>
+        </ul>
+        <div class="p-4 text-xs text-center text-gray-400 border-t">
+            Version 1.5.0
+        </div>
+    </nav>
+
     <div class="container mx-auto p-4 md:p-6">
         <header class="mb-6 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-900">Money Flow Tracker</h1>
-            <div class="text-sm text-gray-500" id="current-time"></div>
+            <div class="flex items-center gap-4">
+                <button id="hamburger-btn" class="p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                </button>
+                <h1 id="main-header-title" class="text-xl md:text-2xl font-bold text-gray-900">Accounts</h1>
+            </div>
+            <div class="text-xs md:text-sm text-gray-500" id="current-time"></div>
         </header>
 
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- Left & Center Column: Main Content with Tabs -->
-            <div class="lg:col-span-2 bg-white rounded-lg shadow p-5">
-                <!-- Tab Navigation -->
-                <nav class="tab-nav mb-5">
-                    <a class="tab-link active" data-tab="accounts">Accounts</a>
-                    <a class="tab-link" data-tab="dashboard">Dashboard</a>
-                    <a class="tab-link" data-tab="transfer">Transfer</a>
-                    <a class="tab-link" data-tab="receive">Receive</a>
-                    <a class="tab-link" data-tab="add-account">Add Account</a>
-                </nav>
-
-                <!-- Tab Content Panes -->
-                <div id="tab-content-container">
-                    <!-- Accounts Tab -->
-                    <div id="tab-accounts" class="tab-content active">
+        <main id="main-content">
+            <!-- ACCOUNTS VIEW -->
+            <div id="view-accounts" class="main-view">
+                <div class="bg-white rounded-lg shadow p-5">
+                    <nav class="sub-tab-nav mb-5">
+                        <a class="sub-tab-link active" data-tab="view-accounts-summary">Summary</a>
+                        <a class="sub-tab-link" data-tab="view-accounts-add">Add Account</a>
+                    </nav>
+                    <div id="sub-tab-view-accounts-summary" class="sub-tab-content active">
                         <h2 class="text-xl font-semibold mb-4">Accounts Summary</h2>
                         <div id="accountsList" class="space-y-4"></div>
                     </div>
-
-                    <!-- Dashboard Tab -->
-                    <div id="tab-dashboard" class="tab-content">
-                        <!-- Calendar will be rendered here by JS -->
-                    </div>
-
-                    <!-- Transfer Tab -->
-                    <div id="tab-transfer" class="tab-content">
-                        <h2 class="text-xl font-semibold mb-4">Make a Transaction</h2>
-                        <form id="transactionForm" class="space-y-3"></form>
-                    </div>
-
-                    <!-- Receive Money Tab -->
-                    <div id="tab-receive" class="tab-content">
-                        <h2 class="text-xl font-semibold mb-4">Receive Money from Others</h2>
-                        <form id="receiveMoneyForm" class="space-y-3"></form>
-                    </div>
-
-                    <!-- Add Account Tab -->
-                    <div id="tab-add-account" class="tab-content">
+                    <div id="sub-tab-view-accounts-add" class="sub-tab-content">
                         <h2 class="text-xl font-semibold mb-4">Add a New Personal Account</h2>
                         <form id="addAccountForm" class="space-y-3"></form>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: Sidebar -->
-            <div class="lg:col-span-1 space-y-6">
-                <div class="bg-white rounded-lg shadow p-5">
-                    <h2 class="text-lg font-semibold mb-4 text-gray-800">Pinned Transactions</h2>
-                    <div id="pinnedTransactionHistory" class="space-y-3"></div>
+            <!-- DASHBOARD VIEW -->
+            <div id="view-dashboard" class="main-view hidden">
+                 <div class="bg-white rounded-lg shadow p-5">
+                    <nav class="sub-tab-nav mb-5">
+                        <a class="sub-tab-link active" data-tab="view-dashboard-calendar">Calendar</a>
+                        <a class="sub-tab-link" data-tab="view-dashboard-history">History</a>
+                    </nav>
+                    <div id="sub-tab-view-dashboard-calendar" class="sub-tab-content active"></div>
+                    <div id="sub-tab-view-dashboard-history" class="sub-tab-content">
+                        <h2 class="text-xl font-semibold mb-4">Transaction History</h2>
+                        <div class="space-y-3 mb-6">
+                            <h3 class="text-lg font-semibold text-gray-700">Pinned</h3>
+                            <div id="pinnedTransactionHistory"></div>
+                        </div>
+                         <div class="space-y-3">
+                            <h3 class="text-lg font-semibold text-gray-700">All</h3>
+                            <div id="transactionHistory" class="max-h-[42rem] overflow-y-auto pr-2"></div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            <!-- TRANSACTIONS VIEW -->
+            <div id="view-transactions" class="main-view hidden">
                 <div class="bg-white rounded-lg shadow p-5">
-                    <h2 class="text-lg font-semibold mb-4 text-gray-800">Transaction History</h2>
-                    <div id="transactionHistory" class="space-y-3 max-h-[42rem] overflow-y-auto pr-2"></div>
+                    <nav class="sub-tab-nav mb-5">
+                        <a class="sub-tab-link active" data-tab="view-transactions-transfer">Transfer</a>
+                        <a class="sub-tab-link" data-tab="view-transactions-receive">Receive</a>
+                        <a class="sub-tab-link" data-tab="view-transactions-pay">Pay</a>
+                    </nav>
+                    <div id="sub-tab-view-transactions-transfer" class="sub-tab-content active">
+                        <h2 class="text-xl font-semibold mb-4">Transfer Money</h2>
+                        <form id="transactionForm" class="space-y-3"></form>
+                    </div>
+                    <div id="sub-tab-view-transactions-receive" class="sub-tab-content">
+                        <h2 class="text-xl font-semibold mb-4">Receive Money</h2>
+                        <form id="receiveMoneyForm" class="space-y-3"></form>
+                    </div>
+                    <div id="sub-tab-view-transactions-pay" class="sub-tab-content">
+                        <h2 class="text-xl font-semibold mb-4">Pay Expense</h2>
+                        <form id="payForm" class="space-y-3"></form>
+                    </div>
                 </div>
             </div>
         </main>
@@ -164,33 +212,25 @@
     <!-- Modals -->
     <div id="editAccountModal" class="modal-overlay"></div>
     <div id="fulfillmentModal" class="modal-overlay"></div>
-
-    <!-- Toast Notification -->
     <div id="toast" class="toast-notification"></div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
-    const addAccountForm = document.getElementById('addAccountForm');
-    const transactionForm = document.getElementById('transactionForm');
-    const receiveMoneyForm = document.getElementById('receiveMoneyForm');
-    const accountsList = document.getElementById('accountsList');
-    const pinnedTransactionHistory = document.getElementById('pinnedTransactionHistory');
-    const transactionHistory = document.getElementById('transactionHistory');
     const timeDisplay = document.getElementById('current-time');
     const editAccountModalContainer = document.getElementById('editAccountModal');
     const fulfillmentModalContainer = document.getElementById('fulfillmentModal');
     const toast = document.getElementById('toast');
-    const dashboardContainer = document.getElementById('tab-dashboard');
+    const sidenav = document.getElementById('sidenav');
+    const sidenavOverlay = document.getElementById('sidenav-overlay');
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const mainHeaderTitle = document.getElementById('main-header-title');
 
     // App State
     let state = {
         accounts: [],
         transactions: [],
-        dashboard: {
-            year: new Date().getFullYear(),
-            month: new Date().getMonth(), // 0-indexed
-        }
+        dashboard: { year: new Date().getFullYear(), month: new Date().getMonth() }
     };
 
     // --- DATA PERSISTENCE ---
@@ -204,13 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const loaded = JSON.parse(savedState);
             state.accounts = loaded.accounts || [];
             state.transactions = loaded.transactions || [];
-            // Ensure dashboard state exists
-            if (!state.dashboard) {
-                 state.dashboard = {
-                    year: new Date().getFullYear(),
-                    month: new Date().getMonth(),
-                };
-            }
+            state.dashboard = loaded.dashboard || { year: new Date().getFullYear(), month: new Date().getMonth() };
         }
     }
 
@@ -218,67 +252,49 @@ document.addEventListener('DOMContentLoaded', () => {
     function showToast(message, duration = 3000) {
         toast.textContent = message;
         toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, duration);
+        setTimeout(() => { toast.classList.remove('show'); }, duration);
     }
 
-    function getAccount(accountId) {
-        return state.accounts.find(acc => acc.id == accountId);
-    }
-    
-    function getAccountName(accountId) {
-        const account = getAccount(accountId);
-        return account ? account.name : 'Unknown Account';
-    }
-
-    function updateTime() {
-        timeDisplay.textContent = new Date().toLocaleString('en-MY', {
-            dateStyle: 'full',
-            timeStyle: 'short'
-        });
-    }
-    
+    function getAccount(accountId) { return state.accounts.find(acc => acc.id == accountId); }
+    function getAccountName(accountId) { const a = getAccount(accountId); return a ? a.name : 'N/A'; }
+    function updateTime() { timeDisplay.textContent = new Date().toLocaleString('en-MY', { dateStyle: 'full', timeStyle: 'short' }); }
     function copyToClipboard(text) {
         const ta = document.createElement('textarea');
         ta.value = text;
         document.body.appendChild(ta);
         ta.select();
-        try {
-            document.execCommand('copy');
-            showToast('Account number copied!');
-        } catch (err) {
-            showToast('Failed to copy.');
-        }
+        try { document.execCommand('copy'); showToast('Account number copied!'); } 
+        catch (err) { showToast('Failed to copy.'); }
         document.body.removeChild(ta);
     }
 
     // --- CORE LOGIC ---
+    const PAYMENTS_ACCOUNT_ID = 'payments-sink';
+    function ensurePaymentsAccountExists() {
+        if (!state.accounts.some(acc => acc.id === PAYMENTS_ACCOUNT_ID)) {
+            const paymentsAccount = { id: PAYMENTS_ACCOUNT_ID, name: 'General Expenses', number: '', balance: 0, type: 'others' };
+            state.accounts.push(paymentsAccount);
+        }
+    }
+
     function addMyAccount(name, number, initialBalance) {
         if (state.accounts.some(acc => acc.type === 'mine' && acc.name.toLowerCase() === name.toLowerCase())) {
-            showToast('A personal account with this name already exists.');
-            return;
+            showToast('A personal account with this name already exists.'); return;
         }
-        const newAccount = { id: Date.now(), name, number, balance: initialBalance, type: 'mine' };
-        state.accounts.push(newAccount);
+        state.accounts.push({ id: Date.now(), name, number, balance: initialBalance, type: 'mine' });
         render();
     }
 
     function updateAccount(id, newName, newNumber, newBalance) {
         const accountToUpdate = getAccount(id);
         if (!accountToUpdate) return;
-
-        const oldBalance = accountToUpdate.balance;
-        if (oldBalance !== newBalance) {
-            const newEditTransaction = { id: Date.now(), type: 'edit', accountId: id, oldBalance, newBalance, date: new Date().toISOString(), pinned: false };
-            state.transactions.unshift(newEditTransaction);
-            showToast('Balance edited. Note: This may cause a mismatch with transaction history.');
+        if (accountToUpdate.balance !== newBalance) {
+            state.transactions.unshift({ id: Date.now(), type: 'edit', accountId: id, oldBalance: accountToUpdate.balance, newBalance, date: new Date().toISOString(), pinned: false });
+            showToast('Balance edited.');
         }
-
         accountToUpdate.name = newName;
         accountToUpdate.number = newNumber;
         accountToUpdate.balance = newBalance;
-        
         editAccountModalContainer.classList.remove('active');
         render();
     }
@@ -286,7 +302,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function addTransaction(fromId, toId, amount, description) {
         const fromAccount = getAccount(fromId);
         const toAccount = getAccount(toId);
-
         if (!fromAccount || !toAccount) { showToast('Invalid account selection.'); return; }
         if (fromAccount.id === toAccount.id) { showToast('Cannot transfer to the same account.'); return; }
         if (fromAccount.type === 'mine' && fromAccount.balance < amount) { showToast(`Insufficient funds in ${fromAccount.name}.`); return; }
@@ -299,192 +314,77 @@ document.addEventListener('DOMContentLoaded', () => {
             fromAccount.balance += amount; toAccount.balance += amount;
         } else { return; }
 
-        const newTransaction = { id: Date.now(), type: 'transfer', fromId, toId, amount, description, date: new Date().toISOString(), pinned: false };
-        state.transactions.unshift(newTransaction);
+        state.transactions.unshift({ id: Date.now(), type: 'transfer', fromId, toId, amount, description, date: new Date().toISOString(), pinned: false });
         render();
         
-        if (fromAccount.type === 'mine' && toAccount.type === 'others') {
-            checkForFulfillment(toAccount.id, fromAccount.id, amount);
+        if (fromAccount.type === 'mine' && toAccount.type === 'others' && toId !== PAYMENTS_ACCOUNT_ID) {
+            checkForFulfillment(toId, fromId, amount);
         }
     }
     
     function togglePinTransaction(txId) {
         const tx = state.transactions.find(t => t.id == txId);
-        if (tx) {
-            tx.pinned = !tx.pinned;
-            render();
-        }
+        if (tx) { tx.pinned = !tx.pinned; render(); }
     }
 
     function checkForFulfillment(recipientId, myAccountId, amount) {
-        const potentialMatch = state.transactions.find(tx => 
-            tx.pinned &&
-            tx.type === 'transfer' &&
-            tx.fromId == recipientId &&
-            tx.toId == myAccountId &&
-            tx.amount == amount
-        );
-        if (potentialMatch) {
-            showFulfillmentPrompt(potentialMatch);
-        }
+        const match = state.transactions.find(tx => tx.pinned && tx.type === 'transfer' && tx.fromId == recipientId && tx.toId == myAccountId && tx.amount == amount);
+        if (match) { showFulfillmentPrompt(match); }
     }
 
     // --- RENDERING ---
     function render() {
-        renderAddAccountForm();
-        renderTransferForm();
-        renderReceiveMoneyForm();
-        renderEditModal();
+        ensurePaymentsAccountExists();
+        renderForms();
+        renderSidenavInfo();
         renderAccountsList();
-        renderAccountSelectors();
-        renderDestinationInput();
         renderTransactionHistory();
         renderDashboard();
         saveState();
     }
-
-    function renderAddAccountForm() {
-        addAccountForm.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="accountName" class="font-medium text-sm">Account Name</label>
-                    <input type="text" id="accountName" placeholder="e.g., Savings, Checking" class="input-field" required>
-                </div>
-                 <div>
-                    <label for="accountNumber" class="font-medium text-sm">Account Number (Optional)</label>
-                    <input type="text" id="accountNumber" placeholder="e.g., 123-456-789" class="input-field">
-                </div>
-            </div>
-            <div>
-                <label for="initialBalance" class="font-medium text-sm">Initial Balance (RM)</label>
-                <input type="number" id="initialBalance" placeholder="0" class="input-field" required min="0" step="0.01">
-            </div>
-            <div class="text-right pt-2">
-                <button type="submit" class="btn btn-primary px-6 py-2">Add Account</button>
-            </div>
-        `;
-    }
     
-    function renderTransferForm() {
-        transactionForm.innerHTML = `
-            <div>
-                <label for="fromAccount" class="font-medium text-sm">From (My Accounts)</label>
-                <select id="fromAccount" class="input-field" required></select>
-            </div>
-            <div>
-                <label class="font-medium text-sm">To</label>
-                <div class="flex gap-4 mt-1" id="destinationType">
-                    <label class="flex items-center text-sm"><input type="radio" name="destinationType" value="mine" class="mr-2" checked> My Account</label>
-                    <label class="flex items-center text-sm"><input type="radio" name="destinationType" value="other" class="mr-2"> Other Person</label>
-                </div>
-            </div>
-            <div id="destinationContainer"></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="amount" class="font-medium text-sm">Amount (RM)</label>
-                    <input type="number" id="amount" placeholder="0.00" class="input-field" required min="0.01" step="0.01">
-                </div>
-                <div>
-                    <label for="description" class="font-medium text-sm">Description (Optional)</label>
-                    <input type="text" id="description" placeholder="e.g., Lunch, Loan" class="input-field">
-                </div>
-            </div>
-            <div class="text-right pt-2">
-                <button type="submit" class="btn btn-primary px-6 py-2">Transfer</button>
-            </div>
-        `;
+    function renderSidenavInfo() {
+        const totalBalance = state.accounts
+            .filter(acc => acc.type === 'mine')
+            .reduce((sum, acc) => sum + acc.balance, 0);
+        
+        const balanceEl = document.getElementById('sidenav-total-balance');
+        balanceEl.textContent = `RM ${totalBalance.toFixed(2)}`;
+        balanceEl.classList.toggle('text-red-600', totalBalance < 0);
+        balanceEl.classList.toggle('text-green-600', totalBalance >= 0);
     }
 
-    function renderReceiveMoneyForm() {
-        receiveMoneyForm.innerHTML = `
-            <div>
-                <label for="fromOtherNameReceive" class="font-medium text-sm">From (Other's Name)</label>
-                <input type="text" id="fromOtherNameReceive" class="input-field" placeholder="e.g., Jane Smith" required>
-            </div>
-            <div>
-                <label for="fromOtherNumberReceive" class="font-medium text-sm">From (Other's Account #)</label>
-                <input type="text" id="fromOtherNumberReceive" class="input-field" placeholder="Optional">
-            </div>
-            <div>
-                <label for="receiveToAccount" class="font-medium text-sm">To (My Account)</label>
-                <select id="receiveToAccount" class="input-field" required></select>
-            </div>
-            <div>
-                <label for="receiveAmount" class="font-medium text-sm">Amount (RM)</label>
-                <input type="number" id="receiveAmount" placeholder="0.00" class="input-field" required min="0.01" step="0.01">
-            </div>
-            <div>
-                <label for="receiveDescription" class="font-medium text-sm">Description (Optional)</label>
-                <input type="text" id="receiveDescription" placeholder="e.g., Payment for goods" class="input-field">
-            </div>
-            <div class="text-right pt-2">
-                <button type="submit" class="btn btn-primary px-6 py-2">Log Incoming Transfer</button>
-            </div>
-        `;
+    function renderForms() {
+        document.getElementById('addAccountForm').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="addAccountName" class="font-medium text-sm">Account Name</label><input type="text" id="addAccountName" placeholder="e.g., Savings" class="input-field" required></div><div><label for="addAccountNumber" class="font-medium text-sm">Account Number (Optional)</label><input type="text" id="addAccountNumber" placeholder="e.g., 123-456" class="input-field"></div></div><div><label for="addInitialBalance" class="font-medium text-sm">Initial Balance (RM)</label><input type="number" id="addInitialBalance" placeholder="0" class="input-field" required min="0" step="0.01"></div><div class="text-right pt-2"><button type="submit" class="btn btn-primary px-6 py-2">Add Account</button></div>`;
+        document.getElementById('transactionForm').innerHTML = `<div><label for="fromAccount" class="font-medium text-sm">From (My Accounts)</label><select id="fromAccount" class="input-field" required></select></div><div><label class="font-medium text-sm">To</label><div class="flex gap-4 mt-1" id="destinationType"><label class="flex items-center text-sm"><input type="radio" name="destinationType" value="mine" class="mr-2" checked> My Account</label><label class="flex items-center text-sm"><input type="radio" name="destinationType" value="other" class="mr-2"> Other Person</label></div></div><div id="destinationContainer"></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="amount" class="font-medium text-sm">Amount (RM)</label><input type="number" id="amount" placeholder="0.00" class="input-field" required min="0.01" step="0.01"></div><div><label for="description" class="font-medium text-sm">Description (Optional)</label><input type="text" id="description" placeholder="e.g., Lunch, Loan" class="input-field"></div></div><div class="text-right pt-2"><button type="submit" class="btn btn-primary px-6 py-2">Transfer</button></div>`;
+        document.getElementById('receiveMoneyForm').innerHTML = `<div><label for="fromOtherNameReceive" class="font-medium text-sm">From (Other's Name)</label><input type="text" id="fromOtherNameReceive" class="input-field" placeholder="e.g., Jane Smith" required></div><div><label for="fromOtherNumberReceive" class="font-medium text-sm">From (Other's Account #)</label><input type="text" id="fromOtherNumberReceive" class="input-field" placeholder="Optional"></div><div><label for="receiveToAccount" class="font-medium text-sm">To (My Account)</label><select id="receiveToAccount" class="input-field" required></select></div><div><label for="receiveAmount" class="font-medium text-sm">Amount (RM)</label><input type="number" id="receiveAmount" placeholder="0.00" class="input-field" required min="0.01" step="0.01"></div><div><label for="receiveDescription" class="font-medium text-sm">Description (Optional)</label><input type="text" id="receiveDescription" placeholder="e.g., Payment for goods" class="input-field"></div><div class="text-right pt-2"><button type="submit" class="btn btn-primary px-6 py-2">Log Incoming</button></div>`;
+        document.getElementById('payForm').innerHTML = `<div><label for="payFromAccount" class="font-medium text-sm">Pay From (My Account)</label><select id="payFromAccount" class="input-field" required></select></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="payAmount" class="font-medium text-sm">Amount (RM)</label><input type="number" id="payAmount" placeholder="0.00" class="input-field" required min="0.01" step="0.01"></div><div><label for="payDescription" class="font-medium text-sm">For (e.g., Groceries, Bills)</label><input type="text" id="payDescription" placeholder="Lunch with friends" class="input-field" required></div></div><div class="text-right pt-2"><button type="submit" class="btn btn-primary px-6 py-2">Log Payment</button></div>`;
+        renderEditModal();
+        renderAccountSelectors();
+        renderDestinationInput();
     }
 
     function renderEditModal() {
-        editAccountModalContainer.innerHTML = `
-            <div class="modal-content">
-                <h2 class="text-xl font-semibold mb-4">Edit Account</h2>
-                <form id="editAccountForm" class="space-y-3">
-                    <input type="hidden" id="editAccountId">
-                    <div>
-                        <label for="editAccountName" class="font-medium text-sm">Account Name</label>
-                        <input type="text" id="editAccountName" class="input-field" required>
-                    </div>
-                    <div>
-                        <label for="editAccountNumber" class="font-medium text-sm">Account Number</label>
-                        <input type="text" id="editAccountNumber" class="input-field">
-                    </div>
-                    <div>
-                        <label for="editAccountBalance" class="font-medium text-sm">Balance (RM)</label>
-                        <input type="number" id="editAccountBalance" class="input-field" required step="0.01">
-                    </div>
-                    <div class="mt-6 flex justify-end gap-4">
-                        <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                    </div>
-                </form>
-            </div>
-        `;
+        editAccountModalContainer.innerHTML = `<div class="modal-content"><h2 class="text-xl font-semibold mb-4">Edit Account</h2><form id="editAccountForm" class="space-y-3"><input type="hidden" id="editAccountId"><div><label for="editAccountName" class="font-medium text-sm">Account Name</label><input type="text" id="editAccountName" class="input-field" required></div><div><label for="editAccountNumber" class="font-medium text-sm">Account Number</label><input type="text" id="editAccountNumber" class="input-field"></div><div><label for="editAccountBalance" class="font-medium text-sm">Balance (RM)</label><input type="number" id="editAccountBalance" class="input-field" required step="0.01"></div><div class="mt-6 flex justify-end gap-4"><button type="button" class="btn btn-secondary" data-close-modal>Cancel</button><button type="submit" class="btn btn-primary">Save Changes</button></div></form></div>`;
     }
-
+    
     function showFulfillmentPrompt(matchedTx) {
-        fulfillmentModalContainer.innerHTML = `
-            <div class="modal-content text-center">
-                <h2 class="text-xl font-semibold mb-2">Fulfill Pinned Transaction?</h2>
-                <p class="text-gray-600 mb-6">Is this transfer related to the pinned payment of <strong class="text-gray-800">RM${matchedTx.amount.toFixed(2)}</strong> from <strong class="text-gray-800">${getAccountName(matchedTx.fromId)}</strong>?</p>
-                <div class="flex justify-center gap-4">
-                    <button type="button" class="btn btn-secondary" id="fulfill-no">No, It's a New Transfer</button>
-                    <button type="button" class="btn btn-primary" id="fulfill-yes" data-tx-id="${matchedTx.id}">Yes, Fulfill It</button>
-                </div>
-            </div>
-        `;
+        fulfillmentModalContainer.innerHTML = `<div class="modal-content text-center"><h2 class="text-xl font-semibold mb-2">Fulfill Pinned Transaction?</h2><p class="text-gray-600 mb-6">Is this transfer related to the pinned payment of <strong class="text-gray-800">RM${matchedTx.amount.toFixed(2)}</strong> from <strong class="text-gray-800">${getAccountName(matchedTx.fromId)}</strong>?</p><div class="flex justify-center gap-4"><button type="button" class="btn btn-secondary" id="fulfill-no">No, It's a New Transfer</button><button type="button" class="btn btn-primary" id="fulfill-yes" data-tx-id="${matchedTx.id}">Yes, Fulfill It</button></div></div>`;
         fulfillmentModalContainer.classList.add('active');
     }
 
     function renderAccountsList() {
+        const accountsList = document.getElementById('accountsList');
         accountsList.innerHTML = '';
         const myAccounts = state.accounts.filter(acc => acc.type === 'mine');
-        const otherAccounts = state.accounts.filter(acc => acc.type === 'others');
+        const otherAccounts = state.accounts.filter(acc => acc.type === 'others' && acc.id !== PAYMENTS_ACCOUNT_ID);
 
         const renderList = (title, accounts, isMyAccount = true) => {
             if (accounts.length > 0) {
                 let listHtml = `<h3 class="text-lg font-semibold text-gray-700 mb-3">${title}</h3><div class="space-y-3">`;
                 accounts.forEach(account => {
                     const balanceColor = account.balance < 0 ? 'text-red-600' : (isMyAccount ? 'text-green-600' : 'text-gray-800');
-                    listHtml += `
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border">
-                            <div>
-                                <p class="font-semibold text-base">${account.name}</p>
-                                ${account.number ? `<p class="text-xs text-gray-500">${account.number}</p>` : ''}
-                            </div>
-                            <div class="text-right">
-                                <p class="font-bold text-lg ${balanceColor}">RM${account.balance.toFixed(2)}</p>
-                                <button data-edit-id="${account.id}" class="edit-btn text-xs text-indigo-600 hover:text-indigo-800 font-semibold mt-1">Edit</button>
-                            </div>
-                        </div>`;
+                    listHtml += `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border"><div><p class="font-semibold text-base">${account.name}</p>${account.number ? `<p class="text-xs text-gray-500">${account.number}</p>` : ''}</div><div class="text-right"><p class="font-bold text-lg ${balanceColor}">RM${account.balance.toFixed(2)}</p><button data-edit-id="${account.id}" class="edit-btn text-xs text-indigo-600 hover:text-indigo-800 font-semibold mt-1">Edit</button></div></div>`;
                 });
                 listHtml += '</div>';
                 accountsList.innerHTML += listHtml;
@@ -492,36 +392,25 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         if (myAccounts.length === 0 && otherAccounts.length === 0) {
-            accountsList.innerHTML = '<p class="text-gray-500 text-center py-8">No accounts added yet. Go to the "Add Account" tab to start.</p>';
-            return;
+            accountsList.innerHTML = '<p class="text-gray-500 text-center py-8">No accounts added yet. Go to the "Add Account" tab to start.</p>'; return;
         }
         
         renderList("My Accounts", myAccounts, true);
-        if(myAccounts.length > 0 && otherAccounts.length > 0) {
-            accountsList.innerHTML += '<hr class="my-4">';
-        }
+        if(myAccounts.length > 0 && otherAccounts.length > 0) { accountsList.innerHTML += '<hr class="my-4">'; }
         renderList("Other's Accounts", otherAccounts, false);
     }
 
     function renderAccountSelectors() {
         const myAccounts = state.accounts.filter(acc => acc.type === 'mine');
-        const fromAccountSelect = document.getElementById('fromAccount');
-        const receiveToAccount = document.getElementById('receiveToAccount');
-        
-        const fromVal = fromAccountSelect ? fromAccountSelect.value : null;
-        const toVal = receiveToAccount ? receiveToAccount.value : null;
-
-        if (fromAccountSelect) fromAccountSelect.innerHTML = '<option value="" disabled selected>Select account</option>';
-        if (receiveToAccount) receiveToAccount.innerHTML = '<option value="" disabled selected>Select account</option>';
-        
-        myAccounts.forEach(account => {
-            const option = `<option value="${account.id}">${account.name} (RM${account.balance.toFixed(2)})</option>`;
-            if (fromAccountSelect) fromAccountSelect.innerHTML += option;
-            if (receiveToAccount) receiveToAccount.innerHTML += option;
+        const selectors = [ document.getElementById('fromAccount'), document.getElementById('receiveToAccount'), document.getElementById('payFromAccount') ];
+        selectors.forEach(sel => {
+            if (!sel) return;
+            const currentVal = sel.value;
+            sel.innerHTML = '<option value="" disabled>Select account</option>';
+            myAccounts.forEach(acc => { sel.innerHTML += `<option value="${acc.id}">${acc.name} (RM${acc.balance.toFixed(2)})</option>`; });
+            sel.value = currentVal;
+            if(!sel.value) sel.selectedIndex = 0;
         });
-
-        if (fromAccountSelect) fromAccountSelect.value = fromVal;
-        if (receiveToAccount) receiveToAccount.value = toVal;
     }
 
     function renderDestinationInput() {
@@ -530,51 +419,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const destinationType = destinationTypeEl.value;
         const fromAccountId = document.getElementById('fromAccount').value;
         const destinationContainer = document.getElementById('destinationContainer');
-        
         if (destinationType === 'mine') {
             const myOtherAccounts = state.accounts.filter(acc => acc.type === 'mine' && acc.id != fromAccountId);
             let options = myOtherAccounts.map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
-            destinationContainer.innerHTML = `
-                <div>
-                    <label for="toAccount" class="font-medium text-sm">To Account</label>
-                    <select id="toAccount" class="input-field" required>
-                        <option value="" disabled selected>Select one of your accounts</option>
-                        ${options}
-                    </select>
-                </div>`;
+            destinationContainer.innerHTML = `<div><label for="toAccount" class="font-medium text-sm">To Account</label><select id="toAccount" class="input-field" required><option value="" disabled selected>Select one of your accounts</option>${options}</select></div>`;
         } else {
-            destinationContainer.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="toOtherName" class="font-medium text-sm">Recipient's Name</label>
-                        <input type="text" id="toOtherName" class="input-field" placeholder="e.g., John Doe" required>
-                    </div>
-                    <div>
-                        <label for="toOtherNumber" class="font-medium text-sm">Recipient's Account # (Optional)</label>
-                        <input type="text" id="toOtherNumber" class="input-field" placeholder="e.g., 987-654-321">
-                    </div>
-                </div>`;
+            destinationContainer.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="toOtherName" class="font-medium text-sm">Recipient's Name</label><input type="text" id="toOtherName" class="input-field" placeholder="e.g., John Doe" required></div><div><label for="toOtherNumber" class="font-medium text-sm">Recipient's Account # (Optional)</label><input type="text" id="toOtherNumber" class="input-field" placeholder="e.g., 987-654-321"></div></div>`;
         }
     }
 
     function renderTransactionHistory() {
-        pinnedTransactionHistory.innerHTML = '';
-        transactionHistory.innerHTML = '';
+        const pinnedHistory = document.getElementById('pinnedTransactionHistory');
+        const regularHistory = document.getElementById('transactionHistory');
+        pinnedHistory.innerHTML = '';
+        regularHistory.innerHTML = '';
         
         const pinnedTxs = state.transactions.filter(tx => tx.pinned);
         const regularTxs = state.transactions.filter(tx => !tx.pinned);
 
-        if (pinnedTxs.length === 0) {
-            pinnedTransactionHistory.innerHTML = '<p class="text-xs text-gray-500 text-center">No pinned transactions.</p>';
-        } else {
-            pinnedTxs.forEach(tx => pinnedTransactionHistory.innerHTML += createTxCardHtml(tx));
-        }
+        if (pinnedTxs.length === 0) { pinnedHistory.innerHTML = '<p class="text-xs text-gray-500 text-center">No pinned transactions.</p>'; } 
+        else { pinnedTxs.forEach(tx => pinnedHistory.innerHTML += createTxCardHtml(tx)); }
 
-        if (state.transactions.length === 0) {
-            transactionHistory.innerHTML = '<p class="text-xs text-gray-500 text-center">No transactions recorded yet.</p>';
-        } else {
-            regularTxs.forEach(tx => transactionHistory.innerHTML += createTxCardHtml(tx));
-        }
+        if (state.transactions.length === 0) { regularHistory.innerHTML = '<p class="text-xs text-gray-500 text-center">No transactions recorded yet.</p>'; } 
+        else { regularTxs.forEach(tx => regularHistory.innerHTML += createTxCardHtml(tx)); }
     }
 
     function createTxCardHtml(tx) {
@@ -604,45 +471,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const copyIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-400 hover:text-gray-600"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg>`;
                 
-                const fromHtml = `
-                    <div class="p-2 rounded-md bg-red-50">
-                        <div class="text-xs text-red-800 font-semibold">FROM</div>
-                        <div class="text-sm font-medium text-gray-800">${fromAccount.name}</div>
-                        ${fromAccount.number ? `<div class="text-xs text-gray-600 flex items-center"><span>${fromAccount.number}</span><button class="copy-btn ml-2" data-copy-text="${fromAccount.number}">${copyIconSvg}</button></div>` : ''}
-                    </div>`;
-                
-                const toHtml = `
-                     <div class="p-2 rounded-md bg-green-50">
-                        <div class="text-xs text-green-800 font-semibold">TO</div>
-                        <div class="text-sm font-medium text-gray-800">${toAccount.name}</div>
-                        ${toAccount.number ? `<div class="text-xs text-gray-600 flex items-center"><span>${toAccount.number}</span><button class="copy-btn ml-2" data-copy-text="${toAccount.number}">${copyIconSvg}</button></div>` : ''}
-                    </div>`;
-
+                const fromHtml = `<div class="p-2 rounded-md bg-red-50"><div class="text-xs text-red-800 font-semibold">FROM</div><div class="text-sm font-medium text-gray-800">${fromAccount.name}</div>${fromAccount.number ? `<div class="text-xs text-gray-600 flex items-center"><span>${fromAccount.number}</span><button class="copy-btn ml-2" data-copy-text="${fromAccount.number}">${copyIconSvg}</button></div>` : ''}</div>`;
+                const toHtml = `<div class="p-2 rounded-md bg-green-50"><div class="text-xs text-green-800 font-semibold">TO</div><div class="text-sm font-medium text-gray-800">${toAccount.name}</div>${toAccount.number ? `<div class="text-xs text-gray-600 flex items-center"><span>${toAccount.number}</span><button class="copy-btn ml-2" data-copy-text="${toAccount.number}">${copyIconSvg}</button></div>` : ''}</div>`;
                 detailsHtml = `<div class="mt-2 grid grid-cols-2 gap-2">${fromHtml}${toHtml}</div>`;
             }
 
-            txHtml = `
-                <div class="tx-card p-3 bg-gray-50 rounded-lg border ${pinClass}">
-                    <div class="flex justify-between items-start">
-                        ${amountDisplayHtml}
-                        <div class="text-right flex-shrink-0 ml-2">
-                            <button class="pin-btn ${pinClass}" data-tx-id="${tx.id}">${pinIcon}</button>
-                            <p class="text-xs text-gray-500 mt-1 whitespace-nowrap">${formattedDate}</p>
-                        </div>
-                    </div>
-                    ${detailsHtml}
-                    ${tx.description ? `<p class="text-xs text-gray-500 italic mt-2 pt-2 border-t border-gray-200">"${tx.description}"</p>` : ''}
-                </div>`;
+            txHtml = `<div class="tx-card p-3 bg-gray-50 rounded-lg border ${pinClass}"><div class="flex justify-between items-start">${amountDisplayHtml}<div class="text-right flex-shrink-0 ml-2"><button class="pin-btn ${pinClass}" data-tx-id="${tx.id}">${pinIcon}</button><p class="text-xs text-gray-500 mt-1 whitespace-nowrap">${formattedDate}</p></div></div>${detailsHtml}${tx.description ? `<p class="text-xs text-gray-500 italic mt-2 pt-2 border-t border-gray-200">"${tx.description}"</p>` : ''}</div>`;
         } else if (tx.type === 'edit') {
-            txHtml = `
-                <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <div class="flex justify-between items-center">
-                        <p class="font-semibold text-yellow-800 text-sm">Balance Edit</p>
-                        <p class="text-xs text-yellow-500">${formattedDate}</p>
-                    </div>
-                    <p class="text-xs text-yellow-700 mt-1">Account: <strong>${getAccountName(tx.accountId)}</strong></p>
-                    <p class="text-xs text-yellow-600">Changed from RM${tx.oldBalance.toFixed(2)} to RM${tx.newBalance.toFixed(2)}</p>
-                </div>`;
+            txHtml = `<div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200"><div class="flex justify-between items-center"><p class="font-semibold text-yellow-800 text-sm">Balance Edit</p><p class="text-xs text-yellow-500">${formattedDate}</p></div><p class="text-xs text-yellow-700 mt-1">Account: <strong>${getAccountName(tx.accountId)}</strong></p><p class="text-xs text-yellow-600">Changed from RM${tx.oldBalance.toFixed(2)} to RM${tx.newBalance.toFixed(2)}</p></div>`;
         }
         return txHtml;
     }
@@ -651,55 +487,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const stats = {};
         const externalTxs = state.transactions.filter(tx => {
             if (tx.type !== 'transfer') return false;
-            const from = getAccount(tx.fromId);
-            const to = getAccount(tx.toId);
+            const from = getAccount(tx.fromId); const to = getAccount(tx.toId);
             return from && to && from.type !== to.type;
         });
 
         externalTxs.forEach(tx => {
-            const date = new Date(tx.date).toISOString().split('T')[0]; // YYYY-MM-DD
-            if (!stats[date]) {
-                stats[date] = { in: 0, out: 0 };
-            }
+            const date = new Date(tx.date).toISOString().split('T')[0];
+            if (!stats[date]) { stats[date] = { in: 0, out: 0 }; }
             const from = getAccount(tx.fromId);
-            if (from.type === 'mine') {
-                stats[date].out += tx.amount;
-            } else {
-                stats[date].in += tx.amount;
-            }
+            if (from.type === 'mine') { stats[date].out += tx.amount; } 
+            else { stats[date].in += tx.amount; }
         });
         return stats;
     }
 
     function renderDashboard() {
+        const dashboardContainer = document.getElementById('sub-tab-view-dashboard-calendar');
         const { year, month } = state.dashboard;
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
         const daysInMonth = lastDay.getDate();
-        const startDayOfWeek = firstDay.getDay(); // 0=Sun, 1=Mon...
-
+        const startDayOfWeek = firstDay.getDay();
         const dailyStats = getDailyFlowStats();
 
-        let calendarHtml = `
-            <div class="flex justify-between items-center mb-4">
-                <button id="prev-month" class="btn btn-secondary">&lt;</button>
-                <h2 class="text-xl font-semibold">${monthNames[month]} ${year}</h2>
-                <button id="next-month" class="btn btn-secondary">&gt;</button>
-            </div>
-            <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-600 mb-2">
-                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-            </div>
-            <div class="grid grid-cols-7 gap-1">
-        `;
+        let calendarHtml = `<div class="flex justify-between items-center mb-4"><button id="prev-month" class="btn btn-secondary">&lt;</button><h2 class="text-xl font-semibold">${monthNames[month]} ${year}</h2><button id="next-month" class="btn btn-secondary">&gt;</button></div><div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-600 mb-2"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div><div class="grid grid-cols-7 gap-1">`;
+        for (let i = 0; i < startDayOfWeek; i++) { calendarHtml += `<div></div>`; }
 
-        // Add blank days for the start of the month
-        for (let i = 0; i < startDayOfWeek; i++) {
-            calendarHtml += `<div></div>`;
-        }
-
-        // Add days of the month
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const stats = dailyStats[dateStr];
@@ -712,117 +526,119 @@ document.addEventListener('DOMContentLoaded', () => {
                 let percColor = 'text-gray-500';
                 if (percentage > 0) percColor = 'text-green-600';
                 if (percentage < 0) percColor = 'text-red-600';
-                
-                statsHtml = `
-                    <div class="text-xs mt-1">
-                        <div class="text-green-600 font-semibold">+${stats.in.toFixed(0)}</div>
-                        <div class="text-red-600 font-semibold">-${stats.out.toFixed(0)}</div>
-                        <div class="${percColor} font-bold">${percentage > 0 ? '+' : ''}${percentage}%</div>
-                    </div>
-                `;
+                statsHtml = `<div class="text-xs mt-1"><div class="text-green-600 font-semibold">+${stats.in.toFixed(0)}</div><div class="text-red-600 font-semibold">-${stats.out.toFixed(0)}</div><div class="${percColor} font-bold">${percentage > 0 ? '+' : ''}${percentage}%</div></div>`;
             }
-
-            calendarHtml += `
-                <div class="border rounded-md p-1 h-24 flex flex-col">
-                    <div class="font-semibold text-gray-700 text-sm">${day}</div>
-                    ${statsHtml}
-                </div>
-            `;
+            calendarHtml += `<div class="border rounded-md p-1 h-24 flex flex-col"><div class="font-semibold text-gray-700 text-sm">${day}</div>${statsHtml}</div>`;
         }
         calendarHtml += `</div>`;
         dashboardContainer.innerHTML = calendarHtml;
     }
 
     // --- EVENT LISTENERS ---
-    addAccountForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = document.getElementById('accountName').value.trim();
-        const number = document.getElementById('accountNumber').value.trim();
-        const initialBalance = parseFloat(document.getElementById('initialBalance').value);
-        if (name && !isNaN(initialBalance)) {
-            addMyAccount(name, number, initialBalance);
-            addAccountForm.reset();
-            showToast('Account added successfully!');
-        }
-    });
-
-    transactionForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const fromId = document.getElementById('fromAccount').value;
-        const amount = parseFloat(document.getElementById('amount').value);
-        const description = document.getElementById('description').value.trim();
-        const destinationType = document.querySelector('input[name="destinationType"]:checked').value;
-        let toId = null;
-
-        if (destinationType === 'mine') {
-            toId = document.getElementById('toAccount').value;
-        } else {
-            const toName = document.getElementById('toOtherName').value.trim();
-            if (!toName) { showToast("Recipient's name is required."); return; }
-            const toNumber = document.getElementById('toOtherNumber').value.trim();
-            let otherAccount = state.accounts.find(acc => acc.type === 'others' && acc.name.toLowerCase() === toName.toLowerCase());
-            if (otherAccount) {
-                toId = otherAccount.id;
-            } else {
-                const newOtherAccount = { id: Date.now(), name: toName, number: toNumber, balance: 0, type: 'others' };
-                state.accounts.push(newOtherAccount);
-                toId = newOtherAccount.id;
-            }
-        }
-
-        if (fromId && toId && !isNaN(amount) && amount > 0) {
-            addTransaction(fromId, toId, amount, description);
-            transactionForm.reset();
-            renderAccountSelectors();
-            renderDestinationInput();
-            showToast('Transfer successful!');
-        } else {
-            showToast('Please fill out the form correctly.');
-        }
-    });
+    function initNavigation() {
+        hamburgerBtn.addEventListener('click', () => { sidenav.classList.add('active'); sidenavOverlay.classList.add('active'); });
+        sidenavOverlay.addEventListener('click', () => { sidenav.classList.remove('active'); sidenavOverlay.classList.remove('active'); });
+        document.querySelectorAll('.main-nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const viewId = `view-${e.target.dataset.view}`;
+                document.querySelectorAll('.main-view').forEach(v => v.classList.add('hidden'));
+                document.getElementById(viewId).classList.remove('hidden');
+                document.querySelectorAll('.main-nav-link').forEach(l => l.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                mainHeaderTitle.textContent = e.currentTarget.textContent.trim();
+                sidenav.classList.remove('active');
+                sidenavOverlay.classList.remove('active');
+            });
+        });
+        document.querySelectorAll('.sub-tab-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const parent = e.target.closest('.bg-white');
+                parent.querySelectorAll('.sub-tab-link').forEach(l => l.classList.remove('active'));
+                parent.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                parent.querySelector(`#sub-tab-${e.target.dataset.tab}`).classList.add('active');
+            });
+        });
+    }
     
-    receiveMoneyForm.addEventListener('submit', (e) => {
+    document.body.addEventListener('submit', e => {
         e.preventDefault();
-        const fromName = document.getElementById('fromOtherNameReceive').value.trim();
-        const fromNumber = document.getElementById('fromOtherNumberReceive').value.trim();
-        const toId = document.getElementById('receiveToAccount').value;
-        const amount = parseFloat(document.getElementById('receiveAmount').value);
-        const description = document.getElementById('receiveDescription').value.trim();
-
-        if (!fromName || !toId || isNaN(amount) || amount <= 0) { showToast('Please fill out the form correctly.'); return; }
-
-        let fromAccount = state.accounts.find(acc => acc.type === 'others' && acc.name.toLowerCase() === fromName.toLowerCase());
-        let fromId;
-        if (fromAccount) {
-            fromId = fromAccount.id;
-        } else {
-            const newOtherAccount = { id: Date.now(), name: fromName, number: fromNumber, balance: 0, type: 'others' };
-            state.accounts.push(newOtherAccount);
-            fromId = newOtherAccount.id;
-        }
-        addTransaction(fromId, toId, amount, description);
-        receiveMoneyForm.reset();
-        showToast('Incoming transfer logged!');
-    });
-
-    document.body.addEventListener('change', (e) => {
-        if (e.target.name === 'destinationType' || e.target.id === 'fromAccount') {
-            renderDestinationInput();
+        if (e.target.id === 'addAccountForm') {
+            const name = document.getElementById('addAccountName').value.trim();
+            const number = document.getElementById('addAccountNumber').value.trim();
+            const initialBalance = parseFloat(document.getElementById('addInitialBalance').value);
+            if (name && !isNaN(initialBalance)) { addMyAccount(name, number, initialBalance); e.target.reset(); showToast('Account added!'); }
+        } else if (e.target.id === 'transactionForm') {
+            const fromId = document.getElementById('fromAccount').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const description = document.getElementById('description').value.trim();
+            const destinationType = document.querySelector('input[name="destinationType"]:checked').value;
+            let toId = null;
+            if (destinationType === 'mine') { toId = document.getElementById('toAccount').value; } 
+            else {
+                const toName = document.getElementById('toOtherName').value.trim();
+                if (!toName) { showToast("Recipient's name is required."); return; }
+                const toNumber = document.getElementById('toOtherNumber').value.trim();
+                let otherAccount = state.accounts.find(acc => acc.type === 'others' && acc.name.toLowerCase() === toName.toLowerCase());
+                if (otherAccount) { toId = otherAccount.id; } 
+                else {
+                    const newOtherAccount = { id: Date.now(), name: toName, number: toNumber, balance: 0, type: 'others' };
+                    state.accounts.push(newOtherAccount);
+                    toId = newOtherAccount.id;
+                }
+            }
+            if (fromId && toId && !isNaN(amount) && amount > 0) {
+                addTransaction(fromId, toId, amount, description);
+                e.target.reset();
+                renderAccountSelectors();
+                renderDestinationInput();
+                showToast('Transfer successful!');
+            } else { showToast('Please fill out the form correctly.'); }
+        } else if (e.target.id === 'receiveMoneyForm') {
+            const fromName = document.getElementById('fromOtherNameReceive').value.trim();
+            const fromNumber = document.getElementById('fromOtherNumberReceive').value.trim();
+            const toId = document.getElementById('receiveToAccount').value;
+            const amount = parseFloat(document.getElementById('receiveAmount').value);
+            const description = document.getElementById('receiveDescription').value.trim();
+            if (!fromName || !toId || isNaN(amount) || amount <= 0) { showToast('Please fill out the form correctly.'); return; }
+            let fromAccount = state.accounts.find(acc => acc.type === 'others' && acc.name.toLowerCase() === fromName.toLowerCase());
+            let fromId;
+            if (fromAccount) { fromId = fromAccount.id; } 
+            else {
+                const newOtherAccount = { id: Date.now(), name: fromName, number: fromNumber, balance: 0, type: 'others' };
+                state.accounts.push(newOtherAccount);
+                fromId = newOtherAccount.id;
+            }
+            addTransaction(fromId, toId, amount, description);
+            e.target.reset();
+            showToast('Incoming transfer logged!');
+        } else if (e.target.id === 'payForm') {
+            const fromId = document.getElementById('payFromAccount').value;
+            const amount = parseFloat(document.getElementById('payAmount').value);
+            const description = document.getElementById('payDescription').value.trim();
+            if (fromId && !isNaN(amount) && amount > 0 && description) {
+                addTransaction(fromId, PAYMENTS_ACCOUNT_ID, amount, description);
+                e.target.reset();
+                showToast('Payment logged!');
+            } else { showToast('Please fill all fields.'); }
+        } else if (e.target.id === 'editAccountForm') {
+            const id = document.getElementById('editAccountId').value;
+            const name = document.getElementById('editAccountName').value.trim();
+            const number = document.getElementById('editAccountNumber').value.trim();
+            const balance = parseFloat(document.getElementById('editAccountBalance').value);
+            if(id && name && !isNaN(balance)) { updateAccount(id, name, number, balance); showToast('Account updated!'); } 
+            else { showToast('Please ensure all fields are valid.'); }
         }
     });
 
     document.body.addEventListener('click', (e) => {
-        if (e.target.hasAttribute('data-close-modal') || e.target.closest('[data-close-modal]')) {
-            e.target.closest('.modal-overlay').classList.remove('active');
-        }
-        if (e.target.classList.contains('modal-overlay')) {
-            e.target.classList.remove('active');
-        }
-
+        if (e.target.hasAttribute('data-close-modal') || e.target.closest('[data-close-modal]')) { e.target.closest('.modal-overlay').classList.remove('active'); }
+        if (e.target.classList.contains('modal-overlay')) { e.target.classList.remove('active'); }
         const editBtn = e.target.closest('.edit-btn');
         if (editBtn) {
-            const accountId = editBtn.dataset.editId;
-            const account = getAccount(accountId);
+            const account = getAccount(editBtn.dataset.editId);
             if (account) {
                 document.getElementById('editAccountId').value = account.id;
                 document.getElementById('editAccountName').value = account.name;
@@ -831,77 +647,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 editAccountModalContainer.classList.add('active');
             }
         }
-        
         const pinBtn = e.target.closest('.pin-btn');
-        if(pinBtn) {
-            togglePinTransaction(pinBtn.dataset.txId);
-        }
-        
+        if(pinBtn) { togglePinTransaction(pinBtn.dataset.txId); }
         const copyBtn = e.target.closest('.copy-btn');
-        if(copyBtn) {
-            copyToClipboard(copyBtn.dataset.copyText);
-        }
-
+        if(copyBtn) { copyToClipboard(copyBtn.dataset.copyText); }
         const fulfillYesBtn = e.target.closest('#fulfill-yes');
-        if (fulfillYesBtn) {
-            togglePinTransaction(fulfillYesBtn.dataset.txId);
-            showToast('Pinned transaction fulfilled!');
-            fulfillmentModalContainer.classList.remove('active');
-        }
+        if (fulfillYesBtn) { togglePinTransaction(fulfillYesBtn.dataset.txId); showToast('Pinned transaction fulfilled!'); fulfillmentModalContainer.classList.remove('active'); }
         const fulfillNoBtn = e.target.closest('#fulfill-no');
-        if (fulfillNoBtn) {
-            fulfillmentModalContainer.classList.remove('active');
-        }
-        
-        // Calendar navigation
+        if (fulfillNoBtn) { fulfillmentModalContainer.classList.remove('active'); }
         const prevMonthBtn = e.target.closest('#prev-month');
-        if (prevMonthBtn) {
-            state.dashboard.month--;
-            if (state.dashboard.month < 0) {
-                state.dashboard.month = 11;
-                state.dashboard.year--;
-            }
-            renderDashboard();
-        }
+        if (prevMonthBtn) { state.dashboard.month--; if (state.dashboard.month < 0) { state.dashboard.month = 11; state.dashboard.year--; } renderDashboard(); }
         const nextMonthBtn = e.target.closest('#next-month');
-        if (nextMonthBtn) {
-            state.dashboard.month++;
-            if (state.dashboard.month > 11) {
-                state.dashboard.month = 0;
-                state.dashboard.year++;
-            }
-            renderDashboard();
-        }
+        if (nextMonthBtn) { state.dashboard.month++; if (state.dashboard.month > 11) { state.dashboard.month = 0; state.dashboard.year++; } renderDashboard(); }
     });
     
-    editAccountModalContainer.addEventListener('submit', (e) => {
-        if (e.target.id === 'editAccountForm') {
-            e.preventDefault();
-            const id = document.getElementById('editAccountId').value;
-            const name = document.getElementById('editAccountName').value.trim();
-            const number = document.getElementById('editAccountNumber').value.trim();
-            const balance = parseFloat(document.getElementById('editAccountBalance').value);
-            if(id && name && !isNaN(balance)) {
-                updateAccount(id, name, number, balance);
-                showToast('Account updated!');
-            } else {
-                showToast('Please ensure all fields are valid.');
-            }
+    document.body.addEventListener('change', (e) => {
+        if (e.target.name === 'destinationType' || e.target.id === 'fromAccount') {
+            renderDestinationInput();
         }
-    });
-
-    document.querySelectorAll('.tab-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            link.classList.add('active');
-            document.getElementById(`tab-${link.dataset.tab}`).classList.add('active');
-        });
     });
 
     // --- INITIALIZATION ---
     loadState();
+    initNavigation();
     render();
     updateTime();
     setInterval(updateTime, 60000);
