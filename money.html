@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Money Flow Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -29,6 +30,13 @@
         }
         .btn-primary:hover {
             background-color: #fbbf24;
+        }
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
         }
         .input-field {
             width: 100%;
@@ -126,7 +134,7 @@
             </a></li>
         </ul>
         <div class="p-4 text-xs text-center text-gray-400 border-t">
-            Version 1.5.0
+            Version 2.0.0
         </div>
     </nav>
 
@@ -167,11 +175,27 @@
                  <div class="bg-white rounded-lg shadow p-5">
                     <nav class="sub-tab-nav mb-5">
                         <a class="sub-tab-link active" data-tab="view-dashboard-calendar">Calendar</a>
+                        <a class="sub-tab-link" data-tab="view-dashboard-charts">Charts</a>
                         <a class="sub-tab-link" data-tab="view-dashboard-history">History</a>
                     </nav>
                     <div id="sub-tab-view-dashboard-calendar" class="sub-tab-content active"></div>
+                    <div id="sub-tab-view-dashboard-charts" class="sub-tab-content">
+                        <!-- Chart will be rendered here -->
+                    </div>
                     <div id="sub-tab-view-dashboard-history" class="sub-tab-content">
-                        <h2 class="text-xl font-semibold mb-4">Transaction History</h2>
+                        <div class="md:flex justify-between items-center mb-4 gap-4">
+                            <h2 class="text-xl font-semibold">Transaction History</h2>
+                            <div class="flex items-center gap-2 mt-2 md:mt-0">
+                                <input type="text" id="searchInput" class="input-field !mt-0" placeholder="Search...">
+                                <select id="filterSelect" class="input-field !mt-0">
+                                    <option value="all">All</option>
+                                    <option value="in">Money In</option>
+                                    <option value="out">Money Out</option>
+                                    <option value="pay">Payments</option>
+                                </select>
+                                <button id="exportCsvBtn" class="btn btn-secondary">Export</button>
+                            </div>
+                        </div>
                         <div class="space-y-3 mb-6">
                             <h3 class="text-lg font-semibold text-gray-700">Pinned</h3>
                             <div id="pinnedTransactionHistory"></div>
@@ -212,6 +236,7 @@
     <!-- Modals -->
     <div id="editAccountModal" class="modal-overlay"></div>
     <div id="fulfillmentModal" class="modal-overlay"></div>
+    <div id="deleteAccountModal" class="modal-overlay"></div>
     <div id="toast" class="toast-notification"></div>
 
 <script>
@@ -220,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeDisplay = document.getElementById('current-time');
     const editAccountModalContainer = document.getElementById('editAccountModal');
     const fulfillmentModalContainer = document.getElementById('fulfillmentModal');
+    const deleteAccountModalContainer = document.getElementById('deleteAccountModal');
     const toast = document.getElementById('toast');
     const sidenav = document.getElementById('sidenav');
     const sidenavOverlay = document.getElementById('sidenav-overlay');
@@ -230,8 +256,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let state = {
         accounts: [],
         transactions: [],
-        dashboard: { year: new Date().getFullYear(), month: new Date().getMonth() }
+        dashboard: { year: new Date().getFullYear(), month: new Date().getMonth() },
+        ui: { searchTerm: '', filter: 'all' }
     };
+    let expenseChartInstance = null;
+
+    const CATEGORIES = ["Food", "Transport", "Bills", "Entertainment", "Shopping", "Health", "Other"];
 
     // --- DATA PERSISTENCE ---
     function saveState() {
@@ -245,6 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.accounts = loaded.accounts || [];
             state.transactions = loaded.transactions || [];
             state.dashboard = loaded.dashboard || { year: new Date().getFullYear(), month: new Date().getMonth() };
+            state.ui = loaded.ui || { searchTerm: '', filter: 'all' };
         }
     }
 
@@ -298,8 +329,21 @@ document.addEventListener('DOMContentLoaded', () => {
         editAccountModalContainer.classList.remove('active');
         render();
     }
+    
+    function deleteAccount(id) {
+        const account = getAccount(id);
+        if (!account) return;
+        if (account.balance !== 0) {
+            showToast('Cannot delete account with a non-zero balance.');
+            return;
+        }
+        state.accounts = state.accounts.filter(acc => acc.id != id);
+        deleteAccountModalContainer.classList.remove('active');
+        render();
+        showToast('Account deleted.');
+    }
 
-    function addTransaction(fromId, toId, amount, description) {
+    function addTransaction(fromId, toId, amount, description, category = null) {
         const fromAccount = getAccount(fromId);
         const toAccount = getAccount(toId);
         if (!fromAccount || !toAccount) { showToast('Invalid account selection.'); return; }
@@ -314,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fromAccount.balance += amount; toAccount.balance += amount;
         } else { return; }
 
-        state.transactions.unshift({ id: Date.now(), type: 'transfer', fromId, toId, amount, description, date: new Date().toISOString(), pinned: false });
+        state.transactions.unshift({ id: Date.now(), type: 'transfer', fromId, toId, amount, description, category, date: new Date().toISOString(), pinned: false });
         render();
         
         if (fromAccount.type === 'mine' && toAccount.type === 'others' && toId !== PAYMENTS_ACCOUNT_ID) {
@@ -331,6 +375,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const match = state.transactions.find(tx => tx.pinned && tx.type === 'transfer' && tx.fromId == recipientId && tx.toId == myAccountId && tx.amount == amount);
         if (match) { showFulfillmentPrompt(match); }
     }
+    
+    function exportCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Date,From,From Account No,To,To Account No,Amount,Category,Description\n";
+        state.transactions.forEach(tx => {
+            if (tx.type !== 'transfer') return;
+            const from = getAccount(tx.fromId);
+            const to = getAccount(tx.toId);
+            const row = [
+                new Date(tx.date).toLocaleString(),
+                from ? from.name : 'N/A',
+                from ? from.number : 'N/A',
+                to ? to.name : 'N/A',
+                to ? to.number : 'N/A',
+                tx.amount,
+                tx.category || '',
+                `"${tx.description || ''}"`
+            ].join(',');
+            csvContent += row + "\r\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "money_tracker_export.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
     // --- RENDERING ---
     function render() {
@@ -340,14 +413,12 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAccountsList();
         renderTransactionHistory();
         renderDashboard();
+        renderCharts();
         saveState();
     }
     
     function renderSidenavInfo() {
-        const totalBalance = state.accounts
-            .filter(acc => acc.type === 'mine')
-            .reduce((sum, acc) => sum + acc.balance, 0);
-        
+        const totalBalance = state.accounts.filter(acc => acc.type === 'mine').reduce((sum, acc) => sum + acc.balance, 0);
         const balanceEl = document.getElementById('sidenav-total-balance');
         balanceEl.textContent = `RM ${totalBalance.toFixed(2)}`;
         balanceEl.classList.toggle('text-red-600', totalBalance < 0);
@@ -358,7 +429,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('addAccountForm').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="addAccountName" class="font-medium text-sm">Account Name</label><input type="text" id="addAccountName" placeholder="e.g., Savings" class="input-field" required></div><div><label for="addAccountNumber" class="font-medium text-sm">Account Number (Optional)</label><input type="text" id="addAccountNumber" placeholder="e.g., 123-456" class="input-field"></div></div><div><label for="addInitialBalance" class="font-medium text-sm">Initial Balance (RM)</label><input type="number" id="addInitialBalance" placeholder="0" class="input-field" required min="0" step="0.01"></div><div class="text-right pt-2"><button type="submit" class="btn btn-primary px-6 py-2">Add Account</button></div>`;
         document.getElementById('transactionForm').innerHTML = `<div><label for="fromAccount" class="font-medium text-sm">From (My Accounts)</label><select id="fromAccount" class="input-field" required></select></div><div><label class="font-medium text-sm">To</label><div class="flex gap-4 mt-1" id="destinationType"><label class="flex items-center text-sm"><input type="radio" name="destinationType" value="mine" class="mr-2" checked> My Account</label><label class="flex items-center text-sm"><input type="radio" name="destinationType" value="other" class="mr-2"> Other Person</label></div></div><div id="destinationContainer"></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="amount" class="font-medium text-sm">Amount (RM)</label><input type="number" id="amount" placeholder="0.00" class="input-field" required min="0.01" step="0.01"></div><div><label for="description" class="font-medium text-sm">Description (Optional)</label><input type="text" id="description" placeholder="e.g., Lunch, Loan" class="input-field"></div></div><div class="text-right pt-2"><button type="submit" class="btn btn-primary px-6 py-2">Transfer</button></div>`;
         document.getElementById('receiveMoneyForm').innerHTML = `<div><label for="fromOtherNameReceive" class="font-medium text-sm">From (Other's Name)</label><input type="text" id="fromOtherNameReceive" class="input-field" placeholder="e.g., Jane Smith" required></div><div><label for="fromOtherNumberReceive" class="font-medium text-sm">From (Other's Account #)</label><input type="text" id="fromOtherNumberReceive" class="input-field" placeholder="Optional"></div><div><label for="receiveToAccount" class="font-medium text-sm">To (My Account)</label><select id="receiveToAccount" class="input-field" required></select></div><div><label for="receiveAmount" class="font-medium text-sm">Amount (RM)</label><input type="number" id="receiveAmount" placeholder="0.00" class="input-field" required min="0.01" step="0.01"></div><div><label for="receiveDescription" class="font-medium text-sm">Description (Optional)</label><input type="text" id="receiveDescription" placeholder="e.g., Payment for goods" class="input-field"></div><div class="text-right pt-2"><button type="submit" class="btn btn-primary px-6 py-2">Log Incoming</button></div>`;
-        document.getElementById('payForm').innerHTML = `<div><label for="payFromAccount" class="font-medium text-sm">Pay From (My Account)</label><select id="payFromAccount" class="input-field" required></select></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="payAmount" class="font-medium text-sm">Amount (RM)</label><input type="number" id="payAmount" placeholder="0.00" class="input-field" required min="0.01" step="0.01"></div><div><label for="payDescription" class="font-medium text-sm">For (e.g., Groceries, Bills)</label><input type="text" id="payDescription" placeholder="Lunch with friends" class="input-field" required></div></div><div class="text-right pt-2"><button type="submit" class="btn btn-primary px-6 py-2">Log Payment</button></div>`;
+        
+        const categoryOptions = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById('payForm').innerHTML = `<div><label for="payFromAccount" class="font-medium text-sm">Pay From (My Account)</label><select id="payFromAccount" class="input-field" required></select></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="payAmount" class="font-medium text-sm">Amount (RM)</label><input type="number" id="payAmount" placeholder="0.00" class="input-field" required min="0.01" step="0.01"></div><div><label for="payCategory" class="font-medium text-sm">Category</label><select id="payCategory" class="input-field">${categoryOptions}</select></div></div><div><label for="payDescription" class="font-medium text-sm">For (e.g., Groceries, Bills)</label><input type="text" id="payDescription" placeholder="Lunch with friends" class="input-field" required></div><div class="text-right pt-2"><button type="submit" class="btn btn-primary px-6 py-2">Log Payment</button></div>`;
+        
         renderEditModal();
         renderAccountSelectors();
         renderDestinationInput();
@@ -368,6 +442,12 @@ document.addEventListener('DOMContentLoaded', () => {
         editAccountModalContainer.innerHTML = `<div class="modal-content"><h2 class="text-xl font-semibold mb-4">Edit Account</h2><form id="editAccountForm" class="space-y-3"><input type="hidden" id="editAccountId"><div><label for="editAccountName" class="font-medium text-sm">Account Name</label><input type="text" id="editAccountName" class="input-field" required></div><div><label for="editAccountNumber" class="font-medium text-sm">Account Number</label><input type="text" id="editAccountNumber" class="input-field"></div><div><label for="editAccountBalance" class="font-medium text-sm">Balance (RM)</label><input type="number" id="editAccountBalance" class="input-field" required step="0.01"></div><div class="mt-6 flex justify-end gap-4"><button type="button" class="btn btn-secondary" data-close-modal>Cancel</button><button type="submit" class="btn btn-primary">Save Changes</button></div></form></div>`;
     }
     
+    function showDeleteAccountPrompt(accountId) {
+        const account = getAccount(accountId);
+        deleteAccountModalContainer.innerHTML = `<div class="modal-content text-center"><h2 class="text-xl font-semibold mb-2">Delete Account?</h2><p class="text-gray-600 mb-6">Are you sure you want to delete the account <strong class="text-gray-800">${account.name}</strong>? This action cannot be undone.</p><div class="flex justify-center gap-4"><button type="button" class="btn btn-secondary" data-close-modal>Cancel</button><button type="button" class="btn btn-danger" id="confirm-delete-btn" data-account-id="${accountId}">Confirm Delete</button></div></div>`;
+        deleteAccountModalContainer.classList.add('active');
+    }
+
     function showFulfillmentPrompt(matchedTx) {
         fulfillmentModalContainer.innerHTML = `<div class="modal-content text-center"><h2 class="text-xl font-semibold mb-2">Fulfill Pinned Transaction?</h2><p class="text-gray-600 mb-6">Is this transfer related to the pinned payment of <strong class="text-gray-800">RM${matchedTx.amount.toFixed(2)}</strong> from <strong class="text-gray-800">${getAccountName(matchedTx.fromId)}</strong>?</p><div class="flex justify-center gap-4"><button type="button" class="btn btn-secondary" id="fulfill-no">No, It's a New Transfer</button><button type="button" class="btn btn-primary" id="fulfill-yes" data-tx-id="${matchedTx.id}">Yes, Fulfill It</button></div></div>`;
         fulfillmentModalContainer.classList.add('active');
@@ -384,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let listHtml = `<h3 class="text-lg font-semibold text-gray-700 mb-3">${title}</h3><div class="space-y-3">`;
                 accounts.forEach(account => {
                     const balanceColor = account.balance < 0 ? 'text-red-600' : (isMyAccount ? 'text-green-600' : 'text-gray-800');
-                    listHtml += `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border"><div><p class="font-semibold text-base">${account.name}</p>${account.number ? `<p class="text-xs text-gray-500">${account.number}</p>` : ''}</div><div class="text-right"><p class="font-bold text-lg ${balanceColor}">RM${account.balance.toFixed(2)}</p><button data-edit-id="${account.id}" class="edit-btn text-xs text-indigo-600 hover:text-indigo-800 font-semibold mt-1">Edit</button></div></div>`;
+                    listHtml += `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border"><div><p class="font-semibold text-base">${account.name}</p>${account.number ? `<p class="text-xs text-gray-500">${account.number}</p>` : ''}</div><div class="text-right"><p class="font-bold text-lg ${balanceColor}">RM${account.balance.toFixed(2)}</p><div class="mt-1"><button data-edit-id="${account.id}" class="edit-btn text-xs text-indigo-600 hover:text-indigo-800 font-semibold">Edit</button><button data-delete-id="${account.id}" class="delete-btn text-xs text-red-600 hover:text-red-800 font-semibold ml-2">Delete</button></div></div></div>`;
                 });
                 listHtml += '</div>';
                 accountsList.innerHTML += listHtml;
@@ -434,13 +514,39 @@ document.addEventListener('DOMContentLoaded', () => {
         pinnedHistory.innerHTML = '';
         regularHistory.innerHTML = '';
         
-        const pinnedTxs = state.transactions.filter(tx => tx.pinned);
-        const regularTxs = state.transactions.filter(tx => !tx.pinned);
+        const searchTerm = state.ui.searchTerm.toLowerCase();
+        const filter = state.ui.filter;
+
+        const filteredTxs = state.transactions.filter(tx => {
+            if (tx.type !== 'transfer') return true; // always show edits
+            const from = getAccount(tx.fromId);
+            const to = getAccount(tx.toId);
+            if (!from || !to) return false;
+
+            let matchFilter = false;
+            if (filter === 'all') matchFilter = true;
+            if (filter === 'in' && from.type === 'others' && to.type === 'mine') matchFilter = true;
+            if (filter === 'out' && from.type === 'mine' && to.type !== 'mine') matchFilter = true;
+            if (filter === 'pay' && to.id === PAYMENTS_ACCOUNT_ID) matchFilter = true;
+            
+            let matchSearch = true;
+            if (searchTerm) {
+                matchSearch = (from.name.toLowerCase().includes(searchTerm) ||
+                               to.name.toLowerCase().includes(searchTerm) ||
+                               (tx.description && tx.description.toLowerCase().includes(searchTerm)) ||
+                               tx.amount.toString().includes(searchTerm));
+            }
+            
+            return matchFilter && matchSearch;
+        });
+        
+        const pinnedTxs = filteredTxs.filter(tx => tx.pinned);
+        const regularTxs = filteredTxs.filter(tx => !tx.pinned);
 
         if (pinnedTxs.length === 0) { pinnedHistory.innerHTML = '<p class="text-xs text-gray-500 text-center">No pinned transactions.</p>'; } 
         else { pinnedTxs.forEach(tx => pinnedHistory.innerHTML += createTxCardHtml(tx)); }
 
-        if (state.transactions.length === 0) { regularHistory.innerHTML = '<p class="text-xs text-gray-500 text-center">No transactions recorded yet.</p>'; } 
+        if (filteredTxs.length === 0) { regularHistory.innerHTML = '<p class="text-xs text-gray-500 text-center">No transactions found.</p>'; } 
         else { regularTxs.forEach(tx => regularHistory.innerHTML += createTxCardHtml(tx)); }
     }
 
@@ -476,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 detailsHtml = `<div class="mt-2 grid grid-cols-2 gap-2">${fromHtml}${toHtml}</div>`;
             }
 
-            txHtml = `<div class="tx-card p-3 bg-gray-50 rounded-lg border ${pinClass}"><div class="flex justify-between items-start">${amountDisplayHtml}<div class="text-right flex-shrink-0 ml-2"><button class="pin-btn ${pinClass}" data-tx-id="${tx.id}">${pinIcon}</button><p class="text-xs text-gray-500 mt-1 whitespace-nowrap">${formattedDate}</p></div></div>${detailsHtml}${tx.description ? `<p class="text-xs text-gray-500 italic mt-2 pt-2 border-t border-gray-200">"${tx.description}"</p>` : ''}</div>`;
+            txHtml = `<div class="tx-card p-3 bg-gray-50 rounded-lg border ${pinClass}"><div class="flex justify-between items-start">${amountDisplayHtml}<div class="text-right flex-shrink-0 ml-2"><button class="pin-btn ${pinClass}" data-tx-id="${tx.id}">${pinIcon}</button><p class="text-xs text-gray-500 mt-1 whitespace-nowrap">${formattedDate}</p></div></div>${detailsHtml}${tx.description ? `<p class="text-xs text-gray-500 italic mt-2 pt-2 border-t border-gray-200">"${tx.category ? `[${tx.category}] ` : ''}${tx.description}"</p>` : ''}</div>`;
         } else if (tx.type === 'edit') {
             txHtml = `<div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200"><div class="flex justify-between items-center"><p class="font-semibold text-yellow-800 text-sm">Balance Edit</p><p class="text-xs text-yellow-500">${formattedDate}</p></div><p class="text-xs text-yellow-700 mt-1">Account: <strong>${getAccountName(tx.accountId)}</strong></p><p class="text-xs text-yellow-600">Changed from RM${tx.oldBalance.toFixed(2)} to RM${tx.newBalance.toFixed(2)}</p></div>`;
         }
@@ -533,6 +639,56 @@ document.addEventListener('DOMContentLoaded', () => {
         calendarHtml += `</div>`;
         dashboardContainer.innerHTML = calendarHtml;
     }
+    
+    function renderCharts() {
+        const expenseData = state.transactions
+            .filter(tx => tx.toId === PAYMENTS_ACCOUNT_ID && tx.category)
+            .reduce((acc, tx) => {
+                acc[tx.category] = (acc[tx.category] || 0) + tx.amount;
+                return acc;
+            }, {});
+
+        const chartContainer = document.getElementById('sub-tab-view-dashboard-charts');
+        if (expenseChartInstance) {
+            expenseChartInstance.destroy();
+            expenseChartInstance = null;
+        }
+        
+        if (Object.keys(expenseData).length === 0) {
+            chartContainer.innerHTML = `<h2 class="text-xl font-semibold mb-4">Expense Breakdown</h2><p class="text-center text-gray-500 py-8">No expense data to display. Use the "Pay" tab to log expenses.</p>`;
+            return;
+        }
+        
+        chartContainer.innerHTML = `<h2 class="text-xl font-semibold mb-4">Expense Breakdown</h2><div class="max-w-md mx-auto"><canvas id="expenseChart"></canvas></div>`;
+        const ctx = document.getElementById('expenseChart').getContext('2d');
+
+        expenseChartInstance = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(expenseData),
+                datasets: [{
+                    label: 'Expenses',
+                    data: Object.values(expenseData),
+                    backgroundColor: [
+                        '#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef'
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Expenses by Category'
+                    }
+                }
+            },
+        });
+    }
 
     // --- EVENT LISTENERS ---
     function initNavigation() {
@@ -541,7 +697,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.main-nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const viewId = `view-${e.target.dataset.view}`;
+                const viewId = `view-${e.target.dataset.view || e.target.closest('[data-view]').dataset.view}`;
                 document.querySelectorAll('.main-view').forEach(v => v.classList.add('hidden'));
                 document.getElementById(viewId).classList.remove('hidden');
                 document.querySelectorAll('.main-nav-link').forEach(l => l.classList.remove('active'));
@@ -618,8 +774,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const fromId = document.getElementById('payFromAccount').value;
             const amount = parseFloat(document.getElementById('payAmount').value);
             const description = document.getElementById('payDescription').value.trim();
+            const category = document.getElementById('payCategory').value;
             if (fromId && !isNaN(amount) && amount > 0 && description) {
-                addTransaction(fromId, PAYMENTS_ACCOUNT_ID, amount, description);
+                addTransaction(fromId, PAYMENTS_ACCOUNT_ID, amount, description, category);
                 e.target.reset();
                 showToast('Payment logged!');
             } else { showToast('Please fill all fields.'); }
@@ -647,6 +804,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 editAccountModalContainer.classList.add('active');
             }
         }
+        const deleteBtn = e.target.closest('.delete-btn');
+        if (deleteBtn) {
+            showDeleteAccountPrompt(deleteBtn.dataset.deleteId);
+        }
+        const confirmDeleteBtn = e.target.closest('#confirm-delete-btn');
+        if (confirmDeleteBtn) {
+            deleteAccount(confirmDeleteBtn.dataset.accountId);
+        }
         const pinBtn = e.target.closest('.pin-btn');
         if(pinBtn) { togglePinTransaction(pinBtn.dataset.txId); }
         const copyBtn = e.target.closest('.copy-btn');
@@ -659,11 +824,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (prevMonthBtn) { state.dashboard.month--; if (state.dashboard.month < 0) { state.dashboard.month = 11; state.dashboard.year--; } renderDashboard(); }
         const nextMonthBtn = e.target.closest('#next-month');
         if (nextMonthBtn) { state.dashboard.month++; if (state.dashboard.month > 11) { state.dashboard.month = 0; state.dashboard.year++; } renderDashboard(); }
+        const exportBtn = e.target.closest('#exportCsvBtn');
+        if (exportBtn) { exportCSV(); }
     });
     
+    document.body.addEventListener('input', e => {
+        if (e.target.id === 'searchInput') {
+            state.ui.searchTerm = e.target.value;
+            renderTransactionHistory();
+        }
+    });
+
     document.body.addEventListener('change', (e) => {
-        if (e.target.name === 'destinationType' || e.target.id === 'fromAccount') {
-            renderDestinationInput();
+        if (e.target.name === 'destinationType' || e.target.id === 'fromAccount') { renderDestinationInput(); }
+        if (e.target.id === 'filterSelect') {
+            state.ui.filter = e.target.value;
+            renderTransactionHistory();
         }
     });
 
