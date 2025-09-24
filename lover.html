@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Well Do You Know Your Partner?</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(45deg, #6d28d9, #be185d, #f59e0b);
+            background-size: 300% 300%;
+            animation: gradient-animation 15s ease infinite;
+            transition: background 0.5s ease, box-shadow 0.3s ease-in-out;
+        }
+
+        .game-title, .game-question, .turn-indicator {
+            font-family: 'Luckiest Guy', cursive;
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.2);
+        }
+
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .timer-active {
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: inset 0 0 0 0px rgba(239, 68, 68, 0.9);
+            }
+            100% {
+                box-shadow: inset 0 0 0 25px rgba(239, 68, 68, 0);
+            }
+        }
+
+        .game-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        .score-display {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        /* Custom styles for the range slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            background: #f59e0b;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 30px;
+            height: 30px;
+            background: #f59e0b;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+    </style>
+</head>
+<body class="text-white min-h-screen flex items-center justify-center p-4">
+
+    <!-- Score Displays -->
+    <div id="gf-score-display" class="score-display fixed top-4 left-4 bg-pink-500 text-white p-4 rounded-lg text-2xl font-bold">
+        Girlfriend: 0
+    </div>
+    <div id="bf-score-display" class="score-display fixed top-4 right-4 bg-blue-500 text-white p-4 rounded-lg text-2xl font-bold">
+        Boyfriend: 0
+    </div>
+
+    <!-- Main Game Container -->
+    <div id="game-container" class="w-full max-w-2xl text-center hidden">
+        <p id="timer-display" class="text-9xl font-bold mb-4 text-red-500" style="display: none; text-shadow: 4px 4px 0px rgba(0,0,0,0.2);"></p>
+        <div class="game-card p-8 rounded-2xl">
+            <h2 class="turn-indicator text-4xl mb-4 text-yellow-300" id="turn-indicator"></h2>
+            <p class="game-question text-3xl mb-6" id="question-text"></p>
+            
+            <div id="rating-area" class="my-8">
+                <div class="flex items-center justify-center space-x-4">
+                     <span class="text-2xl font-bold">1</span>
+                    <input type="range" id="rating-slider" min="1" max="10" value="5" class="w-full">
+                     <span class="text-2xl font-bold">10</span>
+                </div>
+                <p class="text-5xl font-bold mt-4 text-yellow-400" id="slider-value">5</p>
+            </div>
+
+            <button id="action-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-10 rounded-full text-2xl transition-transform transform hover:scale-110 shadow-lg w-full md:w-auto">
+                Set Rating
+            </button>
+        </div>
+    </div>
+
+    <!-- Start/End Game Modal -->
+    <div id="modal" class="modal-overlay active">
+        <div class="game-card text-center p-10 rounded-2xl w-full max-w-md">
+            <h1 id="modal-title" class="game-title text-5xl mb-4 text-yellow-300">Welcome!</h1>
+            <p id="modal-text" class="text-xl mb-8">Who is starting first?</p>
+            <div id="modal-buttons" class="flex flex-col md:flex-row gap-4 justify-center">
+                <button id="start-bf" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105">Boyfriend Starts</button>
+                <button id="start-gf" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105">Girlfriend Starts</button>
+            </div>
+             <div id="result-text" class="text-2xl font-bold hidden"></div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- DOM Elements ---
+        const gfScoreDisplay = document.getElementById('gf-score-display');
+        const bfScoreDisplay = document.getElementById('bf-score-display');
+        const gameContainer = document.getElementById('game-container');
+        const turnIndicator = document.getElementById('turn-indicator');
+        const questionText = document.getElementById('question-text');
+        const ratingArea = document.getElementById('rating-area');
+        const ratingSlider = document.getElementById('rating-slider');
+        const sliderValue = document.getElementById('slider-value');
+        const timerDisplay = document.getElementById('timer-display');
+        const actionButton = document.getElementById('action-button');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalText = document.getElementById('modal-text');
+        const modalButtons = document.getElementById('modal-buttons');
+        const resultText = document.getElementById('result-text');
+        const startBfButton = document.getElementById('start-bf');
+        const startGfButton = document.getElementById('start-gf');
+
+        // --- Game State ---
+        let scores = { bf: 0, gf: 0 };
+        let currentPlayer; // 'bf' or 'gf'
+        let currentPhase; // 'setting' or 'guessing'
+        let currentQuestionIndex = 0;
+        let partnerRating = 0;
+        let timer;
+        let timeLeft = 10;
+
+        let questions = [
+            "How well can your partner cook?",
+            "Rate your partner's patience level.",
+            "How good is your partner at keeping secrets?",
+            "Rate your partner's sense of humor.",
+            "How adventurous is your partner with food?",
+            "How likely is your partner to win at a board game?",
+            "Rate your partner's singing ability (in private!).",
+            "How tidy is your partner?",
+            "How good is your partner at navigating with a map?",
+            "Rate your partner's gift-giving skills.",
+            "How likely is your partner to share their dessert?",
+            "Rate your partner's dancing skills.",
+            "How well does your partner handle stress?",
+            "Rate your partner's ability to assemble furniture.",
+            "How competitive is your partner?",
+            "Rate your partner's fashion sense.",
+            "How much of a morning person is your partner?",
+            "Rate your partner's movie taste.",
+            "How good is your partner at remembering important dates?",
+            "Rate your partner's planning skills for a vacation."
+        ];
+        
+        const initialGradient = 'linear-gradient(45deg, #6d28d9, #be185d, #f59e0b)';
+        const bfGradient = 'linear-gradient(45deg, #3b82f6, #0ea5e9, #60a5fa)'; // Blue tones
+        const gfGradient = 'linear-gradient(45deg, #ec4899, #f472b6, #f9a8d4)'; // Pink tones
+
+        // --- Event Listeners ---
+        startBfButton.addEventListener('click', () => startGame('bf'));
+        startGfButton.addEventListener('click', () => startGame('gf'));
+        actionButton.addEventListener('click', handleAction);
+        ratingSlider.addEventListener('input', () => {
+            sliderValue.textContent = ratingSlider.value;
+        });
+
+        // --- Game Logic Functions ---
+        function startGame(startingPlayer) {
+            // Randomize the order of questions for each new game
+            for (let i = questions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [questions[i], questions[j]] = [questions[j], questions[i]];
+            }
+
+            modal.classList.remove('active');
+            gameContainer.classList.remove('hidden');
+            
+            scores = { bf: 0, gf: 0 };
+            currentQuestionIndex = 0;
+            currentPlayer = startingPlayer;
+            updateScoreDisplays();
+            
+            nextTurn();
+        }
+
+        function nextTurn() {
+            if (currentQuestionIndex >= questions.length) {
+                endGame();
+                return;
+            }
+            currentPhase = 'setting';
+            setupSettingPhase();
+        }
+
+        function setupSettingPhase() {
+            updateBackgroundForPlayer(currentPlayer);
+            ratingSlider.value = 5;
+            sliderValue.textContent = '5';
+            ratingArea.style.visibility = 'visible';
+            timerDisplay.style.display = 'none';
+            document.body.classList.remove('timer-active');
+            actionButton.textContent = 'Lock In Rating';
+            actionButton.disabled = false;
+
+            const partnerName = currentPlayer === 'bf' ? 'Boyfriend' : 'Girlfriend';
+            turnIndicator.textContent = `${partnerName}'s Turn to Set a Rating!`;
+            questionText.textContent = questions[currentQuestionIndex];
+        }
+
+        function handleAction() {
+            if (currentPhase === 'setting') {
+                partnerRating = parseInt(ratingSlider.value);
+                currentPhase = 'guessing'; // Prevents double clicks
+                showLookAwayScreen();
+            } else if (currentPhase === 'guessing') {
+                clearInterval(timer);
+                document.body.classList.remove('timer-active');
+                checkGuess();
+            }
+        }
+        
+        function showLookAwayScreen() {
+            modal.classList.add('active');
+            gameContainer.classList.add('hidden');
+            modalButtons.style.display = 'none';
+            resultText.classList.add('hidden');
+
+            const setter = currentPlayer === 'bf' ? 'Boyfriend' : 'Girlfriend';
+            const guesser = currentPlayer === 'bf' ? 'Girlfriend' : 'Boyfriend';
+            
+            const setterColor = currentPlayer === 'bf' ? 'text-blue-400' : 'text-pink-400';
+            const guesserColor = currentPlayer === 'bf' ? 'text-pink-400' : 'text-blue-400';
+
+            modalTitle.textContent = "Get Ready!";
+            modalText.innerHTML = `<span class="font-bold ${setterColor}">${setter}</span>, please look away now.<br><br><span class="font-bold ${guesserColor}">${guesser}</span>, it's almost your turn!`;
+
+            setTimeout(() => {
+                showReadyScreen();
+            }, 3000); // 3-second blind window
+        }
+
+        function showReadyScreen() {
+            const guesser = currentPlayer === 'bf' ? 'Girlfriend' : 'Boyfriend';
+            const guesserColor = currentPlayer === 'bf' ? 'text-pink-400' : 'text-blue-400';
+
+            modalTitle.textContent = "Ready to Guess?";
+            modalText.innerHTML = `<span class="font-bold text-3xl ${guesserColor}">${guesser}</span>, press the button to start the clock!`;
+            
+            modalButtons.innerHTML = ''; // Clear previous buttons
+            const readyButton = document.createElement('button');
+            readyButton.textContent = "I'm Ready!";
+            readyButton.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105 w-full';
+            
+            readyButton.onclick = () => {
+                modal.classList.remove('active');
+                gameContainer.classList.remove('hidden');
+                currentPlayer = (currentPlayer === 'bf') ? 'gf' : 'bf';
+                setupGuessingPhase();
+            };
+
+            modalButtons.appendChild(readyButton);
+            modalButtons.style.display = 'flex';
+        }
+
+
+        function setupGuessingPhase() {
+            updateBackgroundForPlayer(currentPlayer);
+            const partnerName = currentPlayer === 'bf' ? 'Boyfriend' : 'Girlfriend';
+            turnIndicator.textContent = `${partnerName}, It's Your Turn to Guess!`;
+            ratingArea.style.visibility = 'visible';
+            ratingSlider.value = 5;
+            sliderValue.textContent = '5';
+            actionButton.textContent = 'Submit Guess';
+            actionButton.disabled = false;
+            
+            // Start the timer
+            timeLeft = 10;
+            timerDisplay.textContent = timeLeft;
+            timerDisplay.style.display = 'block';
+            document.body.classList.add('timer-active');
+
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    document.body.classList.remove('timer-active');
+                    timerDisplay.textContent = "Time's Up!";
+                    actionButton.disabled = true;
+                    // Automatically check with a non-matching value after a delay
+                    setTimeout(checkGuess, 1000); 
+                }
+            }, 1000);
+        }
+
+        function checkGuess() {
+            document.body.classList.remove('timer-active');
+            const guess = timeLeft <= 0 ? -1 : parseInt(ratingSlider.value); // Use -1 if time is up
+            const difference = Math.abs(guess - partnerRating);
+            let pointsAwarded = 0;
+
+            if (difference === 0) {
+                pointsAwarded = 2;
+            } else if (difference === 1) {
+                pointsAwarded = 1;
+            }
+
+            scores[currentPlayer] += pointsAwarded;
+            updateScoreDisplays();
+            
+            showRoundResult(pointsAwarded, partnerRating);
+            
+            // Prepare for the next round
+            currentQuestionIndex++;
+            // The current player (the guesser) becomes the setter for the next round
+        }
+
+        function showRoundResult(points, actualRating) {
+            modal.classList.add('active');
+            gameContainer.classList.add('hidden');
+            modalButtons.style.display = 'none';
+            resultText.classList.remove('hidden');
+
+            modalTitle.textContent = `Round ${currentQuestionIndex + 1} Over!`;
+            let message = '';
+            if (points === 2) {
+                message = "Perfect Match! You get 2 points!";
+            } else if (points === 1) {
+                message = `So close! The rating was ${actualRating}. You get 1 point!`;
+            } else {
+                 message = `Not quite! The actual rating was ${actualRating}. 0 points.`;
+            }
+            if (timeLeft <= 0) {
+                message = `Time's up! The actual rating was ${actualRating}. 0 points.`;
+            }
+            resultText.innerHTML = message;
+
+            setTimeout(() => {
+                modal.classList.remove('active');
+                gameContainer.classList.remove('hidden');
+                modalButtons.style.display = 'flex';
+                resultText.classList.add('hidden');
+                nextTurn();
+            }, 3000); // Show result for 3 seconds
+        }
+
+        function endGame() {
+            modal.classList.add('active');
+            gameContainer.classList.add('hidden');
+            document.body.classList.remove('timer-active');
+            updateBackgroundForPlayer(null); // Revert to initial gradient
+            modalTitle.textContent = 'Game Over!';
+            
+            let winnerMessage;
+            if (scores.bf > scores.gf) {
+                winnerMessage = `Boyfriend wins with ${scores.bf} points to ${scores.gf}!`;
+            } else if (scores.gf > scores.bf) {
+                winnerMessage = `Girlfriend wins with ${scores.gf} points to ${scores.bf}!`;
+            } else {
+                winnerMessage = `It's a tie! ${scores.bf} to ${scores.gf}. You both know each other so well!`;
+            }
+            
+            modalText.textContent = winnerMessage;
+            resultText.classList.add('hidden');
+            
+            // Restore original start buttons for a new game
+            modalButtons.innerHTML = `<button id="start-bf" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105">Play Again (BF Starts)</button>
+                <button id="start-gf" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105">Play Again (GF Starts)</button>`;
+            
+            // Re-add event listeners to the new buttons
+            document.getElementById('start-bf').addEventListener('click', () => startGame('bf'));
+            document.getElementById('start-gf').addEventListener('click', () => startGame('gf'));
+
+            modalButtons.style.display = 'flex';
+        }
+
+        function updateScoreDisplays() {
+            gfScoreDisplay.textContent = `Girlfriend: ${scores.gf}`;
+            bfScoreDisplay.textContent = `Boyfriend: ${scores.bf}`;
+        }
+
+        function updateBackgroundForPlayer(player) {
+            if (player === 'bf') {
+                document.body.style.background = bfGradient;
+            } else if (player === 'gf') {
+                document.body.style.background = gfGradient;
+            } else { // For neutral states like end game
+                document.body.style.background = initialGradient;
+            }
+            document.body.style.backgroundSize = '300% 300%';
+            document.body.style.animation = 'gradient-animation 15s ease infinite';
+        }
+
+    </script>
+</body>
+</html>
+
