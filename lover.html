@@ -186,26 +186,26 @@
         let timeLeft = 10;
 
         let questions = [
-            "How well can your partner cook?",
-            "Rate your partner's patience level.",
-            "How good is your partner at keeping secrets?",
-            "Rate your partner's sense of humor.",
-            "How adventurous is your partner with food?",
-            "How likely is your partner to win at a board game?",
-            "Rate your partner's singing ability (in private!).",
-            "How tidy is your partner?",
-            "How good is your partner at navigating with a map?",
-            "Rate your partner's gift-giving skills.",
-            "How likely is your partner to share their dessert?",
-            "Rate your partner's dancing skills.",
-            "How well does your partner handle stress?",
-            "Rate your partner's ability to assemble furniture.",
-            "How competitive is your partner?",
-            "Rate your partner's fashion sense.",
-            "How much of a morning person is your partner?",
-            "Rate your partner's movie taste.",
-            "How good is your partner at remembering important dates?",
-            "Rate your partner's planning skills for a vacation."
+            "How well can your {partner} cook?",
+            "Rate your {partner}'s patience level.",
+            "How good is your {partner} at keeping secrets?",
+            "Rate your {partner}'s sense of humor.",
+            "How adventurous is your {partner} with food?",
+            "How likely is your {partner} to win at a board game?",
+            "Rate your {partner}'s singing ability (in private!).",
+            "How tidy is your {partner}?",
+            "How good is your {partner} at navigating with a map?",
+            "Rate your {partner}'s gift-giving skills.",
+            "How likely is your {partner} to share their dessert?",
+            "Rate your {partner}'s dancing skills.",
+            "How well does your {partner} handle stress?",
+            "Rate your {partner}'s ability to assemble furniture.",
+            "How competitive is your {partner}?",
+            "Rate your {partner}'s fashion sense.",
+            "How much of a morning person is your {partner}?",
+            "Rate your {partner}'s movie taste.",
+            "How good is your {partner} at remembering important dates?",
+            "Rate your {partner}'s planning skills for a vacation."
         ];
         
         const initialGradient = 'linear-gradient(45deg, #6d28d9, #be185d, #f59e0b)';
@@ -259,8 +259,9 @@
             actionButton.disabled = false;
 
             const partnerName = currentPlayer === 'bf' ? 'Boyfriend' : 'Girlfriend';
+            const subjectPlayer = currentPlayer === 'bf' ? 'Girlfriend' : 'Boyfriend'; // The one being rated
             turnIndicator.textContent = `${partnerName}'s Turn to Set a Rating!`;
-            questionText.textContent = questions[currentQuestionIndex];
+            questionText.textContent = questions[currentQuestionIndex].replace('{partner}', subjectPlayer);
         }
 
         function handleAction() {
