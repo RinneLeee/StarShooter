@@ -403,7 +403,9 @@
         function setupGuessingPhase() {
             updateBackgroundForPlayer(currentPlayer);
             const partnerName = currentPlayer === 'bf' ? 'Boyfriend' : 'Girlfriend';
+            const subjectPlayer = currentPlayer === 'bf' ? 'Girlfriend' : 'Boyfriend'; // The one being rated
             turnIndicator.textContent = `${partnerName}, It's Your Turn to Guess!`;
+            questionText.textContent = questions[currentQuestionIndex].replace('{partner}', subjectPlayer);
             ratingArea.style.visibility = 'visible';
             ratingSlider.value = 5;
             sliderValue.textContent = '5';
@@ -434,42 +436,53 @@
             document.body.classList.remove('timer-active');
             const guess = timeLeft <= 0 ? -1 : parseInt(ratingSlider.value); // Use -1 if time is up
             const difference = Math.abs(guess - partnerRating);
-            let pointsAwarded = 0;
+            
+            let guesserPoints = 0;
+            let setterPoints = 0;
+            const setterPlayer = currentPlayer === 'bf' ? 'gf' : 'bf';
 
             if (difference === 0) {
-                pointsAwarded = 2;
+                guesserPoints = 5;
+                setterPoints = 3;
             } else if (difference === 1) {
-                pointsAwarded = 1;
+                guesserPoints = 3;
+                setterPoints = 1;
             }
 
-            scores[currentPlayer] += pointsAwarded;
+            scores[currentPlayer] += guesserPoints;
+            scores[setterPlayer] += setterPoints;
+
             updateScoreDisplays();
             
-            showRoundResult(pointsAwarded, partnerRating);
+            showRoundResult(guesserPoints, setterPoints, partnerRating);
             
             // Prepare for the next round
             currentQuestionIndex++;
             // The current player (the guesser) becomes the setter for the next round
         }
 
-        function showRoundResult(points, actualRating) {
+        function showRoundResult(guesserPoints, setterPoints, actualRating) {
             modal.classList.add('active');
             gameContainer.classList.add('hidden');
             modalButtons.style.display = 'none';
             resultText.classList.remove('hidden');
 
             modalTitle.textContent = `Round ${currentQuestionIndex + 1} Over!`;
+            
+            const guesserName = currentPlayer === 'bf' ? 'Boyfriend' : 'Girlfriend';
+            const setterName = currentPlayer === 'bf' ? 'Girlfriend' : 'Boyfriend';
+
             let message = '';
-            if (points === 2) {
-                message = "Perfect Match! You get 2 points!";
-            } else if (points === 1) {
-                message = `So close! The rating was ${actualRating}. You get 1 point!`;
-            } else {
-                 message = `Not quite! The actual rating was ${actualRating}. 0 points.`;
-            }
             if (timeLeft <= 0) {
-                message = `Time's up! The actual rating was ${actualRating}. 0 points.`;
+                message = `Time's up! The actual rating was ${actualRating}.<br>0 points for both.`;
+            } else if (guesserPoints === 5) {
+                message = `Perfect Match! The rating was ${actualRating}.<br><span class="text-green-400">${guesserName} gets 5 points!</span><br><span class="text-yellow-400">${setterName} gets 3 points!</span>`;
+            } else if (guesserPoints === 3) {
+                message = `So close! The rating was ${actualRating}.<br><span class="text-green-400">${guesserName} gets 3 points!</span><br><span class="text-yellow-400">${setterName} gets 1 point!</span>`;
+            } else {
+                 message = `Not quite! The actual rating was ${actualRating}.<br>0 points for both.`;
             }
+            
             resultText.innerHTML = message;
 
             setTimeout(() => {
@@ -478,7 +491,7 @@
                 modalButtons.style.display = 'flex';
                 resultText.classList.add('hidden');
                 nextTurn();
-            }, 3000); // Show result for 3 seconds
+            }, 5000); // Show result for 5 seconds
         }
 
         function endGame() {
