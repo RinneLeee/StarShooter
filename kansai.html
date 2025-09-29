@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kansai Wanderer: Japan Itinerary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for Japanese aesthetic and functionality */
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #F8F4E8; /* Creamy washi paper color */
+            background-image:
+                linear-gradient(rgba(222, 184, 135, 0.05) .1em, transparent .1em),
+                linear-gradient(90deg, rgba(222, 184, 135, 0.05) .1em, transparent .1em);
+            background-size: 3em 3em;
+        }
+
+        .font-jp {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        .main-title {
+            color: #4A2311; /* Dark brown */
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .day-header {
+            background-color: #FFFFFF;
+            border: 1px solid #D8C6A5;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .day-header:hover {
+            background-color: #FFFBF2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .day-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+            border: 1px solid #D8C6A5;
+            border-top: none;
+            background-color: #FFFCF5;
+        }
+
+        .day-content.open {
+            max-height: 3000px; /* Adjust as needed for content */
+            padding-top: 1.5rem;
+            padding-bottom: 1.5rem;
+        }
+        
+        .day-header.active {
+             background-color: #A94064; /* A deep pink, like umeboshi */
+             color: white;
+        }
+
+        .day-header.active .arrow {
+            transform: rotate(180deg);
+        }
+
+        .arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .cost {
+            background-color: #FDF2E9;
+            color: #BF5700;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+        
+        .icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="font-jp text-gray-800 antialiased">
+
+    <!-- Header -->
+    <header class="bg-cover bg-center" style="background-image: url('https://placehold.co/1200x400/A94064/F8F4E8?text=Welcome+to+Kansai&font=noto-sans-jp')">
+        <div class="bg-black bg-opacity-40 py-12 md:py-20">
+            <div class="container mx-auto px-4 text-center">
+                <h1 class="text-4xl md:text-6xl font-bold text-white main-title">関西の旅人</h1>
+                <p class="text-lg md:text-2xl text-white mt-2">Kansai Wanderer: Your Itinerary</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-4 md:p-8 max-w-4xl">
+
+        <!-- Intro & Tips -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8 border border-gray-200">
+            <h2 class="text-2xl font-bold mb-4 text-brown-800" style="color: #4A2311;">Travel Tips</h2>
+            <div class="space-y-3 text-gray-700">
+                <p><strong class="text-red-800">ICOCA Card:</strong> Get one at the airport. It's a rechargeable smart card for seamless travel on trains, subways, and buses across Kansai. You can also use it at convenience stores!</p>
+                <p><strong class="text-red-800">Connectivity:</strong> Rent a Pocket WiFi or get an eSIM for constant internet access, crucial for maps and translations.</p>
+                <p><strong class="text-red-800">Costs:</strong> Prices are estimates (as of late 2025) and subject to change. Exchange Rate Used: ¥1000 ≈ RM28.20.</p>
+            </div>
+        </div>
+
+        <!-- Itinerary Accordion -->
+        <div id="itinerary-accordion" class="space-y-4">
+
+            <!-- Day 1 -->
+            <div class="day-container">
+                <div class="day-header flex justify-between items-center p-4 rounded-lg">
+                    <h3 class="text-xl font-bold">Day 1: Arrival & Tranquil Kyoto Start</h3>
+                    <span class="arrow text-2xl">▼</span>
+                </div>
+                <div class="day-content px-6 rounded-b-lg">
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/3B82F6/FFFFFF?text=✈️" alt="plane icon" class="icon mt-1">
+                            <div><strong>Arrive at Kansai (KIX):</strong> After clearing immigration, head to the JR office to pick up your ICOCA card.</div>
+                        </li>
+                        <li class="flex items-start">
+                             <img src="https://placehold.co/24x24/10B981/FFFFFF?text=🚆" alt="train icon" class="icon mt-1">
+                            <div><strong>Travel to Kyoto:</strong> Take the JR Haruka Express train directly to Kyoto Station. <span class="cost">~70-80 min | ¥3,000 (RM 84.60)</span></div>
+                        </li>
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/F59E0B/FFFFFF?text=🏨" alt="hotel icon" class="icon mt-1">
+                            <div><strong>Hotel Check-in:</strong> Settle into your accommodation. Staying near Kyoto Station or Gion offers great convenience.</div>
+                        </li>
+                        <li class="flex items-start">
+                             <img src="https://placehold.co/24x24/EF4444/FFFFFF?text=🏮" alt="lantern icon" class="icon mt-1">
+                            <div><strong>Evening in Gion:</strong> Take a gentle stroll through Gion's atmospheric, lantern-lit streets. You might spot a Geiko or Maiko. Enjoy the traditional wooden machiya houses.</div>
+                        </li>
+                        <li class="flex items-start">
+                             <img src="https://placehold.co/24x24/8B5CF6/FFFFFF?text=🍵" alt="tea icon" class="icon mt-1">
+                            <div><strong>Dinner:</strong> Try a Kyoto speciality. A light <i class="italic">kaiseki</i> set dinner offers a taste of local artistry, or find a cozy spot for <i class="italic">yudofu</i> (simmered tofu). <span class="cost">Dinner: ¥2,500-¥6,000 (RM 70-169)</span></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Day 2 -->
+            <div class="day-container">
+                <div class="day-header flex justify-between items-center p-4 rounded-lg">
+                    <h3 class="text-xl font-bold">Day 2: Iconic Gates & Historic Lanes</h3>
+                    <span class="arrow text-2xl">▼</span>
+                </div>
+                <div class="day-content px-6 rounded-b-lg">
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/EF4444/FFFFFF?text=⛩️" alt="torii gate icon" class="icon mt-1">
+                            <div><strong>Morning: Fushimi Inari Shrine:</strong> Go as early as possible (by 7 AM) to experience the thousands of red torii gates without the massive crowds. It's open 24/7. The hike up offers great city views. <span class="cost">Free</span></div>
+                        </li>
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/10B981/FFFFFF?text=🚆" alt="train icon" class="icon mt-1">
+                            <div><strong>Travel to Higashiyama:</strong> From Fushimi Inari Station, take the Keihan Line to Kiyomizu-Gojo or Gion-Shijo Station. <span class="cost">~10 min | ¥220 (RM 6.20)</span></div>
+                        </li>
+                        <li class="flex items-start">
+                             <img src="https://placehold.co/24x24/F59E0B/FFFFFF?text=🍡" alt="dango icon" class="icon mt-1">
+                            <div><strong>Lunch & Snacks in Higashiyama:</strong> Explore the streets leading to Kiyomizu-dera. You'll find many small shops selling matcha ice cream, dango, and other treats. Grab a light lunch here. <span class="cost">Lunch: ¥1,000-¥2,000 (RM 28-56)</span></div>
+                        </li>
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/3B82F6/FFFFFF?text=🏯" alt="temple icon" class="icon mt-1">
+                            <div><strong>Afternoon: Kiyomizu-dera Temple:</strong> Famous for its large wooden stage, offering panoramic views of Kyoto. Explore the charming Sannenzaka and Ninenzaka preserved lanes afterwards. <span class="cost">Entrance: ¥400 (RM 11.30)</span></div>
+                        </li>
+                         <li class="flex items-start">
+                             <img src="https://placehold.co/24x24/8B5CF6/FFFFFF?text=🍜" alt="ramen icon" class="icon mt-1">
+                            <div><strong>Evening: Pontocho Alley:</strong> For dinner, explore Pontocho, a narrow alley running parallel to the Kamo River. It's packed with a variety of restaurants, from casual izakayas to fine dining. <span class="cost">Dinner: ¥2,000-¥5,000 (RM 56-141)</span></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Day 3 -->
+            <div class="day-container">
+                <div class="day-header flex justify-between items-center p-4 rounded-lg">
+                    <h3 class="text-xl font-bold">Day 3: Arashiyama's Beauty & Journey to Osaka</h3>
+                    <span class="arrow text-2xl">▼</span>
+                </div>
+                <div class="day-content px-6 rounded-b-lg">
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/10B981/FFFFFF?text=🎍" alt="bamboo icon" class="icon mt-1">
+                            <div><strong>Morning: Arashiyama:</strong> Arrive early (by 8 AM). Walk through the famous Bamboo Grove first. Then, visit the stunning Tenryu-ji Temple and its world-class garden. <span class="cost">Tenryu-ji: ¥500 (RM 14.10)</span></div>
+                        </li>
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/3B82F6/FFFFFF?text=🏞️" alt="river icon" class="icon mt-1">
+                            <div><strong>Explore More:</strong> Stroll across the Togetsukyo Bridge. Instead of the monkey park, consider visiting the serene Okochi Sanso Villa (former home of a film star) for exquisite gardens and tea. <span class="cost">Okochi Sanso: ¥1,000 (RM 28.20, includes matcha)</span></div>
+                        </li>
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/F59E0B/FFFFFF?text=🏯" alt="castle icon" class="icon mt-1">
+                            <div><strong>Afternoon Option: Nijo Castle:</strong> Head back to central Kyoto. If you have time and interest, visit Nijo Castle, famous for its "nightingale floors" that chirp when walked on. <span class="cost">Entrance: ¥1,300 (RM 36.70)</span></div>
+                        </li>
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/EF4444/FFFFFF?text=🚆" alt="train icon" class="icon mt-1">
+                            <div><strong>Evening: Travel to Osaka:</strong> Take a JR Special Rapid or Hankyu Limited Express train to Osaka. Check into your hotel, preferably in Namba or Umeda for easy access. <span class="cost">~30 min | ¥580 (RM 16.30)</span></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Day 4 -->
+            <div class="day-container">
+                <div class="day-header flex justify-between items-center p-4 rounded-lg">
+                    <h3 class="text-xl font-bold">Day 4: Osaka Sights & Dotonbori Delights</h3>
+                    <span class="arrow text-2xl">▼</span>
+                </div>
+                <div class="day-content px-6 rounded-b-lg">
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/10B981/FFFFFF?text=🏯" alt="castle icon" class="icon mt-1">
+                            <div><strong>Morning: Osaka Castle Park:</strong> Visit the castle grounds for fantastic photo opportunities of the main tower and surrounding walls. The park is beautiful. The museum inside is optional; the main appeal is the exterior view. <span class="cost">Park: Free | Museum: ¥600 (RM 17)</span></div>
+                        </li>
+                         <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/F59E0B/FFFFFF?text=🦐" alt="shrimp icon" class="icon mt-1">
+                            <div><strong>Lunch: Kuromon Ichiba Market:</strong> Known as "Osaka's Kitchen," this is a great spot for fresh seafood, grilled scallops, kushikatsu (deep-fried skewers), and other street food. <span class="cost">Lunch: ¥1,500-¥3,000 (RM 42-85)</span></div>
+                        </li>
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/3B82F6/FFFFFF?text=🏙️" alt="cityscape icon" class="icon mt-1">
+                            <div><strong>Afternoon: Umeda Sky Building:</strong> Head to the "Floating Garden Observatory" for breathtaking 360-degree views of the entire city. Especially stunning around sunset. <span class="cost">Entrance: ¥1,500 (RM 42.30)</span></div>
+                        </li>
+                         <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/EF4444/FFFFFF?text=🐙" alt="octopus icon" class="icon mt-1">
+                            <div><strong>Evening: Dotonbori Food Crawl:</strong> This is the heart of Osaka's food culture. Dive into a sensory overload of neon lights and amazing smells. Must-tries: Takoyaki (octopus balls), Okonomiyaki (savory pancake), and a stroll by the river to see the Glico Running Man sign. <span class="cost">Dinner/Snacks: ¥1,500-¥3,500 (RM 42-99)</span></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+             <!-- Day 5 -->
+            <div class="day-container">
+                <div class="day-header flex justify-between items-center p-4 rounded-lg">
+                    <h3 class="text-xl font-bold">Day 5: Nara's Great Buddha & Deer (Half-Day)</h3>
+                    <span class="arrow text-2xl">▼</span>
+                </div>
+                <div class="day-content px-6 rounded-b-lg">
+                     <p class="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded"><strong>Note:</strong> This is a great, easy half-day trip. If you prefer a full day of shopping or another activity in Osaka, you can skip this.</p>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/10B981/FFFFFF?text=🚆" alt="train icon" class="icon mt-1">
+                            <div><strong>Morning Train to Nara:</strong> Take the Kintetsu Line from Osaka-Namba to Kintetsu-Nara. It's faster and the station is closer to the park. <span class="cost">~40 min | ¥680 (RM 19.20)</span></div>
+                        </li>
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/3B82F6/FFFFFF?text=🦌" alt="deer icon" class="icon mt-1">
+                            <div><strong>Nara Park:</strong> Walk from the station into Nara Park, where you'll be greeted by hundreds of free-roaming, surprisingly polite deer. You can buy special crackers to feed them. <span class="cost">Crackers: ¥200 (RM 5.60)</span></div>
+                        </li>
+                         <li class="flex items-start">
+                             <img src="https://placehold.co/24x24/F59E0B/FFFFFF?text=🙏" alt="buddha icon" class="icon mt-1">
+                            <div><strong>Todai-ji Temple:</strong> The main event. This massive wooden hall houses one of Japan's largest bronze Buddha statues (Daibutsu). It's truly awe-inspiring. <span class="cost">Entrance: ¥600 (RM 17)</span></div>
+                        </li>
+                         <li class="flex items-start">
+                             <img src="https://placehold.co/24x24/EF4444/FFFFFF?text=🛍️" alt="shopping bag icon" class="icon mt-1">
+                            <div><strong>Afternoon: Return to Osaka:</strong> Head back to Osaka for an afternoon of shopping in the covered arcades of Shinsaibashi-suji or exploring the trendy youth fashion in Amerikamura.</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Day 6 -->
+            <div class="day-container">
+                <div class="day-header flex justify-between items-center p-4 rounded-lg">
+                    <h3 class="text-xl font-bold">Day 6: Kobe Beef & Arima Onsen Escape</h3>
+                    <span class="arrow text-2xl">▼</span>
+                </div>
+                <div class="day-content px-6 rounded-b-lg">
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/10B981/FFFFFF?text=🚆" alt="train icon" class="icon mt-1">
+                            <div><strong>Morning Train to Kobe:</strong> Take the JR Special Rapid Service from Osaka to Sannomiya Station in Kobe. <span class="cost">~25 min | ¥420 (RM 11.80)</span></div>
+                        </li>
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/EF4444/FFFFFF?text=🥩" alt="steak icon" class="icon mt-1">
+                            <div><strong>Ultimate Kobe Beef Lunch:</strong> This is the day! Head to a renowned restaurant for a Kobe beef teppanyaki experience. <strong>Booking is highly recommended.</strong> Lunch sets are far more affordable than dinner. <span class="cost">Lunch: ¥5,000-¥15,000+ (RM 141-423+)</span></div>
+                        </li>
+                         <li class="flex items-start">
+                             <img src="https://placehold.co/24x24/F59E0B/FFFFFF?text=♨️" alt="onsen icon" class="icon mt-1">
+                            <div><strong>Afternoon: Arima Onsen:</strong> From Sannomiya, take the subway and then the Kobe Electric Railway to Arima Onsen, one of Japan's oldest hot spring towns. Enjoy a relaxing dip in the famous "golden" or "silver" public baths. <span class="cost">Train: ~30-40 min | ¥750 (RM 21.15) | Public Bath: ¥700 (RM 19.70)</span></div>
+                        </li>
+                         <li class="flex items-start">
+                             <img src="https://placehold.co/24x24/3B82F6/FFFFFF?text=🛍️" alt="shopping bag icon" class="icon mt-1">
+                            <div><strong>Evening: Explore Kobe & Return:</strong> After the onsen, you can explore Kobe's harbor area (Meriken Park) for sunset views before heading back to Osaka.</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Day 7 -->
+            <div class="day-container">
+                <div class="day-header flex justify-between items-center p-4 rounded-lg">
+                    <h3 class="text-xl font-bold">Day 7: Osaka's Wonders - Aquarium or Shopping</h3>
+                    <span class="arrow text-2xl">▼</span>
+                </div>
+                <div class="day-content px-6 rounded-b-lg">
+                    <p class="mb-4 p-3 bg-green-50 border-l-4 border-green-400 text-green-800 rounded">Choose your own adventure for the last full day!</p>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/3B82F6/FFFFFF?text=🐠" alt="fish icon" class="icon mt-1">
+                            <div><strong>Option A: Osaka Aquarium Kaiyukan:</strong> One of the world's largest and most impressive aquariums. The main tank with the giant whale shark is incredible. A great activity for any weather. <span class="cost">~Full half-day | Entrance: ¥2,700 (RM 76.15)</span></div>
+                        </li>
+                        <li class="flex items-start">
+                             <img src="https://placehold.co/24x24/EF4444/FFFFFF?text=🛍️" alt="shopping icon" class="icon mt-1">
+                            <div><strong>Option B: Last-Minute Shopping Spree:</strong> Explore different districts. Umeda has huge department stores (Hanshin, Hankyu, Daimaru). Den Den Town is Osaka's version of Akihabara for electronics and anime. Shinsaibashi for endless retail therapy.</div>
+                        </li>
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/8B5CF6/FFFFFF?text=🍜" alt="ramen icon" class="icon mt-1">
+                            <div><strong>Evening: Farewell Dinner:</strong> Have one last amazing meal. Go back to Dotonbori for your favorite street food, or choose a nice restaurant in Namba or Umeda to celebrate the end of your trip.</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Day 8 -->
+            <div class="day-container">
+                <div class="day-header flex justify-between items-center p-4 rounded-lg">
+                    <h3 class="text-xl font-bold">Day 8: Departure from KIX</h3>
+                    <span class="arrow text-2xl">▼</span>
+                </div>
+                <div class="day-content px-6 rounded-b-lg">
+                    <ul class="space-y-4">
+                       <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/F59E0B/FFFFFF?text=🛍️" alt="shopping bag icon" class="icon mt-1">
+                            <div><strong>Last Minute Souvenirs:</strong> Grab any last-minute gifts or snacks. Don Quijote is a great place for this, or the shops at the airport.</div>
+                        </li>
+                        <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/10B981/FFFFFF?text=🚆" alt="train icon" class="icon mt-1">
+                            <div><strong>Travel to KIX Airport:</strong> Depending on your luggage and hotel location, take the JR Haruka or an airport limousine bus. Give yourself plenty of time. <span class="cost">~50-60 min | Haruka: ¥2,300 (RM 65) | Bus: ~¥1,800 (RM 51)</span></div>
+                        </li>
+                         <li class="flex items-start">
+                            <img src="https://placehold.co/24x24/3B82F6/FFFFFF?text=✈️" alt="plane icon" class="icon mt-1">
+                            <div><strong>Fly Home:</strong> Sayonara! Depart from Kansai International Airport with amazing memories.</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="text-center py-8 mt-8 text-gray-500">
+        <p>Itinerary crafted with care for your Kansai adventure.</p>
+        <p class="text-sm">どうぞ良い旅を！ (Have a wonderful trip!)</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const accordion = document.getElementById('itinerary-accordion');
+            
+            // Open the first day by default
+            const firstDayHeader = accordion.querySelector('.day-header');
+            const firstDayContent = accordion.querySelector('.day-content');
+            if(firstDayHeader && firstDayContent){
+                firstDayHeader.classList.add('active');
+                firstDayContent.classList.add('open');
+            }
+
+            accordion.addEventListener('click', function (e) {
+                const header = e.target.closest('.day-header');
+                if (!header) return;
+
+                const currentContainer = header.parentElement;
+                const content = currentContainer.querySelector('.day-content');
+                const isOpen = content.classList.contains('open');
+
+                // Close all other items
+                accordion.querySelectorAll('.day-container').forEach(container => {
+                    container.querySelector('.day-header').classList.remove('active');
+                    container.querySelector('.day-content').classList.remove('open');
+                });
+                
+                // If it wasn't open, open it
+                if (!isOpen) {
+                    header.classList.add('active');
+                    content.classList.add('open');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
