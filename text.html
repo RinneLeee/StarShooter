@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shareable Animated Text</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevent all scrolling */
+            transition: background-color 0.5s ease; /* Smooth background transition */
+        }
+
+        /* The animation container takes the full screen and hides overflow */
+        #animation-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none; /* Allows clicks to go through to content behind it if any */
+        }
+        
+        /* The animated text itself, now a div */
+        #animated-text {
+            position: absolute;
+            font-weight: 700; /* Bold */
+            white-space: nowrap; /* Prevent the text from wrapping */
+            will-change: transform;
+            /* Massive, responsive font size. Takes the smaller of 25% of viewport height or 40% of viewport width */
+            font-size: min(25vh, 40vw);
+            /* Animation is now controlled by JavaScript */
+        }
+        
+        /* Style for the individual letters */
+        #animated-text span {
+            transition: text-shadow 0.4s ease-in-out; /* Smooth color transition */
+            /* The initial color and glow will be set, then pulsed by JS */
+            color: #fff;
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 15px #ff00c1, /* Hot Pink */
+                0 0 20px #ff00c1,
+                0 0 25px #ff00c1,
+                0 0 30px #ff00c1,
+                0 0 35px #ff00c1;
+        }
+        
+        /* Keyframe animation for right-to-left panning (increased exit distance) */
+        @keyframes marquee-rtl {
+            0% { transform: translate(100vw, -50%); }
+            100% { transform: translate(-200%, -50%); }
+        }
+        /* Keyframe animation for left-to-right panning (increased exit distance) */
+        @keyframes marquee-ltr {
+            0% { transform: translate(-200%, -50%); }
+            100% { transform: translate(100vw, -50%); }
+        }
+        /* Keyframe animation for top-to-bottom panning (increased exit distance) */
+        @keyframes marquee-ttb {
+            0% { transform: translate(-50%, -150vh); }
+            100% { transform: translate(-50%, 150vh); }
+        }
+        /* Keyframe animation for bottom-to-top panning (increased exit distance) */
+        @keyframes marquee-btt {
+            0% { transform: translate(-50%, 150vh); }
+            100% { transform: translate(-50%, -150vh); }
+        }
+        
+        /* Keyframe animation for the new shake effect */
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        /* Keyframe animation for the new snake-like wiggle effect */
+        @keyframes wiggle {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+        
+        /* Class to apply the shake animation to the text wrapper */
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97);
+        }
+
+        /* Class to apply the wiggle animation */
+        .wiggling {
+            animation: wiggle 0.8s ease-in-out infinite;
+        }
+        
+        /* Tighter line height for vertical text */
+        .vertical-text {
+            line-height: 0.8;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
+
+    <!-- This container holds the animated message. It's hidden by default. -->
+    <div id="animation-container" class="hidden">
+        <div id="animated-text"></div>
+    </div>
+
+    <!-- This container holds the input form. It's visible by default. -->
+    <div id="input-container" class="w-full max-w-lg p-6 md:p-8 bg-white rounded-xl shadow-lg space-y-6">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-center">Create a Flying Message</h1>
+            <p class="text-center text-gray-500 mt-2">Enter your text below and click "Share" to generate a link.</p>
+        </div>
+        
+        <textarea id="message-input" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow" placeholder="Your message here..."></textarea>
+        
+        <button id="share-button" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Generate Share Link
+        </button>
+
+        <!-- This section appears after generating the link -->
+        <div id="link-output-section" class="hidden space-y-3">
+            <label class="font-semibold text-gray-600">Your shareable link:</label>
+            <div class="flex items-center space-x-2">
+                <input id="shareable-link" type="text" readonly class="flex-grow p-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-600">
+                <button id="copy-button" class="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-all">
+                    Copy
+                </button>
+            </div>
+            <p id="copy-feedback" class="text-sm text-green-600 text-center font-medium">&nbsp;</p>
+        </div>
+    </div>
+
+    <script>
+        // Get references to all the HTML elements we'll be working with
+        const inputContainer = document.getElementById('input-container');
+        const animationContainer = document.getElementById('animation-container');
+        const animatedText = document.getElementById('animated-text');
+        const messageInput = document.getElementById('message-input');
+        const shareButton = document.getElementById('share-button');
+        const linkOutputSection = document.getElementById('link-output-section');
+        const shareableLinkInput = document.getElementById('shareable-link');
+        const copyButton = document.getElementById('copy-button');
+        const copyFeedback = document.getElementById('copy-feedback');
+        
+        let colorInterval = null;
+        let shakeInterval = null;
+        let currentMessage = ''; // Store message to rebuild for orientation changes
+        let isFirstAnimation = true; // Flag for the initial animation
+        let animationTimeoutId = null; // To control the animation loop
+
+        // Function to generate a random bright color
+        function getRandomColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 100%, 70%)`; // Use HSL for bright, saturated colors
+        }
+
+        // Function to update letter colors
+        function pulseColors() {
+            const letters = document.querySelectorAll('#text-wrapper > span');
+            letters.forEach(letter => {
+                if (letter.textContent.trim() === '') return;
+                const newColor = getRandomColor();
+                letter.style.textShadow = `
+                    0 0 5px #fff, 0 0 10px #fff, 0 0 15px ${newColor}, 0 0 20px ${newColor},
+                    0 0 25px ${newColor}, 0 0 30px ${newColor}, 0 0 35px ${newColor}`;
+            });
+        }
+
+        // Function to run when the page loads
+        function onPageLoad() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                try {
+                    const decodedMessage = atob(hash);
+                    if (decodedMessage.trim() !== '') {
+                        displayAnimatedMessage(decodedMessage);
+                    } else {
+                        showInputForm();
+                    }
+                } catch (e) {
+                    console.error("Failed to decode hash:", e);
+                    showInputForm();
+                }
+            } else {
+                showInputForm();
+            }
+        }
+        
+        function startRandomAnimation() {
+            const textWrapper = document.getElementById('text-wrapper');
+            if (!textWrapper) return; // Safety check
+
+            let newAnimationName;
+            let newDuration; // No longer constant
+            
+            // Reset effects before applying new ones
+            textWrapper.classList.remove('wiggling', 'vertical-text');
+
+            if (isFirstAnimation) {
+                newAnimationName = 'marquee-rtl';
+            } else {
+                const animations = ['marquee-rtl', 'marquee-ltr', 'marquee-ttb', 'marquee-btt'];
+                newAnimationName = animations[Math.floor(Math.random() * animations.length)];
+            }
+
+            // Change text orientation for vertical vs. horizontal and set duration
+            if (newAnimationName.includes('ttb') || newAnimationName.includes('btt')) {
+                // DYNAMIC DURATION: Base time plus additional time per character to prevent cutoff
+                newDuration = 4 + currentMessage.length * 0.3; 
+                // Vertical animation: characters separated by <br> and add class for tighter spacing
+                textWrapper.innerHTML = currentMessage.split('').map(char => `<span>${char}</span>`).join('<br>');
+                textWrapper.classList.add('vertical-text');
+            } else {
+                newDuration = 3; // Shorter duration for horizontal
+                // Horizontal animation: characters joined normally and add wiggle effect
+                textWrapper.innerHTML = currentMessage.split('').map(char => `<span>${char}</span>`).join('');
+                textWrapper.classList.add('wiggling');
+            }
+
+            animatedText.style.top = '';
+            animatedText.style.left = '';
+
+            // Set new position
+            if (newAnimationName.includes('rtl') || newAnimationName.includes('ltr')) {
+                if (isFirstAnimation) {
+                    animatedText.style.top = '50%'; // Center the first animation vertically
+                } else {
+                    animatedText.style.top = `${Math.floor(Math.random() * 70) + 15}%`; 
+                }
+            } else {
+                animatedText.style.left = `${Math.floor(Math.random() * 70) + 15}%`;
+            }
+
+            // Once the first animation is set up, set the flag to false
+            if (isFirstAnimation) {
+                isFirstAnimation = false;
+            }
+            
+            // Restart animation
+            animatedText.style.animation = 'none';
+            void animatedText.offsetHeight; 
+            animatedText.style.animation = `${newAnimationName} ${newDuration}s linear`;
+
+            return newDuration; // Return the duration for the timeout loop
+        }
+
+        function displayAnimatedMessage(message) {
+            isFirstAnimation = true; // Reset the flag for each new message
+            currentMessage = message; // Store for orientation changes
+            document.body.classList.remove('bg-gray-100');
+            document.body.classList.add('bg-gray-900');
+            inputContainer.classList.add('hidden');
+            
+            if (colorInterval) clearInterval(colorInterval);
+            if (shakeInterval) clearInterval(shakeInterval);
+            if (animationTimeoutId) clearTimeout(animationTimeoutId); // Clear previous loop
+            
+            // Add a wrapper for shaking and orientation changes
+            animatedText.innerHTML = '<div id="text-wrapper"></div>';
+            
+            animationContainer.classList.remove('hidden');
+
+            pulseColors();
+            colorInterval = setInterval(pulseColors, 500);
+
+            // Start random shaking
+            shakeInterval = setInterval(() => {
+                const textWrapper = document.getElementById('text-wrapper');
+                if (textWrapper && Math.random() > 0.5) { // 50% chance to shake
+                    textWrapper.classList.add('shake');
+                    setTimeout(() => {
+                        textWrapper.classList.remove('shake');
+                    }, 400); // Shake duration matches animation
+                }
+            }, 1500); // Check every 1.5s
+
+            function animationLoop() {
+                const duration = startRandomAnimation(); // Get the duration of the animation that just started
+                // Set timeout based on the actual duration, minus a small overlap to ensure seamlessness
+                animationTimeoutId = setTimeout(animationLoop, (duration * 1000) - 500); 
+            }
+            animationLoop(); // Start the loop
+        }
+
+        function showInputForm() {
+            if (colorInterval) clearInterval(colorInterval);
+            if (shakeInterval) clearInterval(shakeInterval);
+            if (animationTimeoutId) clearTimeout(animationTimeoutId); // Stop the animation loop
+            document.body.classList.remove('bg-gray-900');
+            document.body.classList.add('bg-gray-100');
+            inputContainer.classList.remove('hidden');
+            animationContainer.classList.add('hidden');
+        }
+
+        shareButton.addEventListener('click', () => {
+            const message = messageInput.value.trim();
+            if (message === '') {
+                messageInput.focus();
+                messageInput.classList.add('border-red-500', 'ring-red-500');
+                setTimeout(()=> {
+                    messageInput.classList.remove('border-red-500', 'ring-red-500');
+                }, 2000);
+                return;
+            }
+
+            const encodedMessage = btoa(message);
+            const link = `${window.location.origin}${window.location.pathname}#${encodedMessage}`;
+            
+            shareableLinkInput.value = link;
+            linkOutputSection.classList.remove('hidden');
+            copyFeedback.textContent = ' ';
+        });
+
+        copyButton.addEventListener('click', () => {
+            shareableLinkInput.select();
+            shareableLinkInput.setSelectionRange(0, 99999);
+
+            try {
+                document.execCommand('copy');
+                copyFeedback.textContent = 'Copied to clipboard!';
+            } catch (err) {
+                copyFeedback.textContent = 'Failed to copy!';
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            
+            window.getSelection().removeAllRanges();
+            setTimeout(() => { copyFeedback.textContent = ' '; }, 3000);
+        });
+
+        window.addEventListener('load', onPageLoad);
+    </script>
+</body>
+</html>
+
