@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RP104 - Data Processor</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter for a clean, modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* A minimalist, professional theme using the Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb; /* Use a slightly off-white for the body */
+            color: #111827; /* Default to a dark gray for text */
+        }
+        
+        /* Custom transition for a smoother slide-out effect */
+        #slide-out-nav {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Subtle focus rings for better accessibility */
+        :focus-visible {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+            border-radius: 0.375rem;
+        }
+
+        /* Custom styles for table */
+        .table-container {
+            overflow-x: auto; /* This enables horizontal scrolling */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            scrollbar-width: thin;
+            scrollbar-color: #d1d5db #f9fafb;
+        }
+        table {
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            white-space: nowrap; /* Prevents text from wrapping to the next line */
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        td {
+            border-bottom: 1px solid #e5e7eb;
+            color: #4b5563;
+        }
+        /* Custom scrollbar for checkbox list */
+        #filter-value-options::-webkit-scrollbar {
+            width: 8px;
+        }
+        #filter-value-options::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        #filter-value-options::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+        #filter-value-options::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden antialiased">
+
+    <!-- Screen overlay for when the navigation is open -->
+    <div id="overlay" class="fixed inset-0 bg-black/30 z-30 opacity-0 pointer-events-none transition-opacity duration-300 ease-in-out"></div>
+
+    <!-- Slide-out Navigation -->
+    <nav id="slide-out-nav" class="fixed top-0 left-0 h-full w-72 bg-white border-r border-gray-200 shadow-xl transform -translate-x-full z-40">
+        <div class="flex flex-col h-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-12">
+                    <h2 class="text-2xl font-semibold text-gray-800">RP104</h2>
+                    <button id="close-nav-btn" class="p-1 text-gray-500 hover:text-gray-900 rounded-full hover:bg-gray-100 transition-colors duration-200">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                <ul class="space-y-2">
+                    <li><a href="#" class="flex items-center gap-4 px-4 py-3 rounded-lg text-lg text-gray-700 font-medium bg-gray-100 transition-colors duration-200"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>Home</a></li>
+                    <li><a href="steps.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Steps</a></li>
+
+                </ul>
+            </div>
+            <div class="mt-auto p-6"><p class="text-sm text-gray-500">&copy; 2025 RP104. All rights reserved.</p></div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="relative min-h-screen">
+        <!-- Header -->
+        <header class="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-sm border-b border-gray-200/80 z-20">
+            <div class="container mx-auto px-6 py-4 flex items-center">
+                <button id="open-nav-btn" class="p-2 rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
+                <div class="ml-4 text-lg font-medium text-gray-700">Home</div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="pt-24 pb-24">
+            <div class="container mx-auto px-4 sm:px-6 py-12">
+                
+                <!-- File Upload Section -->
+                <div id="upload-section" class="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2 tracking-tight">RP104 Processer</h1>
+                    <p class="text-gray-600 text-lg leading-relaxed max-w-3xl mb-6">Select a .txt file. The parser will attempt to split columns by tabs first, then by two or more spaces.</p>
+                    <div class="flex items-center space-x-4">
+                         <input type="file" id="fileInput" accept=".txt" class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors duration-200 cursor-pointer"/>
+                        <button id="processButton" class="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition-all duration-200">Process</button>
+                    </div>
+                </div>
+
+                <!-- Status and Results Section -->
+                <div id="results-container" class="mt-8 hidden">
+                    <div class="flex justify-between items-center bg-white p-6 rounded-2xl border border-gray-200 mb-6">
+                        <div id="status-message"></div>
+                        <div class="flex items-center space-x-4">
+                            <button id="download-button" class="hidden px-5 py-2.5 bg-green-600 text-white font-semibold rounded-lg shadow-sm hover:bg-green-700 transition-all duration-200">Download Filtered (.csv)</button>
+                            <button id="reset-button" class="px-5 py-2.5 bg-gray-600 text-white font-semibold rounded-lg shadow-sm hover:bg-gray-700 transition-all duration-200">Process New File</button>
+                        </div>
+                    </div>
+                    
+                    <div id="error-pill-wrapper" class="hidden mb-6">
+                        <button id="error-pill-button" class="flex items-center space-x-2 text-sm font-semibold bg-red-100 text-red-800 px-4 py-2 rounded-full hover:bg-red-200 transition">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            <span id="error-count-pill"></span>
+                            <span>Errors Found (Click to view)</span>
+                        </button>
+                    </div>
+                    
+                    <div id="error-details-wrapper" class="hidden bg-white rounded-2xl border border-red-200 mb-6">
+                        <div class="flex justify-between items-center p-4 border-b border-red-200">
+                             <h3 class="text-xl font-bold text-red-800">Rows with Errors</h3>
+                             <button id="collapse-errors-btn" class="text-sm font-semibold text-red-700 hover:bg-red-100 p-2 rounded-lg transition">Collapse</button>
+                        </div>
+                        <div id="error-content" class="p-6 bg-red-50 font-mono text-sm text-red-900 overflow-x-auto"></div>
+                    </div>
+
+                    <!-- Super Filter Section -->
+                    <div id="filter-section" class="hidden bg-white p-6 rounded-2xl border border-gray-200 mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Super Filter</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                            <div>
+                                <label for="filter-column" class="block text-sm font-medium text-gray-700 mb-1">Column</label>
+                                <select id="filter-column" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 h-10"></select>
+                            </div>
+                            <div>
+                                <label for="filter-value-search" class="block text-sm font-medium text-gray-700 mb-1">Value</label>
+                                <div class="relative">
+                                    <input type="text" id="filter-value-search" placeholder="Search values..." class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2">
+                                    <div id="filter-value-options" class="max-h-28 overflow-y-auto border border-gray-300 rounded-md p-2 bg-white">
+                                        <div class="text-gray-500 text-sm">Select a column first...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="add-filter-btn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 h-10">Add Selected Filters</button>
+                        </div>
+                        <div id="filter-pills-container" class="mt-4 flex flex-wrap gap-2 items-center"></div>
+                    </div>
+
+                    <div class="bg-white p-2 rounded-2xl border border-gray-200 shadow-sm">
+                        <div id="pagination-controls-top" class="p-4 flex justify-between items-center"></div>
+                        <div class="table-container">
+                            <table id="dataTable"><thead id="data-header"></thead><tbody id="data-body"></tbody></table>
+                        </div>
+                        <div id="pagination-controls-bottom" class="p-4 flex justify-between items-center"></div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Floating Scroll Buttons -->
+    <div id="scroll-buttons" class="fixed bottom-6 right-6 z-40 hidden space-x-2">
+        <button id="scroll-left-btn" class="bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-gray-200 transition-colors duration-200"><svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+        <button id="scroll-right-btn" class="bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-gray-200 transition-colors duration-200"><svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Navigation Logic ---
+            const openNavBtn = document.getElementById('open-nav-btn');
+            const closeNavBtn = document.getElementById('close-nav-btn');
+            const nav = document.getElementById('slide-out-nav');
+            const overlay = document.getElementById('overlay');
+
+            function openNav() { nav.classList.remove('-translate-x-full'); overlay.classList.remove('opacity-0', 'pointer-events-none'); document.body.style.overflow = 'hidden'; }
+            function closeNav() { nav.classList.add('-translate-x-full'); overlay.classList.add('opacity-0', 'pointer-events-none'); document.body.style.overflow = ''; }
+
+            openNavBtn.addEventListener('click', openNav);
+            closeNavBtn.addEventListener('click', closeNav);
+            overlay.addEventListener('click', closeNav);
+            document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !nav.classList.contains('-translate-x-full')) closeNav(); });
+
+            // --- Data Processing & UI Elements ---
+            const fileInput = document.getElementById('fileInput');
+            const processButton = document.getElementById('processButton');
+            const resetButton = document.getElementById('reset-button');
+            const downloadButton = document.getElementById('download-button');
+            const uploadSection = document.getElementById('upload-section');
+            const resultsContainer = document.getElementById('results-container');
+            const statusMessage = document.getElementById('status-message');
+            const errorPillWrapper = document.getElementById('error-pill-wrapper');
+            const errorPillButton = document.getElementById('error-pill-button');
+            const errorCountPill = document.getElementById('error-count-pill');
+            const errorDetailsWrapper = document.getElementById('error-details-wrapper');
+            const errorContent = document.getElementById('error-content');
+            const collapseErrorsBtn = document.getElementById('collapse-errors-btn');
+            const filterSection = document.getElementById('filter-section');
+            const filterColumnSelect = document.getElementById('filter-column');
+            const filterValueSearch = document.getElementById('filter-value-search');
+            const filterValueOptions = document.getElementById('filter-value-options');
+            const addFilterBtn = document.getElementById('add-filter-btn');
+            const filterPillsContainer = document.getElementById('filter-pills-container');
+            const dataHeader = document.getElementById('data-header');
+            const dataBody = document.getElementById('data-body');
+            const paginationTop = document.getElementById('pagination-controls-top');
+            const paginationBottom = document.getElementById('pagination-controls-bottom');
+            const scrollButtonsContainer = document.getElementById('scroll-buttons');
+
+            // --- State Variables ---
+            let tableHeaders = [], tableRecords = [], tableErrors = [], filteredRecords = [];
+            let activeFilters = {};
+            let currentPage = 1;
+            let pillsExpanded = false;
+            const RECORDS_PER_PAGE = 1000;
+            const EXPECTED_COLUMNS = 37;
+            
+            // --- Prevent accidental refresh ---
+            window.addEventListener('beforeunload', function(e) {
+                if (tableRecords.length > 0) {
+                    e.preventDefault(); 
+                    e.returnValue = ''; 
+                }
+            });
+
+            // --- Event Listeners ---
+            processButton.addEventListener('click', handleFileProcessing);
+            resetButton.addEventListener('click', resetUI);
+            downloadButton.addEventListener('click', downloadFilteredData);
+            collapseErrorsBtn.addEventListener('click', () => toggleErrorDetails(true));
+            errorPillButton.addEventListener('click', () => toggleErrorDetails(false));
+            filterColumnSelect.addEventListener('change', populateFilterValues);
+            filterValueSearch.addEventListener('input', filterValueCheckboxes);
+            addFilterBtn.addEventListener('click', addFilters);
+
+            function resetUI() {
+                uploadSection.classList.remove('hidden');
+                resultsContainer.classList.add('hidden');
+                filterSection.classList.add('hidden');
+                errorDetailsWrapper.classList.add('hidden');
+                errorPillWrapper.classList.add('hidden');
+                fileInput.value = null;
+                tableHeaders = [], tableRecords = [], tableErrors = [], filteredRecords = [];
+                activeFilters = {};
+                clearTable();
+            }
+
+            function handleFileProcessing() {
+                const file = fileInput.files[0];
+                if (!file) {
+                    updateStatus('Please select a file first.', 'error');
+                    resultsContainer.classList.remove('hidden');
+                    return;
+                }
+                
+                uploadSection.classList.add('hidden');
+                updateStatus('Processing file...', 'loading');
+                resultsContainer.classList.remove('hidden');
+                
+                errorDetailsWrapper.classList.add('hidden');
+                errorPillWrapper.classList.add('hidden');
+                scrollButtonsContainer.classList.add('hidden');
+                filterSection.classList.add('hidden');
+                activeFilters = {};
+                clearTable();
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const { headers, records, errors } = parseTextData(e.target.result);
+                        tableHeaders = headers, tableRecords = records, tableErrors = errors;
+                        filteredRecords = [...tableRecords];
+
+                        if (tableHeaders.length !== EXPECTED_COLUMNS) throw new Error(`Header validation failed: Found ${tableHeaders.length} columns, expected ${EXPECTED_COLUMNS}.`);
+                        
+                        let statusText = `Successfully processed ${records.length} records.`;
+                        if (tableErrors.length > 0) {
+                            statusText += ` Found ${tableErrors.length} rows with incorrect column counts.`;
+                            renderErrors();
+                        }
+                        
+                        updateStatus(statusText, tableErrors.length > 0 ? 'warning' : 'success');
+                        populateFilterColumn();
+                        filterSection.classList.remove('hidden');
+                        
+                        updateFilteredResults();
+
+                    } catch (error) {
+                        updateStatus(`Error processing file: ${error.message}`, 'error');
+                        clearTable();
+                    }
+                };
+                reader.onerror = () => updateStatus('Error reading the file.', 'error');
+                reader.readAsText(file);
+            }
+
+            function parseTextData(text) {
+                const lines = text.trim().split(/\r?\n/);
+                if (lines.length < 1) throw new Error("File is empty or has an invalid format.");
+                const delimiterRegex = /\t/;
+                let headers = lines[0].split(delimiterRegex).map(h => h.trim());
+                if (headers.length < 2) headers = lines[0].split(/\s{2,}/).map(h => h.trim());
+                const records = [], errors = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    if (line.trim() === '') continue;
+                    let values = line.split(delimiterRegex);
+                    if (values.length < 2) values = line.split(/\s{2,}/);
+                    if (values.length === EXPECTED_COLUMNS) records.push(values);
+                    else errors.push({ lineNumber: i + 1, count: values.length, rawLine: line });
+                }
+                return { headers, records, errors };
+            }
+            
+            function renderErrors() {
+                if (!tableErrors || tableErrors.length === 0) return;
+                errorCountPill.textContent = tableErrors.length;
+                let html = '';
+                tableErrors.forEach(error => {
+                    html += `<div class="mb-2"><strong>Line ${error.lineNumber} (Found ${error.count} columns):</strong></div>`;
+                    html += `<pre class="whitespace-pre-wrap p-2 bg-white/50 rounded"><code>${escapeHtml(error.rawLine)}</code></pre><hr class="my-3 border-red-200">`;
+                });
+                errorContent.innerHTML = html;
+                toggleErrorDetails(false);
+            }
+
+            function toggleErrorDetails(collapse) {
+                if(collapse) {
+                    errorDetailsWrapper.classList.add('hidden');
+                    errorPillWrapper.classList.remove('hidden');
+                } else {
+                    errorDetailsWrapper.classList.remove('hidden');
+                    errorPillWrapper.classList.add('hidden');
+                }
+            }
+
+            function escapeHtml(unsafe) { return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+
+            // --- Filtering Logic ---
+            function populateFilterColumn() {
+                filterColumnSelect.innerHTML = '<option value="">Select a column...</option>';
+                tableHeaders.forEach((header, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = header;
+                    filterColumnSelect.appendChild(option);
+                });
+                populateFilterValues();
+            }
+
+            function populateFilterValues() {
+                const columnIndex = filterColumnSelect.value;
+                filterValueOptions.innerHTML = '';
+                filterValueSearch.value = '';
+
+                if (columnIndex === '') {
+                    filterValueOptions.innerHTML = `<div class="text-gray-500 text-sm p-2">Select a column first...</div>`;
+                    return;
+                }
+
+                const uniqueValues = [...new Set(tableRecords.map(row => row[columnIndex].trim()))].filter(Boolean);
+                uniqueValues.sort();
+                
+                if (uniqueValues.length === 0) {
+                     filterValueOptions.innerHTML = `<div class="text-gray-500 text-sm p-2">No values found in this column.</div>`;
+                    return;
+                }
+
+                uniqueValues.forEach(value => {
+                    const optionWrapper = document.createElement('div');
+                    optionWrapper.className = 'flex items-center p-1';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = value;
+                    checkbox.id = `filter-val-${value.replace(/\s+/g, '-')}`;
+                    checkbox.className = 'h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500';
+
+                    const label = document.createElement('label');
+                    label.htmlFor = checkbox.id;
+                    label.textContent = value;
+                    label.className = 'ml-2 block text-sm text-gray-900';
+                    
+                    optionWrapper.appendChild(checkbox);
+                    optionWrapper.appendChild(label);
+                    filterValueOptions.appendChild(optionWrapper);
+                });
+            }
+
+            function filterValueCheckboxes() {
+                const searchTerm = filterValueSearch.value.toLowerCase();
+                const options = filterValueOptions.querySelectorAll('div.flex');
+                options.forEach(option => {
+                    const label = option.querySelector('label');
+                    if (label) {
+                        const isVisible = label.textContent.toLowerCase().includes(searchTerm);
+                        option.style.display = isVisible ? 'flex' : 'none';
+                    }
+                });
+            }
+            
+            function addFilters() {
+                const columnIndex = filterColumnSelect.value;
+                if (!columnIndex) return;
+                
+                const columnHeader = tableHeaders[columnIndex];
+                const checkedBoxes = filterValueOptions.querySelectorAll('input[type="checkbox"]:checked');
+                
+                if (checkedBoxes.length === 0) return;
+
+                if (!activeFilters[columnHeader]) {
+                    activeFilters[columnHeader] = new Set();
+                }
+
+                checkedBoxes.forEach(box => {
+                    activeFilters[columnHeader].add(box.value);
+                });
+                
+                updateFilteredResults();
+            }
+
+            function removeFilter(columnHeader, value) {
+                if (activeFilters[columnHeader]) {
+                    activeFilters[columnHeader].delete(value);
+                    if (activeFilters[columnHeader].size === 0) {
+                        delete activeFilters[columnHeader];
+                    }
+                }
+                updateFilteredResults();
+            }
+
+            function renderFilterPills() {
+                filterPillsContainer.innerHTML = '';
+                const allPills = [];
+
+                Object.entries(activeFilters).forEach(([header, valueSet]) => {
+                    valueSet.forEach(value => {
+                        const pill = document.createElement('div');
+                        pill.className = 'flex items-center bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full';
+                        pill.innerHTML = `<span>${header}: ${value}</span>
+                                        <button class="ml-2 text-blue-600 hover:text-blue-800 text-lg font-bold leading-none">&times;</button>`;
+                        pill.querySelector('button').addEventListener('click', () => removeFilter(header, value));
+                        allPills.push(pill);
+                    });
+                });
+
+                const pillsToShow = pillsExpanded ? allPills : allPills.slice(0, 3);
+                pillsToShow.forEach(pill => filterPillsContainer.appendChild(pill));
+
+                if (allPills.length > 3) {
+                    const showMoreBtn = document.createElement('button');
+                    showMoreBtn.className = 'text-blue-600 hover:underline text-sm font-semibold p-1';
+                    showMoreBtn.textContent = pillsExpanded ? 'Show less' : `Show ${allPills.length - 3} more...`;
+                    showMoreBtn.addEventListener('click', () => {
+                        pillsExpanded = !pillsExpanded;
+                        renderFilterPills();
+                    });
+                    filterPillsContainer.appendChild(showMoreBtn);
+                }
+            }
+            
+            function applyFilters() {
+                if (Object.keys(activeFilters).length === 0) {
+                    filteredRecords = [...tableRecords];
+                    return;
+                }
+
+                filteredRecords = tableRecords.filter(row => {
+                    return Object.entries(activeFilters).every(([header, valueSet]) => {
+                        const columnIndex = tableHeaders.indexOf(header);
+                        return valueSet.has(row[columnIndex].trim());
+                    });
+                });
+            }
+            
+            function updateFilteredResults() {
+                pillsExpanded = false; // Collapse pills on any filter change
+                applyFilters();
+                renderFilterPills();
+                currentPage = 1;
+                renderTable();
+                renderPagination();
+                scrollButtonsContainer.classList.toggle('hidden', filteredRecords.length === 0);
+                downloadButton.classList.toggle('hidden', filteredRecords.length === 0);
+            }
+
+            // --- Table & Pagination Rendering ---
+            function renderTable() {
+                const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
+                const endIndex = startIndex + RECORDS_PER_PAGE;
+                const paginatedRecords = filteredRecords.slice(startIndex, endIndex);
+                
+                dataHeader.innerHTML = '', dataBody.innerHTML = '';
+                const headerRow = document.createElement('tr');
+                tableHeaders.forEach(headerText => {
+                    const th = document.createElement('th');
+                    th.textContent = headerText;
+                    headerRow.appendChild(th);
+                });
+                dataHeader.appendChild(headerRow);
+                
+                paginatedRecords.forEach(record => {
+                    const row = document.createElement('tr');
+                    record.forEach(cellText => {
+                        const td = document.createElement('td');
+                        td.textContent = cellText.trim() === 'NULL' ? '' : cellText;
+                        row.appendChild(td);
+                    });
+                    dataBody.appendChild(row);
+                });
+            }
+            
+            function renderPagination() {
+                const totalPages = Math.ceil(filteredRecords.length / RECORDS_PER_PAGE);
+                const paginationHTML = createPaginationHTML(totalPages);
+                paginationTop.innerHTML = paginationHTML;
+                paginationBottom.innerHTML = paginationHTML;
+                document.querySelectorAll('.page-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const newPage = parseInt(e.target.dataset.page, 10);
+                        if (newPage >= 1 && newPage <= totalPages) {
+                            currentPage = newPage;
+                            renderTable();
+                            renderPagination();
+                            resultsContainer.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    });
+                });
+            }
+
+            function createPaginationHTML(totalPages) {
+                if (filteredRecords.length === 0) {
+                    return `<div class="text-sm text-gray-600">No records found.</div>`;
+                }
+                
+                if (totalPages <= 1) {
+                    return `<div class="text-sm text-gray-600">Showing 1 to ${filteredRecords.length} of ${filteredRecords.length} records</div>`;
+                }
+                
+                const startRecord = (currentPage - 1) * RECORDS_PER_PAGE + 1;
+                const endRecord = Math.min(currentPage * RECORDS_PER_PAGE, filteredRecords.length);
+                let html = `<div class="text-sm text-gray-600">Showing ${startRecord} to ${endRecord} of ${filteredRecords.length} records</div>`;
+                html += '<div class="flex items-center space-x-2">';
+                const prevDisabled = currentPage === 1 ? 'opacity-50 cursor-not-allowed' : '';
+                html += `<button data-page="${currentPage - 1}" class="page-btn px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 ${prevDisabled}">Previous</button>`;
+                html += `<span class="text-sm text-gray-700">Page ${currentPage} of ${totalPages}</span>`;
+                const nextDisabled = currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : '';
+                html += `<button data-page="${currentPage + 1}" class="page-btn px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 ${nextDisabled}">Next</button>`;
+                html += '</div>';
+                return html;
+            }
+            
+            function formatCsvCell(cell) {
+                const strCell = String(cell);
+                // If the cell contains a comma, double quote, or newline, it needs to be escaped.
+                if (/[",\n\r]/.test(strCell)) {
+                    // First, escape any double quotes by doubling them.
+                    const escapedCell = strCell.replace(/"/g, '""');
+                    // Then, wrap the entire cell in double quotes.
+                    return `"${escapedCell}"`;
+                }
+                return strCell;
+            }
+
+            function downloadFilteredData() {
+                if (filteredRecords.length === 0) { return; }
+
+                const headerText = tableHeaders.map(formatCsvCell).join(',');
+                const rowsText = filteredRecords.map(row => row.map(formatCsvCell).join(',')).join('\n');
+                const fileContent = headerText + '\n' + rowsText;
+
+                const blob = new Blob([fileContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute("href", url);
+                link.setAttribute("download", "filtered_data.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+
+            function updateStatus(message, type) {
+                statusMessage.textContent = message;
+                const wrapper = statusMessage.parentElement;
+                wrapper.className = 'flex justify-between items-center p-6 rounded-2xl border mb-6'; // Reset classes
+                switch (type) {
+                    case 'success': wrapper.classList.add('bg-green-50', 'border-green-200', 'text-green-800'); break;
+                    case 'error': wrapper.classList.add('bg-red-50', 'border-red-200', 'text-red-800'); break;
+                    case 'warning': wrapper.classList.add('bg-yellow-50', 'border-yellow-200', 'text-yellow-800'); break;
+                    default: wrapper.classList.add('bg-blue-50', 'border-blue-200', 'text-blue-800'); break;
+                }
+            }
+
+            function clearTable() {
+                dataHeader.innerHTML = '', dataBody.innerHTML = '', paginationTop.innerHTML = '', paginationBottom.innerHTML = '';
+                filterPillsContainer.innerHTML = '';
+                scrollButtonsContainer.classList.add('hidden');
+                downloadButton.classList.add('hidden');
+            }
+
+            // --- Scroll Button Logic ---
+            const scrollLeftBtn = document.getElementById('scroll-left-btn');
+            const scrollRightBtn = document.getElementById('scroll-right-btn');
+            const tableContainer = document.querySelector('.table-container');
+
+            scrollLeftBtn.addEventListener('click', () => tableContainer.scrollBy({ left: -300, behavior: 'smooth' }));
+            scrollRightBtn.addEventListener('click', () => tableContainer.scrollBy({ left: 300, behavior: 'smooth' }));
+        });
+    </script>
+
+</body>
+</html>
+
