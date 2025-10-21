@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shareable Animated Text</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevent all scrolling */
+            transition: background-color 0.5s ease; /* Smooth background transition */
+        }
+
+        /* The animation container takes the full screen and hides overflow */
+        #animation-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none; /* Allows clicks to go through to content behind it if any */
+        }
+        
+        /* The animated text itself, now a div */
+        #animated-text {
+            position: absolute;
+            font-weight: 700; /* Bold */
+            white-space: nowrap; /* Prevent the text from wrapping */
+            will-change: transform;
+            /* Massive, responsive font size. Takes the smaller of 25% of viewport height or 40% of viewport width */
+            font-size: min(25vh, 40vw);
+            /* Animation is now controlled by JavaScript */
+            z-index: 10; /* Ensure text is above effects */
+        }
+        
+        /* Style for the individual letters */
+        #animated-text span {
+            transition: text-shadow 0.4s ease-in-out; /* Smooth color transition */
+            /* The initial color and glow will be set, then pulsed by JS */
+            color: #fff;
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 15px #ff00c1, /* Hot Pink */
+                0 0 20px #ff00c1,
+                0 0 25px #ff00c1,
+                0 0 30px #ff00c1,
+                0 0 35px #ff00c1;
+        }
+
+        /* --- Snow Effect (Christmas) --- */
+        .snowflake {
+            position: fixed;
+            top: -10vh; /* Start above the screen */
+            background: #ffffff;
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            animation: snow-fall linear infinite;
+            z-index: 1; /* Ensure snow is behind text */
+        }
+
+        @keyframes snow-fall {
+            0% {
+                transform: translateY(0vh) translateX(0);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(110vh) translateX(var(--x-end, 0));
+                opacity: 1;
+            }
+        }
+        /* --- End of Snow Effect --- */
+
+        /* --- Firework Effect (CNY) --- */
+        .firework-particle {
+            position: fixed; /* Positioned relative to the viewport */
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0; /* Start invisible */
+            animation: firework-burst 1s ease-out forwards;
+        }
+
+        @keyframes firework-burst {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x-end), var(--y-end)) scale(0);
+                opacity: 0;
+            }
+        }
+        /* --- End of Firework Effect --- */
+
+        /* --- Sparkle Effect (Deepavali) --- */
+        .sparkle {
+            position: fixed;
+            width: 3px;
+            height: 3px;
+            background: #FFD700; /* Gold */
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+            animation: twinkle linear infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { 
+                opacity: 0; 
+                transform: scale(0.5);
+            }
+            50% { 
+                opacity: 1; 
+                transform: scale(1.2); /* "Twinkle" pop */
+            }
+        }
+        /* --- End of Sparkle Effect --- */
+        
+        /* --- Hari Raya Effect --- */
+        .raya-icon {
+            position: fixed;
+            /* font-size, color, text-shadow set by JS */
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+            animation: fade-float linear infinite;
+        }
+
+        @keyframes fade-float {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0.8);
+            }
+            20% {
+                opacity: 1;
+                transform: translateY(-20vh) scale(1.2); /* Start floating up */
+            }
+            80% {
+                opacity: 1;
+                transform: translateY(-80vh) scale(0.8); /* Continue floating */
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100vh) scale(0.5); /* Float off screen */
+            }
+        }
+        /* --- End of Hari Raya Effect --- */
+
+        /* --- Birthday Effect --- */
+        .balloon {
+            position: fixed;
+            font-size: 25px; /* Base size */
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+            animation: float-up linear infinite;
+        }
+
+        @keyframes float-up {
+            0% {
+                opacity: 0;
+                transform: translateY(110vh) scale(0.8); /* Start below screen */
+            }
+            15% {
+                opacity: 0.9;
+                transform: translateY(75vh) scale(1.1);
+            }
+            90% {
+                opacity: 0.9;
+                transform: translateY(-10vh) scale(0.9); /* Float up */
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-20vh) scale(0.5); /* Float off screen */
+            }
+        }
+        /* --- End of Birthday Effect --- */
+
+        /* Keyframe animation for right-to-left panning */
+        @keyframes marquee-rtl {
+            0% { transform: translate(100vw, -50%); }
+            100% { transform: translate(-200%, -50%); }
+        }
+        /* Keyframe animation for left-to-right panning */
+        @keyframes marquee-ltr {
+            0% { transform: translate(-200%, -50%); }
+            100% { transform: translate(100vw, -50%); }
+        }
+        /* Keyframe animation for top-to-bottom panning */
+        @keyframes marquee-ttb {
+            0% { transform: translate(-50%, -150vh); }
+            100% { transform: translate(-50%, 150vh); }
+        }
+        /* Keyframe animation for bottom-to-top panning */
+        @keyframes marquee-btt {
+            0% { transform: translate(-50%, 150vh); }
+            100% { transform: translate(-50%, -150vh); }
+        }
+        
+        /* Keyframe animation for the new shake effect */
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        /* Keyframe animation for the new snake-like wiggle effect */
+        @keyframes wiggle {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+        
+        /* Class to apply the shake animation to the text wrapper */
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97);
+        }
+
+        /* Class to apply the wiggle animation */
+        .wiggling {
+            animation: wiggle 0.8s ease-in-out infinite;
+        }
+        
+        /* Tighter line height for vertical text */
+        .vertical-text {
+            line-height: 0.8;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
+
+    <div id="animation-container" class="hidden">
+        <div id="animated-text"></div>
+    </div>
+
+    <div id="input-container" class="w-full max-w-lg p-6 md:p-8 bg-white rounded-xl shadow-lg space-y-6">
+        <div>
+            <h1 class="text-xl md:text-2xl font-bold text-center text-gray-700">Generate a Secret Animated Link</h1>
+        </div>
+
+        <div class="space-y-2">
+            <label class="block font-semibold text-gray-600">1. Choose a Vibe:</label>
+            <div class="grid grid-cols-3 gap-3">
+                <button type="button" class="theme-option p-4 border rounded-lg transition-all text-center bg-blue-100 border-blue-600 ring-2 ring-blue-500" data-theme="default">
+                    <span class="text-2xl">✨</span>
+                    <span class="block text-sm font-medium">Default</span>
+                </button>
+                <button type="button" class="theme-option p-4 border bg-gray-50 border-gray-300 rounded-lg transition-all text-center hover:bg-gray-100 hover:border-gray-400" data-theme="christmas">
+                    <span class="text-2xl">🎄</span>
+                    <span class="block text-sm font-medium">Christmas</span>
+                </button>
+                <button type="button" class="theme-option p-4 border bg-gray-50 border-gray-300 rounded-lg transition-all text-center hover:bg-gray-100 hover:border-gray-400" data-theme="cny">
+                    <span class="text-2xl">🏮</span>
+                    <span class="block text-sm font-medium">New Year</span>
+                </button>
+                <button type="button" class="theme-option p-4 border bg-gray-50 border-gray-300 rounded-lg transition-all text-center hover:bg-gray-100 hover:border-gray-400" data-theme="deepavali">
+                    <span class="text-2xl">🪔</span>
+                    <span class="block text-sm font-medium">Deepavali</span>
+                </button>
+                <button type="button" class="theme-option p-4 border bg-gray-50 border-gray-300 rounded-lg transition-all text-center hover:bg-gray-100 hover:border-gray-400" data-theme="hariraya">
+                    <span class="text-2xl">🌙</span>
+                    <span class="block text-sm font-medium">Hari Raya</span>
+                </button>
+                <button type="button" class="theme-option p-4 border bg-gray-50 border-gray-300 rounded-lg transition-all text-center hover:bg-gray-100 hover:border-gray-400" data-theme="birthday">
+                    <span class="text-2xl">🎂</span>
+                    <span class="block text-sm font-medium">Birthday</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="space-y-2">
+            <label for="message-input" class="block font-semibold text-gray-600">2. Write Your Message:</label>
+            <textarea id="message-input" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow" placeholder="Your message here..."></textarea>
+        </div>
+        
+        <button id="share-button" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Generate & Copy Link
+        </button>
+
+        <div id="link-output-section" class="hidden space-y-3">
+            <label class="font-semibold text-gray-600">Your secret link is ready:</label>
+            <div class="flex items-center space-x-2">
+                <input id="shareable-link" type="text" readonly class="flex-grow p-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-600">
+                <button id="copy-button" class="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-all">
+                    Copy
+                </button>
+            </div>
+            <p id="copy-feedback" class="text-sm text-green-600 text-center font-medium">&nbsp;</p>
+        </div>
+    </div>
+
+    <button id="home-button" class="hidden fixed bottom-6 right-6 z-50 bg-white rounded-full w-14 h-14 flex items-center justify-center text-3xl shadow-lg hover:bg-gray-100 transition-all transform hover:scale-110">
+        🏠
+    </button>
+
+
+    <script>
+        // Get references to all the HTML elements
+        const inputContainer = document.getElementById('input-container');
+        const animationContainer = document.getElementById('animation-container');
+        const animatedText = document.getElementById('animated-text');
+        const messageInput = document.getElementById('message-input');
+        const shareButton = document.getElementById('share-button');
+        const linkOutputSection = document.getElementById('link-output-section');
+        const shareableLinkInput = document.getElementById('shareable-link');
+        const copyButton = document.getElementById('copy-button');
+        const copyFeedback = document.getElementById('copy-feedback');
+        const homeButton = document.getElementById('home-button'); // NEW
+        
+        let colorInterval = null;
+        let shakeInterval = null;
+        let fireworkInterval = null; 
+        let currentMessage = '';
+        let currentTheme = 'default';
+        let isFirstAnimation = true;
+        let animationTimeoutId = null;
+
+        // --- NEW: Logic for the visual theme selector ---
+        const themeOptions = document.querySelectorAll('.theme-option');
+        let selectedTheme = 'default'; // Keep track of the selected theme
+        
+        themeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove selected styles from all buttons
+                themeOptions.forEach(opt => {
+                    opt.classList.remove('bg-blue-100', 'border-blue-600', 'ring-2', 'ring-blue-500');
+                    opt.classList.add('bg-gray-50', 'border-gray-300');
+                });
+                
+                // Add selected styles to the clicked button
+                option.classList.add('bg-blue-100', 'border-blue-600', 'ring-2', 'ring-blue-500');
+                option.classList.remove('bg-gray-50', 'border-gray-300');
+                
+                // Update the state
+                selectedTheme = option.dataset.theme;
+                
+                // NEW: Hide link output on change
+                hideLinkOutput();
+            });
+        });
+        // --- End of new theme logic ---
+
+        // Function to generate a random bright color
+        function getRandomColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 100%, 70%)`;
+        }
+
+        // --- Christmas color array and function ---
+        const christmasColors = ['#E61919', '#19E635', '#FFD700', '#FFFFFF', '#34A8E0']; // Red, Green, Gold, White, Light Blue
+        function getChristmasColor() {
+            return christmasColors[Math.floor(Math.random() * christmasColors.length)];
+        }
+        
+        // --- CNY color array and function ---
+        const cnyColors = ['#E61919', '#FFD700', '#FFFFFF']; // Strong Red, Gold, White
+        function getCnyColor() {
+            return cnyColors[Math.floor(Math.random() * cnyColors.length)];
+        }
+        
+        // --- Deepavali color array and function ---
+        const deepavaliColors = ['#FFD700', '#FF00C1', '#FF8C00', '#FFFFFF']; // Gold, Hot Pink, Orange, White
+        function getDeepavaliColor() {
+            return deepavaliColors[Math.floor(Math.random() * deepavaliColors.length)];
+        }
+        
+        // --- Hari Raya color array and function ---
+        const hariRayaColors = ['#19E635', '#FFD700', '#FFFFFF']; // Bright Green, Gold, White
+        function getHariRayaColor() {
+            return hariRayaColors[Math.floor(Math.random() * hariRayaColors.length)];
+        }
+        
+        // --- Birthday color array and function (NEW) ---
+        const birthdayColors = ['#FF00C1', '#34A8E0', '#19E635', '#FFD700', '#FF8C00']; // Hot Pink, Blue, Green, Gold, Orange
+        function getBirthdayColor() {
+            return birthdayColors[Math.floor(Math.random() * birthdayColors.length)];
+        }
+        // --- End of Birthday section ---
+
+        // MODIFIED: Function to update letter colors based on theme
+        function pulseColors() {
+            const letters = document.querySelectorAll('#text-wrapper > span');
+            letters.forEach(letter => {
+                if (letter.textContent.trim() === '') return;
+                
+                let newColor;
+                if (currentTheme === 'christmas') {
+                    newColor = getChristmasColor();
+                } else if (currentTheme === 'cny') { 
+                    newColor = getCnyColor();
+                } else if (currentTheme === 'deepavali') { 
+                    newColor = getDeepavaliColor();
+                } else if (currentTheme === 'hariraya') { 
+                    newColor = getHariRayaColor();
+                } else if (currentTheme === 'birthday') { // NEW
+                    newColor = getBirthdayColor();
+                } else {
+                    newColor = getRandomColor(); // Default
+                }
+
+                letter.style.textShadow = `
+                    0 0 5px #fff, 0 0 10px #fff, 0 0 15px ${newColor}, 0 0 20px ${newColor},
+                    0 0 25px ${newColor}, 0 0 30px ${newColor}, 0 0 35px ${newColor}`;
+            });
+        }
+
+        // --- Snowfall Functions (Christmas) ---
+        function createSnowflakes() {
+            const snowContainer = document.getElementById('animation-container');
+            const numFlakes = 100;
+
+            for (let i = 0; i < numFlakes; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'snowflake';
+                const size = Math.random() * 4 + 1;
+                const duration = Math.random() * 5 + 5;
+                const delay = Math.random() * 5;
+                const startX = Math.random() * 100;
+                const endDrift = Math.random() * 20 - 10;
+                flake.style.width = `${size}px`;
+                flake.style.height = `${size}px`;
+                flake.style.left = `${startX}vw`;
+                flake.style.animationDuration = `${duration}s`;
+                flake.style.animationDelay = `${delay}s`;
+                flake.style.opacity = Math.random() * 0.5 + 0.3;
+                flake.style.setProperty('--x-end', `${endDrift}vw`);
+                snowContainer.prepend(flake); 
+            }
+        }
+        function removeSnowflakes() {
+            const flakes = document.querySelectorAll('.snowflake');
+            flakes.forEach(flake => flake.remove());
+        }
+        // --- End of Snowfall Functions ---
+
+        // --- Firework Functions (CNY) ---
+        function createFireworkBurst() {
+            const fireworkContainer = document.getElementById('animation-container');
+            const numParticles = 30;
+            const burstX = Math.random() * 80 + 10;
+            const burstY = Math.random() * 50 + 10;
+            const burstColor = getCnyColor();
+
+            for (let i = 0; i < numParticles; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'firework-particle';
+                particle.style.left = `${burstX}vw`;
+                particle.style.top = `${burstY}vh`;
+                particle.style.background = burstColor;
+                particle.style.boxShadow = `0 0 5px ${burstColor}, 0 0 10px ${burstColor}`;
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * 100 + 50;
+                const endX = Math.cos(angle) * radius;
+                const endY = Math.sin(angle) * radius + 50;
+                particle.style.setProperty('--x-end', `${endX}px`);
+                particle.style.setProperty('--y-end', `${endY}px`);
+                particle.addEventListener('animationend', () => particle.remove());
+                fireworkContainer.prepend(particle);
+            }
+        }
+        function startFireworks() {
+            if (fireworkInterval) clearInterval(fireworkInterval);
+            createFireworkBurst(); 
+            fireworkInterval = setInterval(createFireworkBurst, Math.random() * 1000 + 1000);
+        }
+        function stopFireworks() {
+            if (fireworkInterval) clearInterval(fireworkInterval);
+            const particles = document.querySelectorAll('.firework-particle');
+            particles.forEach(particle => particle.remove());
+        }
+        // --- End of Firework Functions ---
+
+        // --- Sparkle Functions (Deepavali) ---
+        function createSparkles() {
+            const sparkleContainer = document.getElementById('animation-container');
+            const numSparkles = 150; 
+
+            for (let i = 0; i < numSparkles; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                const size = Math.random() * 3 + 1;
+                const duration = Math.random() * 2 + 1; 
+                const delay = Math.random() * 3; 
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                const color = Math.random() > 0.3 ? '#FFD700' : '#FFFFFF'; 
+                sparkle.style.width = `${size}px`;
+                sparkle.style.height = `${size}px`;
+                sparkle.style.left = `${posX}vw`;
+                sparkle.style.top = `${posY}vh`;
+                sparkle.style.background = color;
+                sparkle.style.boxShadow = `0 0 5px ${color}, 0 0 10px ${color}`;
+                sparkle.style.animationDuration = `${duration}s`;
+                sparkle.style.animationDelay = `${delay}s`;
+                sparkleContainer.prepend(sparkle);
+            }
+        }
+        function removeSparkles() {
+            const sparkles = document.querySelectorAll('.sparkle');
+            sparkles.forEach(sparkle => sparkle.remove());
+        }
+        // --- End of Sparkle Functions ---
+
+        // --- Hari Raya Effect Functions ---
+        function createHariRayaEffect() {
+            const rayaContainer = document.getElementById('animation-container');
+            const numIcons = 50; 
+            const icons = ['🌙', '✨']; 
+
+            for (let i = 0; i < numIcons; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'raya-icon';
+                icon.textContent = icons[Math.floor(Math.random() * icons.length)];
+                const size = Math.random() * 10 + 15; 
+                const duration = Math.random() * 5 + 5; 
+                const delay = Math.random() * 7; 
+                const posX = Math.random() * 100;
+                icon.style.fontSize = `${size}px`;
+                icon.style.left = `${posX}vw`;
+                icon.style.top = '110vh'; 
+                const color = Math.random() > 0.4 ? '#FFD700' : '#19E635'; 
+                icon.style.color = color;
+                icon.style.textShadow = `0 0 5px ${color}, 0 0 10px ${color}`;
+                icon.style.animationDuration = `${duration}s`;
+                icon.style.animationDelay = `${delay}s`;
+                rayaContainer.prepend(icon);
+            }
+        }
+        function removeHariRayaEffect() {
+            const icons = document.querySelectorAll('.raya-icon');
+            icons.forEach(icon => icon.remove());
+        }
+        // --- End of Hari Raya Functions ---
+        
+        // --- Birthday Effect Functions (NEW) ---
+        function createBalloons() {
+            const balloonContainer = document.getElementById('animation-container');
+            const numBalloons = 40; 
+            const balloonEmoji = ['🎈', '🎉'];
+
+            for (let i = 0; i < numBalloons; i++) {
+                const balloon = document.createElement('div');
+                balloon.className = 'balloon';
+                balloon.textContent = balloonEmoji[Math.floor(Math.random() * balloonEmoji.length)];
+                
+                const size = Math.random() * 15 + 20; // 20px to 35px
+                const duration = Math.random() * 6 + 6; // 6s to 12s duration
+                const delay = Math.random() * 8; // 0s to 8s delay
+                const posX = Math.random() * 100;
+                
+                balloon.style.fontSize = `${size}px`;
+                balloon.style.left = `${posX}vw`;
+                
+                // Randomize text-shadow color from the birthday palette
+                const color = getBirthdayColor();
+                balloon.style.textShadow = `0 0 5px ${color}, 0 0 10px ${color}`;
+                
+                balloon.style.animationDuration = `${duration}s`;
+                balloon.style.animationDelay = `${delay}s`;
+
+                balloonContainer.prepend(balloon);
+            }
+        }
+        function removeBalloons() {
+            const balloons = document.querySelectorAll('.balloon');
+            balloons.forEach(balloon => balloon.remove());
+        }
+        // --- End of Birthday Functions ---
+
+        // --- Master function to remove all effects ---
+        function removeThemeEffects() {
+            removeSnowflakes();
+            stopFireworks();
+            removeSparkles(); 
+            removeHariRayaEffect(); 
+            removeBalloons(); // NEW
+        }
+        
+        // NEW: Function to hide the link output section
+        function hideLinkOutput() {
+            linkOutputSection.classList.add('hidden');
+            copyFeedback.textContent = ' ';
+        }
+
+        // --- UPDATED: onPageLoad to read from hash ---
+        function onPageLoad() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                try {
+                    // UPDATED FOR EMOJI SUPPORT
+                    const decodedJson = decodeURIComponent(atob(hash));
+                    const payload = JSON.parse(decodedJson);
+                    
+                    const message = payload.m;
+                    const theme = payload.t || 'default'; 
+                    
+                    if (message && message.trim() !== '') {
+                        displayAnimatedMessage(message, theme);
+                    } else {
+                        showInputForm();
+                    }
+                } catch (e) {
+                    console.error("Failed to decode payload from hash:", e);
+                    showInputForm();
+                }
+            } else {
+                showInputForm();
+            }
+        }
+        
+        function startRandomAnimation() {
+            const textWrapper = document.getElementById('text-wrapper');
+            if (!textWrapper) return;
+
+            let newAnimationName;
+            let newDuration;
+            
+            textWrapper.classList.remove('wiggling', 'vertical-text');
+
+            if (isFirstAnimation) {
+                newAnimationName = 'marquee-rtl';
+            } else {
+                const animations = ['marquee-rtl', 'marquee-ltr', 'marquee-ttb', 'marquee-btt'];
+                newAnimationName = animations[Math.floor(Math.random() * animations.length)];
+            }
+
+            if (newAnimationName.includes('ttb') || newAnimationName.includes('btt')) {
+                newDuration = 4 + currentMessage.length * 0.3; 
+                textWrapper.innerHTML = currentMessage.split('').map(char => `<span>${char}</span>`).join('<br>');
+                textWrapper.classList.add('vertical-text');
+            } else {
+                newDuration = 3;
+                textWrapper.innerHTML = currentMessage.split('').map(char => `<span>${char}</span>`).join('');
+                textWrapper.classList.add('wiggling');
+            }
+
+            animatedText.style.top = '';
+            animatedText.style.left = '';
+
+            if (newAnimationName.includes('rtl') || newAnimationName.includes('ltr')) {
+                if (isFirstAnimation) {
+                    animatedText.style.top = '50%';
+                } else {
+                    animatedText.style.top = `${Math.floor(Math.random() * 70) + 15}%`; 
+                }
+            } else {
+                animatedText.style.left = `${Math.floor(Math.random() * 70) + 15}%`;
+            }
+
+            if (isFirstAnimation) {
+                isFirstAnimation = false;
+            }
+            
+            animatedText.style.animation = 'none';
+            void animatedText.offsetHeight; 
+            animatedText.style.animation = `${newAnimationName} ${newDuration}s linear`;
+
+            return newDuration;
+        }
+
+        // MODIFIED: To handle all themes
+        function displayAnimatedMessage(message, theme = 'default') {
+            isFirstAnimation = true;
+            currentMessage = message;
+            currentTheme = theme; // Store the theme globally
+
+            document.body.classList.remove('bg-gray-100');
+            
+            removeThemeEffects(); // Clear all old effects
+            
+            // Clear all possible background classes
+            const bgClasses = ['bg-gray-900', 'bg-green-900', 'bg-red-900', 'bg-indigo-900', 'bg-teal-900', 'bg-purple-900'];
+            document.body.classList.remove(...bgClasses);
+
+            // MODIFIED: Set background and effects based on theme
+            if (currentTheme === 'christmas') {
+                document.body.classList.add('bg-green-900');
+                createSnowflakes(); // Create snow
+            } else if (currentTheme === 'cny') {
+                document.body.classList.add('bg-red-900'); // Dark CNY red
+                startFireworks(); // Create fireworks
+            } else if (currentTheme === 'deepavali') { 
+                document.body.classList.add('bg-indigo-900'); // Dark Deepavali blue/purple
+                createSparkles(); // Create sparkles
+            } else if (currentTheme === 'hariraya') { 
+                document.body.classList.add('bg-teal-900'); // A nice dark green-blue
+                createHariRayaEffect();
+            } else if (currentTheme === 'birthday') { // NEW
+                document.body.classList.add('bg-purple-900'); // A festive dark purple
+                createBalloons();
+            } else {
+                document.body.classList.add('bg-gray-900'); // Original dark
+            }
+
+            inputContainer.classList.add('hidden');
+            homeButton.classList.remove('hidden'); // NEW: Show home button
+            
+            if (colorInterval) clearInterval(colorInterval);
+            if (shakeInterval) clearInterval(shakeInterval);
+            if (animationTimeoutId) clearTimeout(animationTimeoutId);
+            
+            animatedText.innerHTML = '<div id="text-wrapper"></div>';
+            
+            animationContainer.classList.remove('hidden');
+
+            pulseColors();
+            colorInterval = setInterval(pulseColors, 500);
+
+            shakeInterval = setInterval(() => {
+                const textWrapper = document.getElementById('text-wrapper');
+                if (textWrapper && Math.random() > 0.5) {
+                    textWrapper.classList.add('shake');
+                    setTimeout(() => {
+                        textWrapper.classList.remove('shake');
+                    }, 400);
+                }
+            }, 1500);
+
+            function animationLoop() {
+                const duration = startRandomAnimation();
+                animationTimeoutId = setTimeout(animationLoop, (duration * 1000) - 500); 
+            }
+            animationLoop();
+        }
+
+        // MODIFIED: Reset all backgrounds, effects, AND the theme selector UI
+        function showInputForm() {
+            if (colorInterval) clearInterval(colorInterval);
+            if (shakeInterval) clearInterval(shakeInterval);
+            if (animationTimeoutId) clearTimeout(animationTimeoutId);
+            
+            removeThemeEffects(); // Clean up all effects
+
+            // Remove all possible dark backgrounds
+            const bgClasses = ['bg-gray-900', 'bg-green-900', 'bg-red-900', 'bg-indigo-900', 'bg-teal-900', 'bg-purple-900'];
+            document.body.classList.remove(...bgClasses); 
+            document.body.classList.add('bg-gray-100');
+            
+            inputContainer.classList.remove('hidden');
+            animationContainer.classList.add('hidden');
+            homeButton.classList.add('hidden'); // NEW: Hide home button
+            
+            // NEW: Clear any old link data
+            hideLinkOutput();
+            
+            // --- BUG FIX: Reset the theme selector UI ---
+            themeOptions.forEach(opt => {
+                opt.classList.remove('bg-blue-100', 'border-blue-600', 'ring-2', 'ring-blue-500');
+                opt.classList.add('bg-gray-50', 'border-gray-300');
+            });
+            const defaultOption = document.querySelector('.theme-option[data-theme="default"]');
+            if (defaultOption) {
+                defaultOption.classList.add('bg-blue-100', 'border-blue-600', 'ring-2', 'ring-blue-500');
+                defaultOption.classList.remove('bg-gray-50', 'border-gray-300');
+            }
+            selectedTheme = 'default'; // Reset the underlying variable
+            // --- End of bug fix ---
+        }
+
+        // NEW: Refactored copy to clipboard function
+        function copyLinkToClipboard() {
+            shareableLinkInput.select();
+            shareableLinkInput.setSelectionRange(0, 99999);
+
+            try {
+                document.execCommand('copy');
+                copyFeedback.textContent = 'Copied to clipboard!';
+            } catch (err) { 
+                copyFeedback.textContent = 'Failed to copy!';
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            
+            window.getSelection().removeAllRanges();
+            setTimeout(() => { 
+                if (copyFeedback.textContent === 'Copied to clipboard!') {
+                    copyFeedback.textContent = ' '; 
+                }
+            }, 3000);
+        }
+
+        // --- UPDATED: Share button logic to create the new link ---
+        shareButton.addEventListener('click', () => {
+            const message = messageInput.value.trim();
+            if (message === '') {
+                messageInput.focus();
+                messageInput.classList.add('border-red-500', 'ring-red-500');
+                setTimeout(()=> {
+                    messageInput.classList.remove('border-red-500', 'ring-red-500');
+                }, 2000);
+                return;
+            }
+
+            const theme = selectedTheme; 
+            
+            const payload = {
+                t: theme, // 't' for theme
+                m: message // 'm' for message
+            };
+            
+            const jsonString = JSON.stringify(payload);
+            
+            // UPDATED FOR EMOJI SUPPORT
+            const encodedPayload = btoa(encodeURIComponent(jsonString));
+
+            const link = `${window.location.origin}${window.location.pathname}#${encodedPayload}`;
+            
+            shareableLinkInput.value = link;
+            linkOutputSection.classList.remove('hidden');
+            
+            // NEW: Auto-copy on generate
+            copyLinkToClipboard();
+        });
+
+        // UPDATED: Copy button now uses the refactored function
+        copyButton.addEventListener('click', () => {
+            copyLinkToClipboard();
+        });
+
+        // NEW: Add listener to text input to hide link
+        messageInput.addEventListener('input', hideLinkOutput);
+
+        // NEW: Home button listener
+        homeButton.addEventListener('click', () => {
+            // Clear the hash from the URL so a refresh doesn't show the same message
+            history.pushState("", document.title, window.location.pathname + window.location.search);
+            // Show the main input form
+            showInputForm();
+        });
+
+        window.addEventListener('load', onPageLoad);
+    </script>
+</body>
+</html>
