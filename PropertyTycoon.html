@@ -124,6 +124,28 @@
         .card .asking-price { color: var(--color-accent-gold-dark); background-color: #fffbeb; } 
         .card .job-salary { color: #1d4ed8; background-color: #eff6ff; } 
 
+        /* --- NEW: DISASTER ICON --- */
+        .disaster-icon {
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.8rem; /* Make it noticeable */
+            z-index: 10;
+            animation: shake 0.5s infinite alternate;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+        .disaster-icon.active {
+            display: block; /* Show when active */
+        }
+
+        @keyframes shake {
+            0% { transform: rotate(-10deg); }
+            100% { transform: rotate(10deg); }
+        }
+        /* --- END NEW ICON --- */
+
+
         /* --- NEW BUTTON THEME --- */
         .button {
             color: white; 
@@ -388,7 +410,7 @@
             color: #57534e !important;
         }
         .tab-button.hover\:text-indigo-600:hover {
-            color: var(--color-primary) !important;
+            color: var(--color-primary) !imporA-nt;
         }
         
         /* Market/Job/Portfolio list backgrounds */
@@ -489,6 +511,9 @@
         .modal-counter-offer-button { background: linear-gradient(to bottom, var(--color-accent-gold), var(--color-accent-gold-dark)); border-color: #b45309; }
         .modal-cancel-button { background: linear-gradient(to bottom, #9ca3af, #6b7280); border-color: #4b5563; }
         
+        /* NEW: Flipping Penalty Modal Button */
+        #confirmFlippingSaleBtn { background: linear-gradient(to bottom, #f87171, var(--color-danger)); border-color: var(--color-danger-dark); }
+
         .loan-term-option { margin-bottom: 12px; }
         .loan-term-option label { margin-left: 10px; font-size: 0.95rem; }
         #sellModalOfferDetails p { margin-bottom: 8px; }
@@ -601,7 +626,7 @@
                 <h2 class="section-title !mb-0 !border-b-0 !pb-0">Your Ledger</h2>
                 <button id="new-life-btn" class="button button-new-life mb-4">Start New Life</button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"> 
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4"> 
                 <div class="stat-card">
                     <span class="stat-label">Age</span>
                     <div class="stat-value-container">
@@ -633,7 +658,19 @@
                         <span class="stat-value" id="player-net-worth">$20,000</span>
                     </div>
                 </div>
-            </div>
+                <div class="stat-card">
+                    <span class="stat-label">Annual Inflation</span>
+                    <div class="stat-value-container">
+                        <span class="stat-value" id="current-inflation-rate">0.0%</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Market Status</span>
+                    <div class="stat-value-container">
+                        <span class="stat-value" id="current-market-status">Normal</span>
+                    </div>
+                </div>
+                </div>
         </section>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-8">
             
@@ -755,6 +792,15 @@
     <div id="listSaleModal" class="modal"><div class="modal-content"><h2 id="listSaleModalTitle">List Property</h2><div id="listSalePropertyInfo" class="details mb-3"></div><p><strong>Market Value:</strong> $<span id="listSaleMarketValue">0</span></p><div><label for="askingPriceInput" class="block mb-1 font-medium">Asking Price:</label><input type="number" id="askingPriceInput" class="modal-input" placeholder="Desired price"></div><div class="modal-buttons"><button id="confirmListSaleBtn" class="modal-button modal-confirm-button">List</button><button id="cancelListSaleBtn" class="modal-button modal-cancel-button">Cancel</button></div></div></div>
     <div id="offerModal" class="modal"><div class="modal-content"><h2 id="offerModalTitle">Offer Received!</h2><div id="offerPropertyInfo" class="details mb-3"></div><div id="offerModalDetails" class="mb-3"><p><strong>Asking:</strong> $<span id="offerAskingPrice">0</span></p><p><strong>Buyer's Offer:</strong> $<span id="offerBuyerOfferValue">0</span></p></div><div id="offerModalCounterOfferSection" class="mb-3"><label for="offerCounterInput" class="block mb-1 font-medium">Your Counter:</label><input type="number" id="offerCounterInput" class="modal-input" placeholder="Counter price"></div><div class="modal-buttons"><button id="acceptOfferBtn" class="modal-button modal-accept-offer-button">Accept</button><button id="submitOfferCounterBtn" class="modal-button modal-counter-offer-button">Counter</button><button id="rejectOfferBtn" class="modal-button modal-cancel-button">Reject</button></div></div></div>
     
+    <div id="flippingPenaltyModal" class="modal"><div class="modal-content modal-warning">
+        <h2 id="flippingPenaltyModalTitle">Hefty Flipping Penalty!</h2>
+        <p id="flippingPenaltyMessage" class="text-lg mb-4">Warning: Selling this property so soon will incur a hefty penalty. Do you want to proceed?</p>
+        <div class="modal-buttons">
+            <button id="confirmFlippingSaleBtn" class="modal-button">Yes, Sell & Pay Penalty</button>
+            <button id="cancelFlippingSaleBtn" class="modal-button modal-cancel-button">Cancel Sale</button>
+        </div>
+    </div></div>
+
     <div id="externalLoanModal" class="modal"><div class="modal-content"><h2 id="externalLoanModalTitle">Take Risky Cash Loan</h2><p>Guaranteed cash, repaid over 36 months. The high interest rate is unknown until you accept. This is very risky!</p><div><label for="externalLoanAmountInput" class="block mb-1 font-medium">Loan Amount:</label><input type="number" id="externalLoanAmountInput" class="modal-input" placeholder="Enter amount"></div><div class="quick-loan-buttons text-center mb-4"><button class="button button-secondary" onclick="setExternalLoanAmount(10000)">$10,000</button><button class="button button-secondary" onclick="setExternalLoanAmount(50000)">$50,000</button><button class="button button-secondary" onclick="setExternalLoanAmount(100000)">$100,000</button></div><p>Estimated Monthly Payment: $<span id="externalLoanEstPayment">0</span> (approx.)</p><div class="modal-buttons"><button id="confirmExternalLoanBtn" class="modal-button modal-confirm-button">Take Loan</button><button id="cancelExternalLoanBtn" class="modal-button modal-cancel-button">Cancel</button></div></div></div>
     
     <div id="bankLoanModal" class="modal"><div class="modal-content"><h2 id="bankLoanModalTitle">Apply for Bank Loan</h2><p>Bank loans have a <strong>50% success rate</strong> and are repaid over <strong>60 months (5 years)</strong> at a fixed <strong>8% annual interest</strong>.</p><p>You must have at least one property as collateral.</p><p id="bankLoanFeeText">A non-refundable application fee of <strong>$500</strong> will be charged.</p><div><label for="bankLoanAmountInput" class="block mb-1 font-medium">Loan Amount:</label><input type="number" id="bankLoanAmountInput" class="modal-input" placeholder="Enter desired amount"></div><p>Estimated Monthly Payment: $<span id="bankLoanEstPayment">0</span></p><div class="modal-buttons"><button id="confirmBankLoanBtn" class="modal-button modal-confirm-button">Pay Fee & Apply</button><button id="cancelBankLoanBtn" class="modal-button modal-cancel-button">Cancel</button></div></div></div>
@@ -768,7 +814,7 @@
         <div id="evictTenantPropertyInfo" class="details mb-4"></div>
         <p>Are you sure you want to evict the current tenant? There is a 1-in-5 chance they will damage the property on their way out!</p>
         <div class="modal-buttons">
-            <button id="confirmEvictBtn" class="modal-button button-new-life">Evict Tenant</button>
+            <button id="confirmEvictBtn" class="button button-new-life">Evict Tenant</button>
             <button id="cancelEvictBtn" class="modal-button modal-cancel-button">Cancel</button>
         </div>
     </div></div>
@@ -787,20 +833,52 @@
     <div id="gameOverOverlay" class="game-over-overlay"><div> <h2 id="gameOverTitle">Game Over</h2><p id="gameOverMessage">Your journey has come to an end.</p><button id="restartGameBtn" class="button button-restart">Restart Game</button></div></div>
 
     <script>
-        // CORE DATA DEFINITIONS AT THE TOP
+	
+	// CORE DATA DEFINITIONS AT THE TOP
+        // *** MODIFIED: These are now the BASE definitions. We will copy them into a mutable state. ***
+        // *** MODIFIED: Added priceTier for new property generation logic ***
         const PROPERTY_TYPES = [ 
-            { name: "Studio Apartment", basePrice: 80000, priceRange: 70000, baseRentability: 0.7 },
-            { name: "2-Bedroom Condo", basePrice: 150000, priceRange: 150000, baseRentability: 0.8 },
-            { name: "Townhouse", basePrice: 250000, priceRange: 250000, baseRentability: 0.75 },
-            { name: "Detached House", basePrice: 400000, priceRange: 400000, baseRentability: 0.85 },
-            { name: "Luxury Penthouse", basePrice: 750000, priceRange: 1250000, baseRentability: 0.6 }
-        ];
-        // MODIFIED: Added LEGAL and MEDICAL fields
+			// --- Affordable Properties (Tier 1: < 1M) ---
+			{ name: "Studio Apartment", basePrice: 80000, priceRange: 70000, baseRentability: 0.7, priceTier: 1 },
+			{ name: "Compact Loft", basePrice: 95000, priceRange: 85000, baseRentability: 0.72, priceTier: 1 },
+			{ name: "Suburban Flat", basePrice: 120000, priceRange: 100000, baseRentability: 0.75, priceTier: 1 },
+			{ name: "2-Bedroom Condo", basePrice: 150000, priceRange: 150000, baseRentability: 0.8, priceTier: 1 },
+			{ name: "Townhouse", basePrice: 250000, priceRange: 250000, baseRentability: 0.75, priceTier: 1 },
+			{ name: "Suburban Duplex", basePrice: 320000, priceRange: 200000, baseRentability: 0.8, priceTier: 1 },
+			{ name: "Detached House", basePrice: 400000, priceRange: 400000, baseRentability: 0.85, priceTier: 1 },
+			{ name: "Gated Community Home", basePrice: 550000, priceRange: 300000, baseRentability: 0.82, priceTier: 1 },
+			{ name: "Riverside Bungalow", basePrice: 750000, priceRange: 400000, baseRentability: 0.78, priceTier: 1 },
+
+			// --- Mid-Range & Upscale (Tier 2: 1M - 10M) ---
+			{ name: "Luxury Penthouse", basePrice: 750000, priceRange: 1250000, baseRentability: 0.6, priceTier: 2 },
+			{ name: "Commercial Retail Unit", basePrice: 600000, priceRange: 500000, baseRentability: 0.65, priceTier: 2 },
+			{ name: "Historic Building", basePrice: 800000, priceRange: 1000000, baseRentability: 0.5, priceTier: 2 },
+			{ name: "Beachfront Villa", basePrice: 1500000, priceRange: 2000000, baseRentability: 0.7, priceTier: 2 },
+			{ name: "Countryside Estate", basePrice: 2500000, priceRange: 1500000, baseRentability: 0.68, priceTier: 2 },
+			{ name: "Urban Mixed-Use Block", basePrice: 3000000, priceRange: 2000000, baseRentability: 0.6, priceTier: 2 },
+			{ name: "Skyscraper Office Floor", basePrice: 3000000, priceRange: 4000000, baseRentability: 0.55, priceTier: 2 },
+			{ name: "Private Golf Villa", basePrice: 4000000, priceRange: 3000000, baseRentability: 0.65, priceTier: 2 },
+			{ name: "Hilltop Mansion", basePrice: 5500000, priceRange: 4500000, baseRentability: 0.58, priceTier: 2 },
+			{ name: "Downtown Business Tower", basePrice: 7500000, priceRange: 5000000, baseRentability: 0.6, priceTier: 2 },
+			{ name: "Ultra-Luxury Seaview Penthouse", basePrice: 9000000, priceRange: 6000000, baseRentability: 0.55, priceTier: 2 },
+
+			// --- Ultra-High-End (Tier 3: 10M+) ---
+			{ name: "Mega Luxury Estate", basePrice: 12000000, priceRange: 8000000, baseRentability: 0.5, priceTier: 3 },
+			{ name: "Private Island Villa", basePrice: 25000000, priceRange: 15000000, baseRentability: 0.48, priceTier: 3 },
+			{ name: "Corporate Skyscraper", basePrice: 40000000, priceRange: 30000000, baseRentability: 0.52, priceTier: 3 },
+			{ name: "Exclusive Marina Development", basePrice: 60000000, priceRange: 25000000, baseRentability: 0.5, priceTier: 3 },
+			{ name: "Royal Heritage Palace", basePrice: 100000000, priceRange: 50000000, baseRentability: 0.45, priceTier: 3 }
+		];
+
+
         const JOB_FIELDS = {
             UNSKILLED: "General Labor", IT: "Information Technology", HEALTHCARE: "Healthcare",
-            BUSINESS: "Business & Finance", SERVICE: "Service Industry", LEGAL: "Legal", MEDICAL: "Medical"
+            BUSINESS: "Business & Finance", SERVICE: "Service Industry", LEGAL: "Legal", MEDICAL: "Medical",
+            // *** NEW: Added new fields from your job list ***
+            ENGINEERING: "Engineering", EDUCATION: "Education", MEDIA: "Creative / Media",
+            TRADES: "Skilled Trades", GOVERNMENT: "Government", ARTS: "Arts", ENTREPRENEURSHIP: "Entrepreneurship"
         };
-        // MODIFIED: Added firingRisk to high-level jobs and added new job tracks
+        
         const JOBS = [
             // General
             { id: "unskilled0", title: "Unskilled Labor", field: JOB_FIELDS.UNSKILLED, level: 0, salary: 1200, annualIncrementPercent: 0.01, prerequisites: null, promotionChanceMonths: 24, promotionChance: 0.1, promotionTo: "it0" },
@@ -831,20 +909,71 @@
             { id: "serv1", title: "Shift Supervisor", field: JOB_FIELDS.SERVICE, level: 1, salary: 2800, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.SERVICE, minExperienceInFieldMonths: 6 }, promotionChanceMonths: 18, promotionChance: 0.25, promotionTo: "serv2" },
             { id: "serv2", title: "Store Manager", field: JOB_FIELDS.SERVICE, level: 2, salary: 4000, annualIncrementPercent: 0.00, companyAnnualBonusChance: 0.5, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.SERVICE, minExperienceInFieldMonths: 24 }, firingRisk: 0.002 },
 
-            // NEW: Legal Track
+            // Legal Track
             { id: "legal0", title: "Legal Intern", field: JOB_FIELDS.LEGAL, level: 0, salary: 2500, annualIncrementPercent: 0.02, prerequisites: null, promotionChanceMonths: 12, promotionChance: 0.2, promotionTo: "legal1" },
             { id: "legal1", title: "Paralegal", field: JOB_FIELDS.LEGAL, level: 1, salary: 3800, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.LEGAL, minExperienceInFieldMonths: 12 }, promotionChanceMonths: 24, promotionChance: 0.2, promotionTo: "legal2" },
             { id: "legal2", title: "Junior Associate", field: JOB_FIELDS.LEGAL, level: 2, salary: 6000, annualIncrementPercent: 0.05, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.LEGAL, minExperienceInFieldMonths: 30 }, promotionChanceMonths: 36, promotionChance: 0.15, promotionTo: "legal3" },
             { id: "legal3", title: "Senior Associate", field: JOB_FIELDS.LEGAL, level: 3, salary: 9500, annualIncrementPercent: 0.03, companyAnnualBonusChance: 0.6, companyAnnualBonusPercent: 0.15, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.LEGAL, minExperienceInFieldMonths: 60 }, promotionChanceMonths: 48, promotionChance: 0.1, promotionTo: "legal4", firingRisk: 0.01 },
             { id: "legal4", title: "Partner", field: JOB_FIELDS.LEGAL, level: 4, salary: 15000, annualIncrementPercent: 0.01, companyAnnualBonusChance: 0.8, companyAnnualBonusPercent: 0.25, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.LEGAL, minExperienceInFieldMonths: 96 }, firingRisk: 0.005 },
             
-            // NEW: Medical (Doctor) Track
+            // Medical (Doctor) Track
             { id: "med0", title: "Medical Intern", field: JOB_FIELDS.MEDICAL, level: 0, salary: 3000, annualIncrementPercent: 0.01, prerequisites: null, promotionChanceMonths: 24, promotionChance: 0.15, promotionTo: "med1" },
             { id: "med1", title: "Resident Doctor", field: JOB_FIELDS.MEDICAL, level: 1, salary: 4500, annualIncrementPercent: 0.02, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.MEDICAL, minExperienceInFieldMonths: 24 }, promotionChanceMonths: 48, promotionChance: 0.1, promotionTo: "med2" },
             { id: "med2", title: "General Practitioner", field: JOB_FIELDS.MEDICAL, level: 2, salary: 9000, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.MEDICAL, minExperienceInFieldMonths: 72 }, promotionChanceMonths: 48, promotionChance: 0.1, promotionTo: "med3", firingRisk: 0.005 },
             { id: "med3", title: "Specialist Surgeon", field: JOB_FIELDS.MEDICAL, level: 3, salary: 16000, annualIncrementPercent: 0.04, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.MEDICAL, minExperienceInFieldMonths: 120 }, promotionChanceMonths: 60, promotionChance: 0.05, promotionTo: "med4", firingRisk: 0.015 },
-            { id: "med4", title: "Chief of Medicine", field: JOB_FIELDS.MEDICAL, level: 4, salary: 20000, annualIncrementPercent: 0.02, companyAnnualBonusChance: 0.7, companyAnnualBonusPercent: 0.20, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.MEDICAL, minExperienceInFieldMonths: 180 }, firingRisk: 0.01 }
-        ];
+            { id: "med4", title: "Chief of Medicine", field: JOB_FIELDS.MEDICAL, level: 4, salary: 20000, annualIncrementPercent: 0.02, companyAnnualBonusChance: 0.7, companyAnnualBonusPercent: 0.20, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.MEDICAL, minExperienceInFieldMonths: 180 }, firingRisk: 0.01 },
+        
+			// Engineering Track
+			{ id: "eng0", title: "Engineering Intern", field: JOB_FIELDS.ENGINEERING, level: 0, salary: 2500, annualIncrementPercent: 0.02, prerequisites: null, promotionChanceMonths: 12, promotionChance: 0.3, promotionTo: "eng1" },
+			{ id: "eng1", title: "Junior Engineer", field: JOB_FIELDS.ENGINEERING, level: 1, salary: 4000, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.ENGINEERING, minExperienceInFieldMonths: 12 }, promotionChanceMonths: 24, promotionChance: 0.25, promotionTo: "eng2" },
+			{ id: "eng2", title: "Project Engineer", field: JOB_FIELDS.ENGINEERING, level: 2, salary: 6500, annualIncrementPercent: 0.04, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.ENGINEERING, minExperienceInFieldMonths: 36 }, promotionChanceMonths: 36, promotionChance: 0.15, promotionTo: "eng3" },
+			{ id: "eng3", title: "Senior Engineer", field: JOB_FIELDS.ENGINEERING, level: 3, salary: 9000, annualIncrementPercent: 0.03, companyAnnualBonusChance: 0.5, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.ENGINEERING, minExperienceInFieldMonths: 60 }, promotionChanceMonths: 48, promotionChance: 0.1, promotionTo: "eng4", firingRisk: 0.005 },
+			{ id: "eng4", title: "Engineering Director", field: JOB_FIELDS.ENGINEERING, level: 4, salary: 13000, annualIncrementPercent: 0.02, companyAnnualBonusChance: 0.7, companyAnnualBonusPercent: 0.15, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.ENGINEERING, minExperienceInFieldMonths: 96 }, firingRisk: 0.01 },
+
+			// Education Track
+			{ id: "edu0", title: "Teaching Assistant", field: JOB_FIELDS.EDUCATION, level: 0, salary: 2200, annualIncrementPercent: 0.02, prerequisites: null, promotionChanceMonths: 18, promotionChance: 0.3, promotionTo: "edu1" },
+			{ id: "edu1", title: "Primary School Teacher", field: JOB_FIELDS.EDUCATION, level: 1, salary: 3500, annualIncrementPercent: 0.025, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.EDUCATION, minExperienceInFieldMonths: 12 }, promotionChanceMonths: 36, promotionChance: 0.25, promotionTo: "edu2" },
+			{ id: "edu2", title: "Secondary School Teacher", field: JOB_FIELDS.EDUCATION, level: 2, salary: 4800, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.EDUCATION, minExperienceInFieldMonths: 36 }, promotionChanceMonths: 48, promotionChance: 0.2, promotionTo: "edu3" },
+			{ id: "edu3", title: "Lecturer", field: JOB_FIELDS.EDUCATION, level: 3, salary: 6500, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.EDUCATION, minExperienceInFieldMonths: 72 }, promotionChanceMonths: 60, promotionChance: 0.15, promotionTo: "edu4" },
+			{ id: "edu4", title: "Professor", field: JOB_FIELDS.EDUCATION, level: 4, salary: 9500, annualIncrementPercent: 0.02, companyAnnualBonusChance: 0.5, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.EDUCATION, minExperienceInFieldMonths: 120 }, firingRisk: 0.003 },
+
+			// Creative / Media Track
+			{ id: "media0", title: "Content Intern", field: JOB_FIELDS.MEDIA, level: 0, salary: 1800, annualIncrementPercent: 0.015, prerequisites: null, promotionChanceMonths: 9, promotionChance: 0.35, promotionTo: "media1" },
+			{ id: "media1", title: "Junior Writer", field: JOB_FIELDS.MEDIA, level: 1, salary: 3000, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.MEDIA, minExperienceInFieldMonths: 6 }, promotionChanceMonths: 18, promotionChance: 0.25, promotionTo: "media2" },
+			{ id: "media2", title: "Content Producer", field: JOB_FIELDS.MEDIA, level: 2, salary: 5000, annualIncrementPercent: 0.04, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.MEDIA, minExperienceInFieldMonths: 18 }, promotionChanceMonths: 24, promotionChance: 0.2, promotionTo: "media3" },
+			{ id: "media3", title: "Creative Director", field: JOB_FIELDS.MEDIA, level: 3, salary: 8500, annualIncrementPercent: 0.03, companyAnnualBonusChance: 0.6, companyAnnualBonusPercent: 0.15, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.MEDIA, minExperienceInFieldMonths: 48 }, promotionChanceMonths: 36, promotionChance: 0.1, promotionTo: "media4", firingRisk: 0.01 },
+			{ id: "media4", title: "Head of Media", field: JOB_FIELDS.MEDIA, level: 4, salary: 13000, annualIncrementPercent: 0.02, companyAnnualBonusChance: 0.8, companyAnnualBonusPercent: 0.20, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.MEDIA, minExperienceInFieldMonths: 84 }, firingRisk: 0.015 },
+
+			// Skilled Trades Track
+			{ id: "trade0", title: "Apprentice Electrician", field: JOB_FIELDS.TRADES, level: 0, salary: 1800, annualIncrementPercent: 0.015, prerequisites: null, promotionChanceMonths: 12, promotionChance: 0.3, promotionTo: "trade1" },
+			{ id: "trade1", title: "Certified Electrician", field: JOB_FIELDS.TRADES, level: 1, salary: 3500, annualIncrementPercent: 0.025, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.TRADES, minExperienceInFieldMonths: 12 }, promotionChanceMonths: 24, promotionChance: 0.25, promotionTo: "trade2" },
+			{ id: "trade2", title: "Senior Electrician", field: JOB_FIELDS.TRADES, level: 2, salary: 5000, annualIncrementPercent: 0.03, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.TRADES, minExperienceInFieldMonths: 36 }, promotionChanceMonths: 36, promotionChance: 0.15, promotionTo: "trade3" },
+			{ id: "trade3", title: "Site Supervisor", field: JOB_FIELDS.TRADES, level: 3, salary: 7000, annualIncrementPercent: 0.03, companyAnnualBonusChance: 0.5, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.TRADES, minExperienceInFieldMonths: 60 }, promotionChanceMonths: 48, promotionChance: 0.1, promotionTo: "trade4" },
+			{ id: "trade4", title: "Master Contractor", field: JOB_FIELDS.TRADES, level: 4, salary: 10000, annualIncrementPercent: 0.02, companyAnnualBonusChance: 0.7, companyAnnualBonusPercent: 0.15, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.TRADES, minExperienceInFieldMonths: 84 }, firingRisk: 0.008 },
+
+			// Government / Civil Service Track
+			{ id: "gov0", title: "Administrative Clerk", field: JOB_FIELDS.GOVERNMENT, level: 0, salary: 2400, annualIncrementPercent: 0.02, prerequisites: null, promotionChanceMonths: 24, promotionChance: 0.25, promotionTo: "gov1" },
+			{ id: "gov1", title: "Executive Officer", field: JOB_FIELDS.GOVERNMENT, level: 1, salary: 3800, annualIncrementPercent: 0.025, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.GOVERNMENT, minExperienceInFieldMonths: 24 }, promotionChanceMonths: 36, promotionChance: 0.2, promotionTo: "gov2" },
+			{ id: "gov2", title: "Senior Executive Officer", field: JOB_FIELDS.GOVERNMENT, level: 2, salary: 5200, annualIncrementPercent: 0.025, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.GOVERNMENT, minExperienceInFieldMonths: 60 }, promotionChanceMonths: 48, promotionChance: 0.15, promotionTo: "gov3" },
+			{ id: "gov3", title: "Assistant Director", field: JOB_FIELDS.GOVERNMENT, level: 3, salary: 7500, annualIncrementPercent: 0.02, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.GOVERNMENT, minExperienceInFieldMonths: 96 }, promotionChanceMonths: 60, promotionChance: 0.1, promotionTo: "gov4" },
+			{ id: "gov4", title: "Director General", field: JOB_FIELDS.GOVERNMENT, level: 4, salary: 11000, annualIncrementPercent: 0.015, companyAnnualBonusChance: 0.5, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.GOVERNMENT, minExperienceInFieldMonths: 144 }, firingRisk: 0.002 },
+			
+			
+			{ id: "art0", title: "Street Performer", field: JOB_FIELDS.ARTS, level: 0, salary: 1500, annualIncrementPercent: 0.01, prerequisites: null, promotionChanceMonths: 12, promotionChance: 0.3, promotionTo: "art1" },
+			{ id: "art1", title: "Freelance Artist", field: JOB_FIELDS.ARTS, level: 1, salary: 2500, annualIncrementPercent: 0.025, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.ARTS, minExperienceInFieldMonths: 12 }, promotionChanceMonths: 24, promotionChance: 0.25, promotionTo: "art2" },
+			{ id: "art2", title: "Studio Artist", field: JOB_FIELDS.ARTS, level: 2, salary: 4800, annualIncrementPercent: 0.04, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.ARTS, minExperienceInFieldMonths: 36 }, promotionChanceMonths: 30, promotionChance: 0.2, promotionTo: "art3" },
+			{ id: "art3", title: "Renowned Illustrator", field: JOB_FIELDS.ARTS, level: 3, salary: 9500, annualIncrementPercent: 0.05, companyAnnualBonusChance: 0.5, companyAnnualBonusPercent: 0.15, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.ARTS, minExperienceInFieldMonths: 72 }, promotionChanceMonths: 48, promotionChance: 0.15, promotionTo: "art4", firingRisk: 0.01 },
+			{ id: "art4", title: "International Art Director", field: JOB_FIELDS.ARTS, level: 4, salary: 20000, annualIncrementPercent: 0.03, companyAnnualBonusChance: 0.8, companyAnnualBonusPercent: 0.25, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.ARTS, minExperienceInFieldMonths: 120 }, firingRisk: 0.008 },
+			
+			
+			{ id: "ent0", title: "Small Business Dreamer", field: JOB_FIELDS.ENTREPRENEURSHIP, level: 0, salary: 1000, annualIncrementPercent: 0.00, prerequisites: null, promotionChanceMonths: 18, promotionChance: 0.25, promotionTo: "ent1" },
+			{ id: "ent1", title: "Startup Founder", field: JOB_FIELDS.ENTREPRENEURSHIP, level: 1, salary: 2000, annualIncrementPercent: 0.02, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.ENTREPRENEURSHIP, minExperienceInFieldMonths: 12 }, promotionChanceMonths: 24, promotionChance: 0.2, promotionTo: "ent2" },
+			{ id: "ent2", title: "Startup CEO", field: JOB_FIELDS.ENTREPRENEURSHIP, level: 2, salary: 6000, annualIncrementPercent: 0.05, companyAnnualBonusChance: 0.4, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.ENTREPRENEURSHIP, minExperienceInFieldMonths: 36 }, promotionChanceMonths: 36, promotionChance: 0.15, promotionTo: "ent3" },
+			{ id: "ent3", title: "Tech Founder / Angel Investor", field: JOB_FIELDS.ENTREPRENEURSHIP, level: 3, salary: 15000, annualIncrementPercent: 0.07, companyAnnualBonusChance: 0.6, companyAnnualBonusPercent: 0.25, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.ENTREPRENEURSHIP, minExperienceInFieldMonths: 72 }, promotionChanceMonths: 48, promotionChance: 0.1, promotionTo: "ent4", firingRisk: 0.02 },
+			{ id: "ent4", title: "Venture Capital Mogul", field: JOB_FIELDS.ENTREPRENEURSHIP, level: 4, salary: 40000, annualIncrementPercent: 0.05, companyAnnualBonusChance: 0.9, companyAnnualBonusPercent: 0.40, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.ENTREPRENEURSHIP, minExperienceInFieldMonths: 120 }, firingRisk: 0.03 },
+
+		
+		];
         
         // --- GAME PARAMETERS ---
         const INITIAL_CASH = 20000;
@@ -860,11 +989,14 @@
         const CONDITION_DECAY_RENTED_PER_MONTH = 0.3; 
         const MIN_TENANT_STAY_MONTHS = 6;
         const CHANCE_TENANT_LEAVES_AFTER_MIN = 0.1;
-        const CLEANING_FEE_MIN = 100;
-        const CLEANING_FEE_MAX = 500;
+        
+        // *** NEW: Made these `let` for inflation ***
+        let CLEANING_FEE_MIN = 100;
+        let CLEANING_FEE_MAX = 500;
+        
         const RENT_AS_PERCENTAGE_OF_VALUE_MIN_ANNUAL = 0.03;
         const RENT_AS_PERCENTAGE_OF_VALUE_MAX_ANNUAL = 0.08;
-        const BASE_TENANT_FIND_CHANCE = 0.3;
+        let BASE_TENANT_FIND_CHANCE = 0.3; // *** MODIFIED: Made let for market cycles ***
         const RANDOM_DAMAGE_EVENT_CHANCE = 0.03;
         const RANDOM_DAMAGE_MIN_PERCENT = 3;
         const RANDOM_DAMAGE_MAX_PERCENT = 10;
@@ -876,34 +1008,39 @@
         const DISASTER_DAMAGE_MIN_PERCENT = 5;
         const DISASTER_DAMAGE_MAX_PERCENT = 50;
 
-        const ANNUAL_APPRECIATION_MIN = 0.02;
-        const ANNUAL_APPRECIATION_MAX = 0.10;
-        const ANNUAL_APPRECIATION_TYPICAL_BIAS_STRENGTH = 3; 
-        const ANNUAL_APPRECIATION_TYPICAL = 0.05; 
-        const BUYER_OFFER_DISCOUNT_BASE_FROM_MARKET = 0.05; 
+        // *** MODIFIED: Base appreciation rates for different market states ***
+        const ANNUAL_APPRECIATION_NORMAL = 0.02; 
+        const ANNUAL_APPRECIATION_BOOM = 0.10;
+        const ANNUAL_APPRECIATION_BUST = -0.05;
+        
+        let BUYER_OFFER_DISCOUNT_BASE_FROM_MARKET = 0.05; // *** MODIFIED: Made let for market cycles ***
         const BUYER_OFFER_CONDITION_PENALTY_MAX = 0.10; 
-        const COUNTER_OFFER_ACCEPT_THRESHOLD_GOOD_DEAL = 1.02; 
-        const COUNTER_OFFER_REJECT_THRESHOLD_BAD_DEAL = 1.15; 
-        const BASE_CHANCE_OF_RECEIVING_OFFER = 0.15; 
+        
+        const COUNTER_OFFER_NEGOTIATION_MAX_CHANCE = 0.90;
+        const COUNTER_OFFER_NEGOTIATION_MIN_CHANCE = 0.10;
+        const COUNTER_OFFER_MIN_ACCEPT_CHANCE = 0.01;
+        
+        let BASE_CHANCE_OF_RECEIVING_OFFER = 0.15; // *** MODIFIED: Made let for market cycles ***
         const ASKING_PRICE_SENSITIVITY_FOR_OFFER_CHANCE = 0.1; 
         const CONDITION_SENSITIVITY_FOR_OFFER_CHANCE = 0.002; 
 
         const BAD_TENANT_CONDITION_THRESHOLD = 35; 
-        const CHANCE_BECOME_DELINQUENT_IF_LOW_CONDITION = 0.20; 
-        const DELINQUENT_NON_PAYMENT_BASE_CHANCE = 0.25; 
+        let CHANCE_BECOME_DELINQUENT_IF_LOW_CONDITION = 0.20; // *** MODIFIED: Made let for market cycles ***
+        let DELINQUENT_NON_PAYMENT_BASE_CHANCE = 0.25; // *** MODIFIED: Made let for market cycles ***
         const DELINQUENT_NON_PAYMENT_ESCALATION_PER_MONTH = 0.15; 
         const DELINQUENT_MAX_NON_PAYMENT_CHANCE = 0.90; 
         const CONDITION_THRESHOLD_TO_CURE_DELINQUENCY = 50; 
         const CHANCE_CURE_DELINQUENCY_IF_RENOVATED = 0.75; 
 
-        const EXTERNAL_LOAN_MIN_MONTHLY_INTEREST = 0.01; // This is now for the "Risky Loan"
-        const EXTERNAL_LOAN_MAX_MONTHLY_INTEREST = 0.15; // This is now for the "Risky Loan"
-        const EXTERNAL_LOAN_TERM_MONTHS = 36; // This is now for the "Risky Loan"
+        const EXTERNAL_LOAN_MIN_MONTHLY_INTEREST = 0.01;
+        const EXTERNAL_LOAN_MAX_MONTHLY_INTEREST = 0.15;
+        const EXTERNAL_LOAN_TERM_MONTHS = 36;
         const LOAN_AD_CHANCE = 0.03; 
         const MIN_MONTHS_FOR_LOAN_AD = 6; 
         
         const BANK_LOAN_SUCCESS_CHANCE = 0.50;
-        const BANK_LOAN_APPLICATION_FEE = 500;
+        // *** NEW: Made this `let` for inflation ***
+        let BANK_LOAN_APPLICATION_FEE = 500;
         const BANK_LOAN_COOLDOWN_MONTHS = 3;
         const BANK_LOAN_ANNUAL_INTEREST_RATE = 0.08;
         const BANK_LOAN_TERM_MONTHS = 60; // 5 years
@@ -911,12 +1048,18 @@
         const MAX_JOB_LISTINGS = 4;
         const JOB_APPLICATION_BASE_SUCCESS_CHANCE = 0.4;
         const BANKRUPTCY_THRESHOLD = -10000; 
-        const BASE_FIRING_RISK = 0.002; // Base chance per month of being fired from any job (except unskilled)
+        const BASE_FIRING_RISK = 0.002;
 
-        // NEW: Marketing Parameters
-        const MARKETING_ASKING_PRICE_CAP_PERCENT = 1.20; // Max asking price is 120% of market value for marketing
-        const MARKETING_SALE_CHANCE_MONTH_1 = 0.50; // 50% chance in month 1
-        const MARKETING_SALE_CHANCE_MONTH_2 = 0.40; // 40% chance in month 2 (given failure in month 1) - total 70%
+        const MARKETING_ASKING_PRICE_CAP_PERCENT = 1.20;
+        const MARKETING_SALE_CHANCE_MONTH_1 = 0.50;
+        const MARKETING_SALE_CHANCE_MONTH_2 = 0.40;
+
+        // *** NEW: Economic Cycle Constants ***
+        const MARKET_STATES = { NORMAL: 'Normal', BOOM: 'Boom', BUST: 'Bust' };
+        const MARKET_STATE_MIN_DURATION_MONTHS = 12;
+        const MARKET_STATE_NORMAL_TO_CHANGE_CHANCE = 0.15;
+        const MARKET_STATE_BOOM_BUST_TO_NORMAL_CHANCE = 0.40;
+
 
         // --- GAME STATE VARIABLES ---
         let player = { 
@@ -926,12 +1069,22 @@
             totalExperienceInFieldMonths: 0, 
             salary: 1200, 
             netWorth: INITIAL_CASH, 
-            properties: [], externalLoans: [], // externalLoans now holds BOTH loan types
+            properties: [], externalLoans: [],
             deathAgeYears: 0, 
             deathAgeMonths: 0,
             bankLoanCooldown: 0,
-            lastMonthCashChange: 0 // For cash indicator
+            lastMonthCashChange: 0
         };
+        
+        // *** NEW: Mutable game data for inflation ***
+        let gamePropertyTypes = [];
+        let gameJobs = [];
+        let currentInflationRate = 0.0; // NEW: Inflation
+        
+        // *** NEW: Economic Cycle State ***
+        let marketState = MARKET_STATES.NORMAL;
+        let marketStateMonths = 0;
+        
         let availableProperties = [];
         let availableJobs = []; 
         let gameLog = ["Game started. Good luck!"];
@@ -945,22 +1098,23 @@
         // --- DOM Element References ---
         const ageEl = document.getElementById('player-age');
         const cashEl = document.getElementById('player-cash');
-        const cashChangeIndicatorEl = document.getElementById('cash-change-indicator'); // This ID is correct
+        const cashChangeIndicatorEl = document.getElementById('cash-change-indicator');
         const playerJobTitleEl = document.getElementById('player-job-title'); 
         const salaryEl = document.getElementById('player-salary');
         const netWorthEl = document.getElementById('player-net-worth');
+        const inflationRateEl = document.getElementById('current-inflation-rate'); // NEW: Inflation DOM
+        const marketStatusEl = document.getElementById('current-market-status'); // *** NEW: Market Status DOM ***
         const propertyListingsEl = document.getElementById('property-listings');
         const jobMarketListingsEl = document.getElementById('job-market-listings'); 
         const ownedPropertiesEl = document.getElementById('owned-properties');
         const noOwnedPropertiesMsgEl = document.getElementById('no-owned-properties-msg');
         const nextMonthBtn = document.getElementById('next-month-btn');
-        const externalLoanBtn = document.getElementById('external-loan-btn'); // This is now "Risky Loan" button
+        const externalLoanBtn = document.getElementById('external-loan-btn');
         const bankLoanBtn = document.getElementById('bank-loan-btn'); 
         const newLifeBtn = document.getElementById('new-life-btn'); 
         const gameLogEl = document.getElementById('game-log');
         const gameHeaderEl = document.getElementById('gameHeader'); 
 
-        // Collapsible section DOM elements
         const loanSectionToggleBtn = document.getElementById('loan-section-toggle');
         const loanSectionContentEl = document.getElementById('loan-section-content');
 
@@ -1017,6 +1171,11 @@
         const acceptOfferBtn = document.getElementById('acceptOfferBtn');
         const submitOfferCounterBtn = document.getElementById('submitOfferCounterBtn');
         const rejectOfferBtn = document.getElementById('rejectOfferBtn');
+
+        const flippingPenaltyModal = document.getElementById('flippingPenaltyModal');
+        const flippingPenaltyMessage = document.getElementById('flippingPenaltyMessage');
+        const confirmFlippingSaleBtn = document.getElementById('confirmFlippingSaleBtn');
+        const cancelFlippingSaleBtn = document.getElementById('cancelFlippingSaleBtn');
         
         const externalLoanModal = document.getElementById('externalLoanModal');
         const externalLoanModalTitleEl = document.getElementById('externalLoanModalTitle');
@@ -1101,6 +1260,9 @@
 
         function getRenovationCostPerPoint(property) {
             if (!property) return 100; 
+            // *** NEW: Inflate renovation costs by 1/3 of inflation rate ***
+            // This prevents renovation from becoming trivially cheap in late game.
+            const inflationAdjustment = 1 + (currentInflationRate / 3);
             const value = property.currentMarketValue;
             let totalRenovationCost;
             if (value < 200000) {
@@ -1110,7 +1272,7 @@
             } else { 
                 totalRenovationCost = value * 0.8; 
             }
-            return totalRenovationCost / 100;
+            return (totalRenovationCost / 100) * inflationAdjustment;
         }
 
         function showModal(title, message, type = 'info') { 
@@ -1142,6 +1304,7 @@
             if (event.target == resetConfirmModal) resetConfirmModal.style.display = "none";
             if (event.target == evictTenantModal) evictTenantModal.style.display = "none";
             if (event.target == marketingConfirmModal) marketingConfirmModal.style.display = "none";
+            if (event.target == flippingPenaltyModal) flippingPenaltyModal.style.display = "none";
         }
         function addLogEntry(message) { gameLog.unshift(message); if (gameLog.length > MAX_LOG_ENTRIES) gameLog.pop(); renderGameLog(); }
         function getConditionClass(condition) { if (condition >= 70) return 'condition-good'; if (condition >= 40) return 'condition-fair'; return 'condition-poor'; }
@@ -1154,7 +1317,7 @@
                 let totalExpenses = 0;
 
                 player.properties.forEach(prop => {
-                    if (prop.isRented && !prop.isDelinquent && !prop.tenantFirstMonthFree) { // Check for free month
+                    if (prop.isRented && !prop.isDelinquent && !prop.tenantFirstMonthFree) {
                         totalIncome += prop.currentRent;
                     }
                     if (prop.remainingLoan > 0) {
@@ -1188,11 +1351,11 @@
                 cashflowNetEl.textContent = "Error";
             }
         }
-
-        // *** MODIFIED renderPlayerStats with ANIMATION ***
+		
+		// *** MODIFIED: To include market status ***
         function renderPlayerStats() { 
             try {
-                const currentJob = JOBS.find(j => j.id === player.currentJobId);
+                const currentJob = gameJobs.find(j => j.id === player.currentJobId); // MODIFIED: Use gameJobs
                 
                 // Get new values
                 const newAge = `${Math.floor(player.ageMonths / 12)} years, ${player.ageMonths % 12} months`;
@@ -1200,16 +1363,17 @@
                 const newJobTitle = currentJob ? currentJob.title : "Unemployed";
                 const newSalary = `$${formatCurrency(player.salary)}`;
                 const newNetWorth = `$${formatCurrency(calculateNetWorth())}`;
+                const newInflation = `${(currentInflationRate * 100).toFixed(1)}%`; // NEW: Inflation
+                const newMarketStatus = marketState; // *** NEW ***
 
                 // Helper function to update value and trigger animation
                 const updateStat = (element, newValue) => {
                     if (element.textContent !== newValue) {
                         element.textContent = newValue;
                         element.classList.add('animated-flip');
-                        // Remove class after animation finishes
                         setTimeout(() => {
                             element.classList.remove('animated-flip');
-                        }, 600); // 600ms matches animation duration
+                        }, 600);
                     }
                 };
 
@@ -1219,9 +1383,23 @@
                 updateStat(playerJobTitleEl, newJobTitle);
                 updateStat(salaryEl, newSalary);
                 updateStat(netWorthEl, newNetWorth);
+                updateStat(inflationRateEl, newInflation); // NEW: Update inflation display
+                
+                // *** NEW: Update market status display ***
+                updateStat(marketStatusEl, newMarketStatus);
+                marketStatusEl.classList.remove('text-green-600', 'text-red-600', 'text-slate-700');
+                if (marketState === MARKET_STATES.BOOM) {
+                    marketStatusEl.classList.add('text-green-600');
+                } else if (marketState === MARKET_STATES.BUST) {
+                    marketStatusEl.classList.add('text-red-600');
+                } else {
+                    marketStatusEl.classList.add('text-slate-700');
+                }
+                // *** END NEW ***
 
-                // Logic for the cash change indicator (this is separate from the flip)
-                if (player.lastMonthCashChange !== 0 && firstMonthAdvanced) { // Only show after month 1
+
+                // Logic for the cash change indicator
+                if (player.lastMonthCashChange !== 0 && firstMonthAdvanced) {
                     cashChangeIndicatorEl.classList.remove('profit', 'loss');
                     if (player.lastMonthCashChange > 0) {
                         cashChangeIndicatorEl.textContent = `(+$${formatCurrency(player.lastMonthCashChange)})`;
@@ -1230,10 +1408,8 @@
                         cashChangeIndicatorEl.textContent = `(-$${formatCurrency(Math.abs(player.lastMonthCashChange))})`;
                         cashChangeIndicatorEl.classList.add('loss');
                     }
-                    // Make it visible
                     cashChangeIndicatorEl.classList.add('visible');
                 } else {
-                    // Hide it if no change or new game
                     cashChangeIndicatorEl.classList.remove('visible');
                 }
 
@@ -1241,9 +1417,11 @@
                 console.error("Error in renderPlayerStats:", e);
             }
         }
-        // *** END MODIFIED FUNCTION ***
 
         function renderLoanButtons() {
+            // Update fee text in case of inflation
+            bankLoanFeeTextEl.innerHTML = `A non-refundable application fee of <strong>$${formatCurrency(BANK_LOAN_APPLICATION_FEE)}</strong> will be charged.`;
+            
             if (player.bankLoanCooldown > 0) {
                 bankLoanBtn.classList.add('button-disabled');
                 bankLoanBtn.disabled = true;
@@ -1254,15 +1432,15 @@
                 bankLoanBtn.textContent = 'Apply for Bank Loan';
             }
         }
-
-        function renderPropertyListings() { 
+		
+		function renderPropertyListings() {
             try {
                 propertyListingsEl.innerHTML = '';
-                if (!availableProperties || availableProperties.length === 0) { 
+                if (!availableProperties || availableProperties.length === 0) {
                     propertyListingsEl.innerHTML = '<p class="text-slate-500 text-center py-12">No new properties listed this month.</p>'; return;
                 }
                 availableProperties.forEach((prop, index) => {
-                    if (!prop) { console.error("Undefined property in availableProperties at index:", index); return; } 
+                    if (!prop) { console.error("Undefined property in availableProperties at index:", index); return; }
                     const downPayment = prop.price * PROPERTY_DOWN_PAYMENT_PERCENTAGE;
                     const card = document.createElement('div');
                     card.className = `card ${prop.isGolden ? 'golden-opportunity' : ''}`;
@@ -1272,8 +1450,8 @@
                         <p><span class="rent-estimate">Est. Monthly Rent: $${formatCurrency(prop.estimatedRent)}</span></p>
                         <p>Initial Condition: <span class="${getConditionClass(prop.initialCondition)} font-semibold">${prop.initialCondition.toFixed(1)}%</span></p>
                         <p>Down Payment (20%): $${formatCurrency(downPayment)}</p>
-                        <button class="button button-buy mt-3 w-full ${player.cash < downPayment ? 'button-disabled' : ''}" 
-                                onclick="openLoanTermModal(${index})" 
+                        <button class="button button-buy mt-3 w-full ${player.cash < downPayment ? 'button-disabled' : ''}"
+                                onclick="openLoanTermModal(${index})"
                                 ${player.cash < downPayment ? 'disabled' : ''}>
                             ${player.cash < downPayment ? 'Not Enough Cash' : 'Consider Purchase'}
                         </button>`;
@@ -1284,20 +1462,21 @@
                 propertyListingsEl.innerHTML = '<p class="text-red-500 text-center py-12">Error loading property listings!</p>';
             }
         }
-        
+
         function renderJobMarket() {
             try {
                 jobMarketListingsEl.innerHTML = '';
-                if (!availableJobs || availableJobs.length === 0) { 
+                if (!availableJobs || availableJobs.length === 0) {
                     jobMarketListingsEl.innerHTML = '<p class="text-slate-500 text-center py-12 col-span-full">No suitable job openings this month.</p>'; return;
                 }
                 availableJobs.forEach(job => {
-                    if (!job) { console.error("Undefined job in availableJobs"); return; } 
+                    if (!job) { console.error("Undefined job in availableJobs"); return; }
                     const card = document.createElement('div');
                     card.className = 'card';
                     let prereqText = "None";
                     if (job.prerequisites) {
-                        const prevJob = JOBS.find(j => j.level === job.prerequisites.previousJobLevel && j.field === job.prerequisites.field);
+                        // MODIFIED: Use gameJobs
+                        const prevJob = gameJobs.find(j => j.level === job.prerequisites.previousJobLevel && j.field === job.prerequisites.field);
                         prereqText = `${prevJob ? prevJob.title : `Level ${job.prerequisites.previousJobLevel} in ${job.prerequisites.field}`} & ${(job.prerequisites.minExperienceInFieldMonths / 12).toFixed(1)} yrs in field`;
                     }
 
@@ -1315,7 +1494,8 @@
                 jobMarketListingsEl.innerHTML = '<p class="text-red-500 text-center py-12">Error loading job market!</p>';
             }
         }
-		
+
+        // *** MODIFIED: renderOwnedProperties with DISASTER ICON ***
 		function renderOwnedProperties() {
             try {
                 ownedPropertiesEl.innerHTML = '';
@@ -1327,50 +1507,66 @@
                     if (!prop) { console.error("Undefined property in player.properties at index:", index); return; }
                     const card = document.createElement('div');
                     card.className = 'card';
-                    let statusHTML = '', rentalActionButtonHTML = '', saleActionButtonHTML = '', marketingButtonHTML = ''; // NEW: Added marketingButtonHTML
 
-                    // --- NEW: Marketing Status Check ---
+                    // --- NEW: Disaster Icon Logic ---
+                    let disasterIconHTML = '';
+                    let disasterTitle = '';
+                    if (prop.hasDisasterIcon && prop.disasterIcon) {
+                        switch(prop.disasterIcon) {
+                            case '🔥': disasterTitle = 'Fire Damage'; break;
+                            case '🌊': disasterTitle = 'Flood Damage'; break;
+                            case '💥': disasterTitle = 'Earthquake Damage'; break;
+                            case '🔧': disasterTitle = 'Property Damage'; break;
+                            case '😠': disasterTitle = 'Eviction Damage'; break;
+                            default: disasterTitle = 'Damage Reported';
+                        }
+                        disasterIconHTML = `
+                            <span class="disaster-icon active" title="${disasterTitle}">
+                                ${prop.disasterIcon}
+                            </span>
+                        `;
+                    }
+                    // --- END NEW ---
+
+                    let statusHTML = '', rentalActionButtonHTML = '', saleActionButtonHTML = '', marketingButtonHTML = '';
+
                     if (prop.isBeingMarketed) {
                         statusHTML = `<span class="property-status status-listed-rent" style="color: #2563eb; font-weight: 700;">MARKETING ACTIVE</span><br>Campaign Month: ${prop.marketingMonths + 1}<br>Type: ${prop.wasListedForRent ? 'Fast Rent' : 'Fast Sale'}`;
                         rentalActionButtonHTML = `<button class="button button-rent mt-2 w-full button-disabled" disabled>Manage Rental (Blocked)</button>`;
                         saleActionButtonHTML = `<button class="button button-list-sell w-full button-disabled" disabled>List for Sale (Blocked)</button>`;
                         marketingButtonHTML = `<button class="button button-marketing w-full button-disabled" disabled>Marketing Active...</button>`;
-
                     } else if (prop.isListedForSale) {
                         statusHTML = `<span class="property-status status-listed-sale">LISTED FOR SALE</span><br>Asking: <span class="asking-price">$${formatCurrency(prop.askingPrice)}</span><br>On Market: ${prop.timeOnMarket} months`;
                         saleActionButtonHTML = `<button class="button button-secondary w-full" onclick="openListSaleModal(${index}, true)">Adjust Price</button><button class="button button-secondary w-full" onclick="deListProperty(${index})">De-list Property</button>`;
                         rentalActionButtonHTML = `<button class="button button-rent mt-2 w-full button-disabled" disabled title="Property is listed for sale">Manage Rental (Blocked)</button>`;
-                        marketingButtonHTML = `<button class="button button-marketing w-full" onclick="openMarketingConfirmModal(${index})">Start Marketing</button>`; // NEW
-
+                        marketingButtonHTML = `<button class="button button-marketing w-full" onclick="openMarketingConfirmModal(${index})">Start Marketing</button>`;
                     } else if (prop.isDelinquent) {
                         statusHTML = `<span class="property-status status-delinquent">TENANT DELINQUENT (${prop.delinquentMonths} months unpaid)</span>`;
                         rentalActionButtonHTML = `<button class="button button-secondary mt-2 w-full" onclick="openManageRentalModal(${index})">Evict Delinquent Tenant</button>`;
                         saleActionButtonHTML = `<button class="button button-list-sell w-full" onclick="openListSaleModal(${index})">List for Sale</button>`;
-                        marketingButtonHTML = `<button class="button button-marketing w-full button-disabled" disabled title="Resolve delinquency to market">Start Marketing</button>`; // NEW
-
+                        marketingButtonHTML = `<button class="button button-marketing w-full button-disabled" disabled title="Resolve delinquency to market">Start Marketing</button>`;
                     } else if (prop.isRented) {
                         statusHTML = `<span class="property-status status-rented">Rented: $${formatCurrency(prop.currentRent)}/month</span> (Tenant for ${prop.tenantMonths} months)`;
                         rentalActionButtonHTML = `<button class="button button-secondary mt-2 w-full" onclick="openManageRentalModal(${index})">Manage Rental</button>`;
                         saleActionButtonHTML = `<button class="button button-list-sell w-full" onclick="openListSaleModal(${index})">List for Sale</button>`;
-                        marketingButtonHTML = `<button class="button button-marketing w-full button-disabled" disabled title="Evict tenant to market">Start Marketing</button>`; // NEW
-
+                        marketingButtonHTML = `<button class="button button-marketing w-full button-disabled" disabled title="Evict tenant to market">Start Marketing</button>`;
                     } else if (prop.isListedForRent) {
                         statusHTML = `<span class="property-status status-listed-rent">Listed for Rent</span>`;
                         rentalActionButtonHTML = `<button class="button button-secondary mt-2 w-full" onclick="toggleListingStatus(${index})">Cancel Rent Listing</button>`;
                         saleActionButtonHTML = `<button class="button button-list-sell w-full" onclick="openListSaleModal(${index})">List for Sale</button>`;
-                        marketingButtonHTML = `<button class="button button-marketing w-full" onclick="openMarketingConfirmModal(${index})">Start Marketing</button>`; // NEW
-
+                        marketingButtonHTML = `<button class="button button-marketing w-full" onclick="openMarketingConfirmModal(${index})">Start Marketing</button>`;
                     } else { // Vacant
                         statusHTML = `<span class="property-status status-vacant">Vacant</span>`;
                         rentalActionButtonHTML = `<button class="button button-rent mt-2 w-full" onclick="toggleListingStatus(${index})">List for Rent</button>`;
                         saleActionButtonHTML = `<button class="button button-list-sell w-full" onclick="openListSaleModal(${index})">List for Sale</button>`;
-                        marketingButtonHTML = `<button class="button button-marketing w-full button-disabled" disabled title="List property to start marketing">Start Marketing</button>`; // NEW
+                        marketingButtonHTML = `<button class="button button-marketing w-full button-disabled" disabled title="List property to start marketing">Start Marketing</button>`;
                     }
 
                     card.innerHTML = `
-                        <h3>${prop.name} (ID: ${prop.id})</h3>
+                        ${disasterIconHTML} <h3>${prop.name} (ID: ${prop.id})</h3>
                         <p>Market Value: $${formatCurrency(prop.currentMarketValue)} (Bought for $${formatCurrency(prop.purchasePrice)})</p>
                         <p>Loan: $${formatCurrency(prop.remainingLoan)} (${prop.monthsPaid}/${prop.loanTermMonths} paid)</p>
+                        <p>Months Owned: ${prop.monthsOwned || 0}</p>
                         <p>Monthly Installment: $${formatCurrency(prop.monthlyInstallment)}</p>
                         <p>Monthly Fees: $${formatCurrency(prop.monthlyFees)}</p>
                         <p>Condition: <span class="${getConditionClass(prop.condition)} font-semibold">${prop.condition.toFixed(1)}%</span></p>
@@ -1390,6 +1586,7 @@
                 ownedPropertiesEl.innerHTML = '<p class="text-red-500 text-center py-12 col-span-full">Error loading your portfolio!</p>';
             }
         }
+        // *** END MODIFIED FUNCTION ***
 
         function renderGameLog() {
              try {
@@ -1398,12 +1595,13 @@
                 gameLog.forEach(entry => {
                     const li = document.createElement('li');
                     li.textContent = entry;
-                    if (entry.toLowerCase().includes("bought") || entry.toLowerCase().includes("salary increase") || entry.toLowerCase().includes("rented out") || entry.toLowerCase().includes("rental income") || entry.toLowerCase().includes("sold") || entry.toLowerCase().includes("resumed payment") || entry.toLowerCase().includes("offer accepted") || entry.toLowerCase().includes("golden opportunity") || entry.toLowerCase().includes("got the job") || entry.toLowerCase().includes("promoted") || entry.toLowerCase().includes("bonus") || entry.toLowerCase().includes("bank loan approved") || entry.toLowerCase().includes("marketing success")) {
+                    // *** MODIFIED: Added 'inflation' and market state change colors ***
+                    if (entry.toLowerCase().includes("bought") || entry.toLowerCase().includes("salary increase") || entry.toLowerCase().includes("rented out") || entry.toLowerCase().includes("rental income") || entry.toLowerCase().includes("sold") || entry.toLowerCase().includes("resumed payment") || entry.toLowerCase().includes("offer accepted") || entry.toLowerCase().includes("golden opportunity") || entry.toLowerCase().includes("got the job") || entry.toLowerCase().includes("promoted") || entry.toLowerCase().includes("bonus") || entry.toLowerCase().includes("bank loan approved") || entry.toLowerCase().includes("marketing success") || entry.toLowerCase().includes("market is booming")) {
                         li.style.color = "#15803d"; // success-dark
                         li.style.fontWeight = "500";
-                    } else if (entry.toLowerCase().includes("paid") || entry.toLowerCase().includes("expenses") || entry.toLowerCase().includes("fee") || entry.toLowerCase().includes("renovation") || entry.toLowerCase().includes("external loan payment") || entry.toLowerCase().includes("bank loan payment") || entry.toLowerCase().includes("marketing campaign fee")) {
+                    } else if (entry.toLowerCase().includes("paid") || entry.toLowerCase().includes("expenses") || entry.toLowerCase().includes("fee") || entry.toLowerCase().includes("renovation") || entry.toLowerCase().includes("external loan payment") || entry.toLowerCase().includes("bank loan payment") || entry.toLowerCase().includes("marketing campaign fee") || entry.toLowerCase().includes("flipping penalty")) {
                         li.style.color = "#b91c1c"; // danger-dark
-                    } else if (entry.toLowerCase().includes("tenant left") || entry.toLowerCase().includes("damage") || entry.toLowerCase().includes("deal fell through") || entry.toLowerCase().includes("offer rejected") || entry.toLowerCase().includes("delinquent") || entry.toLowerCase().includes("stopped paying") || entry.toLowerCase().includes("no offers") || entry.toLowerCase().includes("took risky loan") || entry.toLowerCase().includes("application rejected") || entry.toLowerCase().includes("fired") || entry.toLowerCase().includes("disaster") || entry.toLowerCase().includes("evicted tenant damaged") || entry.toLowerCase().includes("bank loan rejected") || entry.toLowerCase().includes("marketing failed")) { // Added marketing failed
+                    } else if (entry.toLowerCase().includes("tenant left") || entry.toLowerCase().includes("damage") || entry.toLowerCase().includes("deal fell through") || entry.toLowerCase().includes("offer rejected") || entry.toLowerCase().includes("delinquent") || entry.toLowerCase().includes("stopped paying") || entry.toLowerCase().includes("no offers") || entry.toLowerCase().includes("took risky loan") || entry.toLowerCase().includes("application rejected") || entry.toLowerCase().includes("fired") || entry.toLowerCase().includes("disaster") || entry.toLowerCase().includes("evicted tenant damaged") || entry.toLowerCase().includes("bank loan rejected") || entry.toLowerCase().includes("marketing failed") || entry.toLowerCase().includes("inflation") || entry.toLowerCase().includes("market enters bust") || entry.toLowerCase().includes("market cools")) {
                         li.style.color = "#b45309"; // gold-dark
                         li.style.fontWeight = "500";
                     }
@@ -1416,39 +1614,110 @@
 
         // --- DATA GENERATION FUNCTIONS ---
 
-        // Helper function to standardize rent calculation
         function getEstimatedMonthlyRent(value, condition, isGolden = false) {
             const annualRentMin = value * RENT_AS_PERCENTAGE_OF_VALUE_MIN_ANNUAL;
             const annualRentMax = value * RENT_AS_PERCENTAGE_OF_VALUE_MAX_ANNUAL;
             let monthlyRent = (annualRentMin + Math.random() * (annualRentMax - annualRentMin)) / 12;
 
-            // Use original logic for condition/golden factor
             let rentConditionFactor = isGolden ? (0.8 + Math.random() * 0.2) : (0.5 + condition / 200);
             monthlyRent *= rentConditionFactor;
+
+            // *** MODIFIED: Rent is lower during a Bust ***
+            if (marketState === MARKET_STATES.BUST) {
+                monthlyRent *= 0.8; // 20% lower rent in a bust
+            } else if (marketState === MARKET_STATES.BOOM) {
+                 monthlyRent *= 1.1; // 10% higher rent in a boom
+            }
+
 
             return Math.max(50, Math.round(monthlyRent));
         }
 
+        // *** MODIFIED: Adjust property price based on market state AND net worth ***
         function generateNewProperties() {
-            if (typeof PROPERTY_TYPES === 'undefined' || !PROPERTY_TYPES) {
-                console.error("CRITICAL: PROPERTY_TYPES is undefined or null in generateNewProperties!");
+            if (typeof gamePropertyTypes === 'undefined' || !gamePropertyTypes) {
+                console.error("CRITICAL: gamePropertyTypes is undefined or null in generateNewProperties!");
                 availableProperties = []; return;
             }
+
+            // *** NEW: Determine property tier probabilities based on net worth ***
+            let netWorth = player.netWorth;
+            let probs;
+
+            if (netWorth < 5000000) {
+                // Tier 1 (< 1M), Tier 2 (1-10M), Tier 3 (10M+)
+                probs = { 1: 0.80, 2: 0.15, 3: 0.05 }; // 80% cheap, 15% mid, 5% expensive
+            } else if (netWorth < 10000000) {
+                probs = { 1: 0.60, 2: 0.30, 3: 0.10 };
+            } else if (netWorth < 50000000) {
+                probs = { 1: 0.40, 2: 0.45, 3: 0.15 };
+            } else { // 50M+
+                probs = { 1: 0.20, 2: 0.50, 3: 0.30 }; // 20% cheap, 50% mid, 30% expensive
+            }
+            // *** END NEW ***
+
+
             availableProperties = [];
             const numPropsToGenerate = Math.floor(Math.random() * (PROPERTIES_PER_MONTH_MAX - PROPERTIES_PER_MONTH_MIN + 1)) + PROPERTIES_PER_MONTH_MIN;
             let goldenAppearedThisMonth = false;
+
+            // *** NEW: Filter property types based on probabilities ***
+            const availableTiers = gamePropertyTypes.reduce((acc, type) => {
+                if (!acc[type.priceTier]) {
+                    acc[type.priceTier] = [];
+                }
+                acc[type.priceTier].push(type);
+                return acc;
+            }, {});
+            // *** END NEW ***
+
             for (let i = 0; i < numPropsToGenerate; i++) {
-                const typeIndex = Math.floor(Math.random() * PROPERTY_TYPES.length);
-                const type = PROPERTY_TYPES[typeIndex];
+                
+                // *** NEW: Select a tier based on weighted probability ***
+                let selectedTierList;
+                const rand = Math.random();
+                if (rand < probs[1]) {
+                    selectedTierList = availableTiers[1];
+                } else if (rand < probs[1] + probs[2]) {
+                    selectedTierList = availableTiers[2];
+                } else {
+                    selectedTierList = availableTiers[3];
+                }
+
+                // Fallback logic in case a tier has no properties (shouldn't happen with current data)
+                if (!selectedTierList || selectedTierList.length === 0) {
+                    // Fallback to Tier 1
+                    selectedTierList = availableTiers[1];
+                    if (!selectedTierList || selectedTierList.length === 0) {
+                         // Fallback to any property
+                         selectedTierList = gamePropertyTypes;
+                    }
+                }
+                
+                const type = selectedTierList[Math.floor(Math.random() * selectedTierList.length)];
+                // *** END NEW ***
+
+
                 if (!type) { console.error("Error: Could not find property type for index", typeIndex); continue; }
                 let price, initialCondition, estimatedRent; let isGolden = false;
+                let basePrice = type.basePrice + Math.floor(Math.random() * type.priceRange);
+
+                // Adjust price for market state
+                let marketPriceMultiplier = 1.0;
+                if (marketState === MARKET_STATES.BOOM) {
+                    marketPriceMultiplier = 1.15; // 15% more expensive in boom
+                } else if (marketState === MARKET_STATES.BUST) {
+                    marketPriceMultiplier = 0.80; // 20% cheaper in bust
+                }
+
                 if (!goldenAppearedThisMonth && Math.random() < GOLDEN_OPPORTUNITY_CHANCE) {
                     isGolden = true; goldenAppearedThisMonth = true;
-                    price = Math.round(type.basePrice * (0.65 + Math.random() * 0.15));
+                    // Golden opportunities are less affected by market swings, but still slightly
+                    price = Math.round(basePrice * (0.65 + Math.random() * 0.15) * (1 + (marketPriceMultiplier-1)/2) );
                     initialCondition = 85 + Math.random() * 15;
                     addLogEntry(`⭐ A Golden Opportunity appeared: ${type.name}!`);
                 } else {
-                    price = type.basePrice + Math.floor(Math.random() * type.priceRange);
+                    price = Math.round(basePrice * marketPriceMultiplier);
                     let conditionFactor = type.priceRange > 0 ? (price - type.basePrice) / type.priceRange : 1;
                     conditionFactor = Math.max(0, Math.min(1, conditionFactor));
                     let baseRandomCondition = 60 + Math.random() * 40;
@@ -1456,7 +1725,6 @@
                     initialCondition = Math.max(20, Math.min(100, initialCondition));
                 }
 
-                // Use the new helper function
                 estimatedRent = getEstimatedMonthlyRent(price, initialCondition, isGolden);
 
                 availableProperties.push({
@@ -1471,20 +1739,23 @@
                  addLogEntry(`Market update: No properties met criteria this month.`);
             }
         }
+        // *** END MODIFIED FUNCTION ***
 
         function generateJobOpportunities() {
             availableJobs = [];
-            const currentPlayerJob = JOBS.find(j => j.id === player.currentJobId);
+            const currentPlayerJob = gameJobs.find(j => j.id === player.currentJobId);
             if (!currentPlayerJob) {
                 console.error("Error: Current player job not found in generateJobOpportunities! ID:", player.currentJobId);
                 return;
             }
 
-            const potentialJobs = JOBS.filter(job => {
+            const potentialJobs = gameJobs.filter(job => {
                 if (job.id === player.currentJobId) return false;
                 let meetsPrereqs = true;
                 if (job.prerequisites) {
                     const currentJobField = currentPlayerJob.field;
+                    const prevJob = gameJobs.find(j => j.level === job.prerequisites.previousJobLevel && j.field === job.prerequisites.field);
+
                     if (job.prerequisites.field && currentJobField !== job.prerequisites.field && job.level > 0) {
                         meetsPrereqs = false;
                     }
@@ -1501,16 +1772,24 @@
                 if (!meetsPrereqs) return false;
 
                 const salaryLowerBound = player.salary * 0.7;
-                // MODIFIED: Increased upper bound to show more high-paying jobs
                 const salaryUpperBound = player.salary * 2.5;
                 const isSalaryRelevant = job.salary >= salaryLowerBound && job.salary <= salaryUpperBound;
 
-                if (job.field === currentPlayerJob.field && job.level === currentPlayerJob.level + 1) return true;
-                if (job.level === 0 && job.field !== currentPlayerJob.field) return true; // Entry level jobs in other fields
-                if (isSalaryRelevant && Math.random() < 0.6) return true;
-                if (job.level === currentPlayerJob.level && job.field !== currentPlayerJob.field && Math.random() < 0.3) return true; // Lateral moves
+                // *** MODIFIED: Job availability tied to market state ***
+                let marketAvailabilityFactor = 1.0;
+                if (marketState === MARKET_STATES.BOOM) {
+                    marketAvailabilityFactor = 1.2; // More jobs in boom
+                } else if (marketState === MARKET_STATES.BUST) {
+                     marketAvailabilityFactor = 0.6; // Fewer jobs in bust
+                }
 
-                return Math.random() < 0.1;
+
+                if (job.field === currentPlayerJob.field && job.level === currentPlayerJob.level + 1 && Math.random() < marketAvailabilityFactor) return true;
+                if (job.level === 0 && job.field !== currentPlayerJob.field && Math.random() < marketAvailabilityFactor) return true;
+                if (isSalaryRelevant && Math.random() < 0.6 * marketAvailabilityFactor) return true;
+                if (job.level === currentPlayerJob.level && job.field !== currentPlayerJob.field && Math.random() < 0.3 * marketAvailabilityFactor) return true;
+
+                return Math.random() < 0.1 * marketAvailabilityFactor;
             });
 
             potentialJobs.sort(() => 0.5 - Math.random());
@@ -1526,11 +1805,118 @@
             player.netWorth = player.cash + propertyMarketValues - totalPropertyLoan - totalExternalLoan;
             return player.netWorth;
         }
+        
+        // *** NEW: Function to update market state ***
+        function updateMarketState() {
+            marketStateMonths++;
+            if (marketStateMonths < MARKET_STATE_MIN_DURATION_MONTHS) {
+                return; // Don't change state too quickly
+            }
 
-        // MODIFIED: advanceMonth with updated marketing logic
+            let changeOccurred = false;
+            if (marketState === MARKET_STATES.NORMAL) {
+                if (Math.random() < MARKET_STATE_NORMAL_TO_CHANGE_CHANCE) {
+                    marketState = (Math.random() < 0.5) ? MARKET_STATES.BOOM : MARKET_STATES.BUST;
+                    marketStateMonths = 0;
+                    changeOccurred = true;
+                    if (marketState === MARKET_STATES.BOOM) {
+                        addLogEntry("ECONOMY: The market is BOOMING! Property values are soaring and sales are fast.");
+                        showModal("Market Boom!", "Property values are rising rapidly, and buyers are eager!", 'success');
+                    } else {
+                        addLogEntry("ECONOMY: The market enters a BUST! Values are dropping, sales are slow, and risks are higher.");
+                        showModal("Market Bust!", "Property values are falling, sales are difficult, and tenants may struggle.", 'error');
+                    }
+                }
+            } else { // Boom or Bust state
+                if (Math.random() < MARKET_STATE_BOOM_BUST_TO_NORMAL_CHANCE) {
+                    marketState = MARKET_STATES.NORMAL;
+                    marketStateMonths = 0;
+                    changeOccurred = true;
+                     addLogEntry("ECONOMY: The market cools down and returns to NORMAL conditions.");
+                     showModal("Market Normalizes", "The economic situation has stabilized.", 'info');
+                }
+            }
+            
+            // Apply effects of the current market state
+            applyMarketStateEffects();
+        }
+
+        // *** NEW: Function to apply effects based on market state ***
+        function applyMarketStateEffects() {
+            let firingRiskMultiplier = 1.0;
+            let delinquencyMultiplier = 1.0;
+
+            if (marketState === MARKET_STATES.BOOM) {
+                BASE_CHANCE_OF_RECEIVING_OFFER = 0.30; // Easier to sell
+                BUYER_OFFER_DISCOUNT_BASE_FROM_MARKET = 0.02; // Buyers offer closer to market value
+                BASE_TENANT_FIND_CHANCE = 0.4; // Easier to find tenants
+                firingRiskMultiplier = 0.5; // Lower chance of being fired
+                delinquencyMultiplier = 0.7; // Lower chance of delinquency
+            } else if (marketState === MARKET_STATES.BUST) {
+                BASE_CHANCE_OF_RECEIVING_OFFER = 0.05; // Harder to sell
+                BUYER_OFFER_DISCOUNT_BASE_FROM_MARKET = 0.15; // Buyers offer much lower
+                BASE_TENANT_FIND_CHANCE = 0.15; // Harder to find tenants
+                firingRiskMultiplier = 2.5; // Higher chance of being fired
+                delinquencyMultiplier = 2.0; // Higher chance of delinquency
+            } else { // Normal
+                BASE_CHANCE_OF_RECEIVING_OFFER = 0.15;
+                BUYER_OFFER_DISCOUNT_BASE_FROM_MARKET = 0.05;
+                BASE_TENANT_FIND_CHANCE = 0.3;
+                firingRiskMultiplier = 1.0;
+                delinquencyMultiplier = 1.0;
+            }
+            
+            // Apply multipliers (ensure base constants are defined appropriately)
+            CHANCE_BECOME_DELINQUENT_IF_LOW_CONDITION = 0.20 * delinquencyMultiplier;
+            DELINQUENT_NON_PAYMENT_BASE_CHANCE = 0.25 * delinquencyMultiplier;
+            // Update base firing risk (Note: Individual job firing risks still apply on top)
+            // We'll apply this multiplier inside the firing check logic in advanceMonth
+        }
+
+
+        // *** NEW: Function to apply annual inflation ***
+        function applyAnnualInflation() {
+            // 1. Set new inflation rate (3% to 5%)
+            currentInflationRate = (Math.random() * (0.05 - 0.03)) + 0.03;
+            addLogEntry(`ECONOMY: Annual inflation is ${(currentInflationRate * 100).toFixed(1)}%. Prices and salaries are rising.`);
+            
+            const inflationFactor = 1 + currentInflationRate;
+
+            // 2. Inflate base property prices
+            gamePropertyTypes.forEach(type => {
+                type.basePrice = Math.round(type.basePrice * inflationFactor);
+                type.priceRange = Math.round(type.priceRange * inflationFactor);
+            });
+
+            // 3. Inflate all job salaries
+            gameJobs.forEach(job => {
+                job.salary = Math.round(job.salary * inflationFactor);
+            });
+
+            // 4. Inflate player's current salary (Cost-of-Living adjustment)
+            const oldSalary = player.salary;
+            player.salary = Math.round(player.salary * inflationFactor);
+            addLogEntry(`Your salary received a cost-of-living adjustment of ${(currentInflationRate * 100).toFixed(1)}% (to $${formatCurrency(player.salary)}).`);
+
+
+            // 5. Inflate misc. fees
+            CLEANING_FEE_MIN = Math.round(CLEANING_FEE_MIN * inflationFactor);
+            CLEANING_FEE_MAX = Math.round(CLEANING_FEE_MAX * inflationFactor);
+            BANK_LOAN_APPLICATION_FEE = Math.round(BANK_LOAN_APPLICATION_FEE * inflationFactor);
+        }
+
         function advanceMonth() {
             try {
-                const cashBeforeMonth = player.cash; // Track cash at the start
+                const cashBeforeMonth = player.cash;
+
+                // *** NEW: Update market state FIRST ***
+                updateMarketState();
+
+                // *** NEW: Clear all disaster icons at the start of the month ***
+                player.properties.forEach(prop => {
+                    prop.hasDisasterIcon = false;
+                    prop.disasterIcon = '';
+                });
 
                 if (!firstMonthAdvanced) {
                     if (gameHeaderEl) gameHeaderEl.classList.add('header-hidden');
@@ -1551,16 +1937,23 @@
                 }
 
                 // --- FIRING LOGIC ---
-                const currentJobForFiringCheck = JOBS.find(j => j.id === player.currentJobId);
+                const currentJobForFiringCheck = gameJobs.find(j => j.id === player.currentJobId);
                 let effectiveFiringRisk = 0;
+                let marketFiringMultiplier = 1.0; // *** NEW: Get market multiplier ***
+                if (marketState === MARKET_STATES.BUST) {
+                    marketFiringMultiplier = 2.5;
+                } else if (marketState === MARKET_STATES.BOOM) {
+                    marketFiringMultiplier = 0.5;
+                }
 
                 if (currentJobForFiringCheck && player.currentJobId !== "unskilled0") {
-                    effectiveFiringRisk = currentJobForFiringCheck.firingRisk || BASE_FIRING_RISK;
+                    // *** MODIFIED: Apply market multiplier to firing risk ***
+                    effectiveFiringRisk = (currentJobForFiringCheck.firingRisk || BASE_FIRING_RISK) * marketFiringMultiplier;
                 }
 
                 if (effectiveFiringRisk > 0 && Math.random() < effectiveFiringRisk) {
                     const oldJob = currentJobForFiringCheck;
-                    const baseJob = JOBS.find(j => j.id === "unskilled0");
+                    const baseJob = gameJobs.find(j => j.id === "unskilled0");
                     if (oldJob && baseJob) {
                         const oldJobTitle = oldJob.title;
                         player.currentJobId = baseJob.id;
@@ -1574,32 +1967,47 @@
                 // --- END FIRING LOGIC ---
 
 
-                const currentJob = JOBS.find(j => j.id === player.currentJobId);
+                const currentJob = gameJobs.find(j => j.id === player.currentJobId);
                 if (currentJob) {
+                    // *** MODIFIED: This is now a "Merit Raise" on top of inflation ***
                     if (player.experienceInCurrentJobMonths > 0 && player.experienceInCurrentJobMonths % 12 === 0 && currentJob.annualIncrementPercent > 0) {
                         const oldSalary = player.salary;
                         player.salary = Math.round(player.salary * (1 + currentJob.annualIncrementPercent));
-                        addLogEntry(`Annual raise at ${currentJob.title}! New salary: $${formatCurrency(player.salary)} (was $${formatCurrency(oldSalary)}).`);
-                        showModal("Annual Raise!", `You received an annual raise. Your new salary is $${formatCurrency(player.salary)}.`, 'success');
+                        addLogEntry(`Annual merit raise at ${currentJob.title}! New salary: $${formatCurrency(player.salary)} (was $${formatCurrency(oldSalary)}).`);
+                        showModal("Annual Merit Raise!", `You received an annual merit raise. Your new salary is $${formatCurrency(player.salary)}.`, 'success');
                     }
-                    if (currentJob.companyAnnualBonusChance && currentMonth % 12 === 11) {
+
+                    // *** MODIFIED: Job Bonus Logic as per user request ***
+                    if (currentJob.companyAnnualBonusChance && currentMonth % 12 === 11) { // Check for bonus at end of year (11th month)
                         if (Math.random() < currentJob.companyAnnualBonusChance) {
-                            const bonusAmount = Math.round(player.salary * 12 * currentJob.companyAnnualBonusPercent);
+
+                            // Define the range for the bonus
+                            const maxBonusPercent = currentJob.companyAnnualBonusPercent;
+                            // Lower level jobs get a smaller, less reliable bonus (e.g., 20-100% of the 'maxBonusPercent')
+                            // Higher level jobs get a more reliable bonus (e.g., 60-100% of the 'maxBonusPercent')
+                            const minBonusPercent = maxBonusPercent * (0.2 + (currentJob.level * 0.1));
+
+                            // Calculate a random bonus within that range
+                            const actualBonusPercent = minBonusPercent + (Math.random() * (maxBonusPercent - minBonusPercent));
+                            const bonusAmount = Math.round((player.salary * 12) * actualBonusPercent);
+
                             player.cash += bonusAmount;
                             addLogEntry(`Received an annual bonus of $${formatCurrency(bonusAmount)} from ${currentJob.title}!`);
                             showModal("Annual Bonus!", `Congratulations! You received an annual bonus of $${formatCurrency(bonusAmount)}.`, 'success');
                         }
                     }
+                    // *** END MODIFIED BONUS LOGIC ***
+
                     if (currentJob.promotionTo && currentJob.promotionChance && currentJob.promotionChanceMonths &&
                         player.experienceInCurrentJobMonths >= currentJob.promotionChanceMonths &&
                         Math.random() < currentJob.promotionChance) {
-                        const newJob = JOBS.find(j => j.id === currentJob.promotionTo);
+                        const newJob = gameJobs.find(j => j.id === currentJob.promotionTo);
                         if (newJob) {
                             addLogEntry(`🎉 PROMOTION! You've been promoted from ${currentJob.title} to ${newJob.title}!`);
                             showModal("Promotion!", `Congratulations! You've been promoted to ${newJob.title} with a salary of $${formatCurrency(newJob.salary)}.`, 'success');
                             const oldJobField = currentJob.field;
                             player.currentJobId = newJob.id;
-                            player.salary = newJob.salary;
+                            player.salary = newJob.salary; // Salary is pulled from the (inflated) gameJobs data
                             player.experienceInCurrentJobMonths = 0;
                             if (oldJobField !== newJob.field) {
                                 player.totalExperienceInFieldMonths = 0;
@@ -1614,16 +2022,13 @@
                 let totalExternalLoanPayments = 0;
                 for (let i = player.externalLoans.length - 1; i >= 0; i--) {
                     const loan = player.externalLoans[i];
-
                     const interestThisMonth = loan.remainingBalance * loan.monthlyInterestRate;
                     const principalPayment = loan.monthlyPayment - interestThisMonth;
-
                     player.cash -= loan.monthlyPayment;
                     loan.remainingBalance -= principalPayment;
                     loan.remainingBalance = Math.max(0, loan.remainingBalance);
                     loan.monthsPaid++;
                     totalExternalLoanPayments += loan.monthlyPayment;
-
                     if (loan.remainingBalance <= 0.01 || loan.monthsPaid >= loan.termMonths) {
                         const loanType = loan.type === 'risky' ? 'Risky Loan' : 'Bank Loan';
                         addLogEntry(`${loanType} (ID: ${loan.id}) of $${formatCurrency(loan.principal)} has been fully paid off!`);
@@ -1633,20 +2038,40 @@
                 }
                 if (totalExternalLoanPayments > 0) addLogEntry(`Paid $${formatCurrency(totalExternalLoanPayments)} for external loan installments.`);
 
+                // *** MODIFIED: Annual inflation and market-based appreciation logic ***
                 if (currentMonth > 0 && currentMonth % 12 === 0) {
+                    // 1. Apply inflation first
+                    applyAnnualInflation();
+
+                    // 2. Apply market appreciation based on market state
                     addLogEntry("Annual market review...");
+                    let marketAppreciationRate = 0;
+                    if (marketState === MARKET_STATES.BOOM) {
+                        marketAppreciationRate = ANNUAL_APPRECIATION_BOOM;
+                    } else if (marketState === MARKET_STATES.BUST) {
+                        marketAppreciationRate = ANNUAL_APPRECIATION_BUST;
+                    } else { // Normal
+                        marketAppreciationRate = ANNUAL_APPRECIATION_NORMAL;
+                    }
+
                     player.properties.forEach(prop => {
-                        const appreciationRates = [ANNUAL_APPRECIATION_MIN, ANNUAL_APPRECIATION_MAX];
-                        for(let k=0; k<ANNUAL_APPRECIATION_TYPICAL_BIAS_STRENGTH; k++) appreciationRates.push(ANNUAL_APPRECIATION_TYPICAL);
-                        const randomAppreciationRate = appreciationRates[Math.floor(Math.random() * appreciationRates.length)];
-                        prop.currentMarketValue = Math.round(prop.currentMarketValue * (1 + randomAppreciationRate));
-                        addLogEntry(`${prop.name} market value appreciated by ${(randomAppreciationRate * 100).toFixed(1)}% to $${formatCurrency(prop.currentMarketValue)}.`);
+                        // Appreciation is now inflation + market factor + small random factor
+                        const randomFactor = (Math.random() * 0.04) - 0.02; // +/- 2% randomness
+                        const totalAppreciationRate = currentInflationRate + marketAppreciationRate + randomFactor;
+
+                        prop.currentMarketValue = Math.round(prop.currentMarketValue * (1 + totalAppreciationRate));
+
+                        addLogEntry(`${prop.name} market value changed by ${(totalAppreciationRate * 100).toFixed(1)}% to $${formatCurrency(prop.currentMarketValue)}.`);
                     });
-                    showModal("Market Update", "Property values updated based on annual market appreciation.", 'info');
+                    showModal("Market Update", `Annual inflation: ${(currentInflationRate * 100).toFixed(1)}%. Market state: ${marketState}. Property values and salaries updated.`, 'info');
                 }
+                // *** END MODIFIED ***
 
                 let totalPropertyExpenses = 0, totalRentalIncome = 0;
                 player.properties.forEach((prop, index) => {
+                    if (prop.monthsOwned === undefined) { prop.monthsOwned = prop.monthsPaid || 0; }
+                    prop.monthsOwned++;
+
                     if (prop.remainingLoan > 0) {
                         const paymentThisMonth = Math.min(prop.monthlyInstallment, prop.remainingLoan);
                         player.cash -= paymentThisMonth; prop.remainingLoan -= paymentThisMonth; prop.monthsPaid++; totalPropertyExpenses += paymentThisMonth;
@@ -1657,102 +2082,105 @@
                     if (Math.random() < RANDOM_DAMAGE_EVENT_CHANCE) {
                         let incidentDamage = RANDOM_DAMAGE_MIN_PERCENT + Math.random() * (RANDOM_DAMAGE_MAX_PERCENT - RANDOM_DAMAGE_MIN_PERCENT);
                         prop.condition -= incidentDamage;
+                        prop.hasDisasterIcon = true;
+                        prop.disasterIcon = '🔧';
                         addLogEntry(`ALERT! ${prop.name} suffered damage, losing ${incidentDamage.toFixed(1)}% condition.`);
                         showModal("Property Incident!", `${prop.name} condition dropped by ${incidentDamage.toFixed(1)}%! Consider renovating.`, 'warning');
                     }
 
                     if (Math.random() < DISASTER_EVENT_CHANCE) {
-                        const disasters = ["Fire", "Flood", "Earthquake"];
-                        const disasterName = disasters[Math.floor(Math.random() * disasters.length)];
+                        const disasters = [{name: "Fire", icon: '🔥'}, {name: "Flood", icon: '🌊'}, {name: "Earthquake", icon: '💥'}];
+                        const disaster = disasters[Math.floor(Math.random() * disasters.length)];
                         let disasterDamage = DISASTER_DAMAGE_MIN_PERCENT + Math.random() * (DISASTER_DAMAGE_MAX_PERCENT - DISASTER_DAMAGE_MIN_PERCENT);
 
                         prop.condition -= disasterDamage;
                         prop.condition = Math.max(0, prop.condition);
+                        prop.hasDisasterIcon = true;
+                        prop.disasterIcon = disaster.icon;
 
-                        addLogEntry(`DISASTER! A ${disasterName} hit ${prop.name}, causing ${disasterDamage.toFixed(1)}% damage. Condition: ${prop.condition.toFixed(1)}%.`);
-                        showModal("Natural Disaster!", `A ${disasterName} struck ${prop.name}! Condition dropped by ${disasterDamage.toFixed(1)}%! You should renovate.`, 'error');
+                        addLogEntry(`DISASTER! A ${disaster.name} hit ${prop.name}, causing ${disasterDamage.toFixed(1)}% damage. Condition: ${prop.condition.toFixed(1)}%.`);
+                        showModal("Natural Disaster!", `A ${disaster.name} struck ${prop.name}! Condition dropped by ${disasterDamage.toFixed(1)}%! You should renovate.`, 'error');
                     }
 
                     prop.condition -= (prop.isRented ? CONDITION_DECAY_RENTED_PER_MONTH : CONDITION_DECAY_VACANT_PER_MONTH);
                     prop.condition = Math.max(0, prop.condition);
 
-                    // --- MODIFIED: Marketing Logic ---
                     if (prop.isBeingMarketed) {
                         prop.marketingMonths++;
-                        let campaignSuccess = false;
-                        let logMsg = "";
-                        let campaignEnded = false;
+                        let campaignSuccess = false; let logMsg = ""; let campaignEnded = false;
 
-                        if (prop.wasListedForRent) { // Rent is guaranteed
-                            if (prop.marketingMonths === 1 && Math.random() < MARKETING_SALE_CHANCE_MONTH_1) { // Same 50% chance as sale M1
+                        if (prop.wasListedForRent) {
+                            if (prop.marketingMonths === 1 && Math.random() < MARKETING_SALE_CHANCE_MONTH_1) {
                                 campaignSuccess = true; logMsg = `Fast Marketing (Month 1) for ${prop.name} rent succeeded!`;
                             } else if (prop.marketingMonths === 2) {
-                                campaignSuccess = true; logMsg = `Marketing Campaign (Month 2) for ${prop.name} rent succeeded!`; // Guaranteed M2
+                                campaignSuccess = true; logMsg = `Marketing Campaign (Month 2) for ${prop.name} rent succeeded!`;
                             }
-                        } else { // Sale chance updated
+                        } else {
                             if (prop.marketingMonths === 1 && Math.random() < MARKETING_SALE_CHANCE_MONTH_1) {
                                 campaignSuccess = true; logMsg = `Fast Marketing (Month 1) for ${prop.name} sale succeeded!`;
                             } else if (prop.marketingMonths === 2) {
-                                if (Math.random() < MARKETING_SALE_CHANCE_MONTH_2) { // Use new M2 chance
+                                if (Math.random() < MARKETING_SALE_CHANCE_MONTH_2) {
                                    campaignSuccess = true; logMsg = `Marketing Campaign (Month 2) for ${prop.name} sale succeeded!`;
                                 } else {
-                                   campaignEnded = true; // Failed after 2 months
+                                   campaignEnded = true;
                                    logMsg = `MARKETING FAILED: Fast Sale campaign for ${prop.name} did not find a buyer after 2 months.`;
                                    showModal("Marketing Failed", `The Fast Sale campaign for ${prop.name} ended without finding a suitable buyer. The property has been de-listed.`, 'error');
-                                   prop.isListedForSale = false; // De-list
-                                   prop.askingPrice = 0;
-                                   prop.timeOnMarket = 0;
+                                   prop.isListedForSale = false; prop.askingPrice = 0; prop.timeOnMarket = 0;
                                 }
                             }
                         }
 
                         if (campaignSuccess) {
                             addLogEntry(logMsg);
-                            if (prop.wasListedForRent) {
-                                forceFindTenant(prop);
-                            } else { // Was listed for sale
-                                forceFindBuyer(prop, index);
-                            }
-                            // Reset marketing flags
-                            prop.isBeingMarketed = false;
-                            prop.marketingMonths = 0;
-                            prop.wasListedForRent = false;
+                            if (prop.wasListedForRent) { forceFindTenant(prop); } else { forceFindBuyer(prop, index); }
+                            prop.isBeingMarketed = false; prop.marketingMonths = 0; prop.wasListedForRent = false;
                         } else if (campaignEnded) {
                             addLogEntry(logMsg);
-                             // Reset marketing flags
-                            prop.isBeingMarketed = false;
-                            prop.marketingMonths = 0;
-                            prop.wasListedForRent = false;
+                            prop.isBeingMarketed = false; prop.marketingMonths = 0; prop.wasListedForRent = false;
                         } else if (prop.marketingMonths === 1) {
                              addLogEntry(`Marketing (Month 1) for ${prop.name} found no one. Trying again...`);
                         }
 
                     } else if (prop.isListedForSale) {
-                        prop.timeOnMarket++; let offerChance = BASE_CHANCE_OF_RECEIVING_OFFER;
+                        prop.timeOnMarket++;
+                        // *** MODIFIED: Use BASE_CHANCE_OF_RECEIVING_OFFER which changes with market state ***
+                        let offerChance = BASE_CHANCE_OF_RECEIVING_OFFER;
                         const priceRatio = prop.askingPrice > 0 ? prop.askingPrice / prop.currentMarketValue : 1;
                         if (priceRatio > 1) offerChance -= (priceRatio - 1) * ASKING_PRICE_SENSITIVITY_FOR_OFFER_CHANCE * 5;
                         else offerChance += (1 - priceRatio) * ASKING_PRICE_SENSITIVITY_FOR_OFFER_CHANCE * 2;
                         offerChance += (prop.condition / 100 - 0.5) * CONDITION_SENSITIVITY_FOR_OFFER_CHANCE * 100;
                         offerChance = Math.max(0.01, Math.min(0.9, offerChance));
+
                         if (Math.random() < offerChance) {
+                            // *** MODIFIED: Use BUYER_OFFER_DISCOUNT_BASE_FROM_MARKET which changes with market state ***
                             let buyerOffer = prop.currentMarketValue * (1 - BUYER_OFFER_DISCOUNT_BASE_FROM_MARKET);
                             const conditionPenaltyFactor = (100 - prop.condition) / 100;
                             buyerOffer *= (1 - (BUYER_OFFER_CONDITION_PENALTY_MAX * conditionPenaltyFactor));
-                            if (prop.askingPrice < buyerOffer && prop.askingPrice > 0) buyerOffer = prop.askingPrice + Math.random() * (buyerOffer - prop.askingPrice);
+                            
+                            // Buyers might offer asking price in boom, rarely in bust
+                            let askingPriceOfferChance = 0.1;
+                            if (marketState === MARKET_STATES.BOOM) askingPriceOfferChance = 0.4;
+                            else if (marketState === MARKET_STATES.BUST) askingPriceOfferChance = 0.01;
+
+                            if (prop.askingPrice < buyerOffer && prop.askingPrice > 0 && Math.random() < askingPriceOfferChance) {
+                                buyerOffer = prop.askingPrice + Math.random() * (buyerOffer - prop.askingPrice); // Offer between asking and their calculated offer
+                            } else if (prop.askingPrice > 0 && buyerOffer > prop.askingPrice) {
+                                buyerOffer = prop.askingPrice * (0.95 + Math.random() * 0.05); // Don't offer significantly MORE than asking
+                            }
+
                             currentOfferForProperty = Math.round(Math.max(0, buyerOffer));
                             addLogEntry(`OFFER RECEIVED for ${prop.name}! Buyer offers $${formatCurrency(currentOfferForProperty)} (Asking: $${formatCurrency(prop.askingPrice)}).`);
                             openOfferModal(index, currentOfferForProperty);
                         }
-                    } else if (!prop.isListedForSale) { // Check for rental status (not listed for sale)
+                    } else if (!prop.isListedForSale) {
                         if (prop.isRented) {
-
-                            // NEW: Check for first month free from marketing
                             if (prop.tenantFirstMonthFree) {
                                 prop.tenantFirstMonthFree = false;
                                 addLogEntry(`New tenant at ${prop.name} gets their first month free (marketing deal).`);
                             } else {
                                 let tenantPaidThisMonth = true;
                                 if (prop.isDelinquent) {
+                                    // *** MODIFIED: Use DELINQUENT_NON_PAYMENT_BASE_CHANCE which changes with market state ***
                                     let nonPaymentChance = DELINQUENT_NON_PAYMENT_BASE_CHANCE + (prop.delinquentMonths * DELINQUENT_NON_PAYMENT_ESCALATION_PER_MONTH);
                                     nonPaymentChance = Math.min(nonPaymentChance, DELINQUENT_MAX_NON_PAYMENT_CHANCE);
                                     if (Math.random() < nonPaymentChance) {
@@ -1760,7 +2188,7 @@
                                         addLogEntry(`BAD TENANT: ${prop.name} did not pay rent (Cond: ${prop.condition.toFixed(1)}%). ${prop.delinquentMonths} months unpaid.`);
                                         showModal("Rent Not Paid!", `Tenant at ${prop.name} is delinquent and did not pay rent. Improve property condition!`, 'warning');
                                     } else { player.cash += prop.currentRent; totalRentalIncome += prop.currentRent; addLogEntry(`Delinquent tenant at ${prop.name} paid $${formatCurrency(prop.currentRent)}.`); }
-                                } else if (prop.condition < BAD_TENANT_CONDITION_THRESHOLD && Math.random() < CHANCE_BECOME_DELINQUENT_IF_LOW_CONDITION) {
+                                } else if (prop.condition < BAD_TENANT_CONDITION_THRESHOLD && Math.random() < CHANCE_BECOME_DELINQUENT_IF_LOW_CONDITION) { // *** MODIFIED: Use CHANCE_BECOME_DELINQUENT_IF_LOW_CONDITION which changes ***
                                     prop.isDelinquent = true; prop.delinquentMonths = 1; tenantPaidThisMonth = false;
                                     addLogEntry(`WARNING: Tenant at ${prop.name} became delinquent (Cond: ${prop.condition.toFixed(1)}%) and stopped paying!`);
                                     showModal("Tenant Delinquent!", `Tenant at ${prop.name} became delinquent due to poor condition and has not paid rent!`, 'warning');
@@ -1788,9 +2216,9 @@
                             }
                         } else if (prop.isListedForRent) {
                             const effectiveRentability = prop.baseRentability * (prop.condition / 100);
+                            // *** MODIFIED: Use BASE_TENANT_FIND_CHANCE which changes with market state ***
                             if (Math.random() < BASE_TENANT_FIND_CHANCE * effectiveRentability) {
                                 prop.isRented = true; prop.isListedForRent = false; prop.isDelinquent = false; prop.delinquentMonths = 0;
-                                // Use helper function
                                 prop.currentRent = getEstimatedMonthlyRent(prop.currentMarketValue, prop.condition);
                                 prop.tenantMonths = 0;
                                 addLogEntry(`${prop.name} rented for $${formatCurrency(prop.currentRent)}/month!`);
@@ -1809,7 +2237,6 @@
                 generateNewProperties();
                 generateJobOpportunities();
 
-                // NEW: Calculate and store cash change
                 player.lastMonthCashChange = player.cash - cashBeforeMonth;
 
                 updateAllUI();
@@ -1836,31 +2263,23 @@
             }
         }
 
-        // --- Marketing Helper Functions ---
-
-        function forceFindTenant(prop) {
+		function forceFindTenant(prop) {
             prop.isRented = true;
             prop.isListedForRent = false;
             prop.isDelinquent = false;
             prop.delinquentMonths = 0;
-
             const newRent = getEstimatedMonthlyRent(prop.currentMarketValue, prop.condition);
             prop.currentRent = newRent;
             prop.tenantMonths = 0;
-            prop.tenantFirstMonthFree = true; // Tenant gets first month free
-
+            prop.tenantFirstMonthFree = true;
             addLogEntry(`MARKETING SUCCESS: ${prop.name} rented for $${formatCurrency(prop.currentRent)}/month! (First month free).`);
             showModal("Tenant Found!", `Marketing campaign found a tenant for ${prop.name} at $${formatCurrency(prop.currentRent)}/month. They get the first month free as part of the deal.`, 'success');
         }
 
         function forceFindBuyer(prop, index) {
-            // Generate a good offer, from 95% to 100% of the asking price
             let buyerOffer = prop.askingPrice * (0.95 + Math.random() * 0.05);
             currentOfferForProperty = Math.round(Math.max(0, buyerOffer));
-
-            // Re-list for sale so the offer modal works correctly
             prop.isListedForSale = true;
-
             addLogEntry(`MARKETING SUCCESS: Offer for ${prop.name}! Buyer offers $${formatCurrency(currentOfferForProperty)} (Asking: $${formatCurrency(prop.askingPrice)}).`);
             openOfferModal(index, currentOfferForProperty);
         }
@@ -1905,6 +2324,8 @@
             const monthlyInstallment = loanAmount / chosenTermMonths;
             const monthlyFees = (propToBuy.price * PROPERTY_FEES_PERCENTAGE_ANNUAL) / 12;
             player.cash -= downPayment;
+
+            // *** NEW: Add disasterIcon flags to new property ***
             const newOwnedProperty = {
                 id: propToBuy.id, name: propToBuy.name, purchasePrice: propToBuy.price,
                 currentMarketValue: propToBuy.price, baseRentability: propToBuy.baseRentability,
@@ -1913,9 +2334,13 @@
                 condition: propToBuy.initialCondition, isRented: false, isListedForRent: false,
                 currentRent: 0, tenantMonths: 0, isDelinquent: false, delinquentMonths: 0,
                 isListedForSale: false, askingPrice: 0, timeOnMarket: 0, loanTermMonths: chosenTermMonths,
-                // NEW: Add marketing flags
-                isBeingMarketed: false, marketingMonths: 0, wasListedForRent: false, tenantFirstMonthFree: false
+                isBeingMarketed: false, marketingMonths: 0, wasListedForRent: false, tenantFirstMonthFree: false,
+                monthsOwned: 0,
+                hasDisasterIcon: false, // NEW
+                disasterIcon: ''        // NEW
             };
+            // *** END NEW ***
+
             player.properties.push(newOwnedProperty);
             addLogEntry(`Bought ${propToBuy.name} for $${formatCurrency(propToBuy.price)} (${chosenTermMonths/12}-yr loan).`);
             showModal("Purchase Successful!", `Bought ${propToBuy.name}! Cash: $${formatCurrency(player.cash)}.`, 'success');
@@ -1958,12 +2383,12 @@
             if (!prop) return;
 
             prop.isRented = false;
-            prop.isListedForRent = false; // Property becomes vacant, not auto-listed
+            prop.isListedForRent = false;
             prop.currentRent = 0;
             prop.tenantMonths = 0;
             prop.isDelinquent = false;
             prop.delinquentMonths = 0;
-            prop.tenantFirstMonthFree = false; // Reset this flag
+            prop.tenantFirstMonthFree = false;
 
             let damageMessage = `Tenant has been evicted from ${prop.name}. The property is now vacant.`;
 
@@ -1972,6 +2397,9 @@
                 prop.condition -= damagePercent;
                 prop.condition = Math.max(0, prop.condition);
                 damageMessage = `The evicted tenant from ${prop.name} got angry and caused ${damagePercent.toFixed(1)}% damage! Condition is now ${prop.condition.toFixed(1)}%.`;
+                // *** NEW: Add disaster icon ***
+                prop.hasDisasterIcon = true;
+                prop.disasterIcon = '😠';
                 addLogEntry(`ALERT: Evicted tenant damaged ${prop.name} by ${damagePercent.toFixed(1)}%.`);
                 showModal("Tenant Evicted (Damaged)!", damageMessage, 'error');
             } else {
@@ -2113,7 +2541,7 @@
             if (prop.isBeingMarketed) { showModal("Cannot List", "Property is currently being marketed.", 'warning'); return; }
 
             listSaleModalTitleEl.textContent = isAdjusting ? `Adjust Asking Price: ${prop.name}` : `List for Sale: ${prop.name}`;
-            listSalePropertyInfoEl.innerHTML = `<p><strong>Original Purchase:</strong> $${formatCurrency(prop.purchasePrice)}</p><p><strong>Remaining Loan:</strong> $${formatCurrency(prop.remainingLoan)}</p><p><strong>Condition:</strong> ${prop.condition.toFixed(1)}%</p>`;
+            listSalePropertyInfoEl.innerHTML = `<p><strong>Original Purchase:</strong> $${formatCurrency(prop.purchasePrice)}</p><p><strong>Remaining Loan:</strong> $${formatCurrency(prop.remainingLoan)}</p><p><strong>Condition:</strong> ${prop.condition.toFixed(1)}%</p><p><strong>Months Owned:</strong> ${prop.monthsOwned}</p>`;
             listSaleMarketValueEl.textContent = formatCurrency(prop.currentMarketValue);
             askingPriceInputEl.value = prop.isListedForSale ? prop.askingPrice : Math.round(prop.currentMarketValue * 1.05);
             askingPriceInputEl.placeholder = `e.g., ${formatCurrency(Math.round(prop.currentMarketValue * 1.05))}`;
@@ -2127,7 +2555,8 @@
             if (prop.isListedForSale) addLogEntry(`Asking price for ${prop.name} changed from $${formatCurrency(prop.askingPrice)} to $${formatCurrency(newAskingPrice)}.`);
             else { addLogEntry(`${prop.name} listed for sale with asking price $${formatCurrency(newAskingPrice)}.`); prop.timeOnMarket = 0; }
             prop.isListedForSale = true; prop.askingPrice = newAskingPrice; prop.isListedForRent = false;
-            listSaleModal.style.display = 'none'; propertyToManageIndex = -1; updateAllUI(); saveGame();
+            listSaleModal.style.display = 'none';
+            updateAllUI(); saveGame();
         }
         cancelListSaleBtn.onclick = function() { listSaleModal.style.display = 'none'; propertyToManageIndex = -1; }
 
@@ -2146,7 +2575,7 @@
             propertyToManageIndex = index; currentOfferForProperty = buyerOfferAmount;
             const prop = player.properties[propertyToManageIndex]; if (!prop || !prop.isListedForSale) return;
             offerModalTitleEl.textContent = `Buyer's Offer for ${prop.name}!`;
-            offerPropertyInfoEl.innerHTML = `<p><strong>Market Value:</strong> $${formatCurrency(prop.currentMarketValue)}</p><p><strong>Condition:</strong> ${prop.condition.toFixed(1)}%</p>`;
+            offerPropertyInfoEl.innerHTML = `<p><strong>Market Value:</strong> $${formatCurrency(prop.currentMarketValue)}</p><p><strong>Condition:</strong> ${prop.condition.toFixed(1)}%</p><p><strong>Months Owned:</strong> ${prop.monthsOwned}</p>`;
             offerAskingPriceEl.textContent = formatCurrency(prop.askingPrice);
             offerBuyerOfferValueEl.textContent = formatCurrency(currentOfferForProperty);
             offerCounterInputEl.value = ''; offerCounterInputEl.placeholder = `e.g., ${formatCurrency(Math.round(currentOfferForProperty * 1.03))}`;
@@ -2155,7 +2584,12 @@
 
         acceptOfferBtn.onclick = function() {
             if (propertyToManageIndex === -1 || currentOfferForProperty === null) return;
-            finalizeSale(propertyToManageIndex, currentOfferForProperty);
+            const prop = player.properties[propertyToManageIndex];
+            if (prop.monthsOwned < 12) {
+                openFlippingPenaltyModal(propertyToManageIndex, currentOfferForProperty);
+            } else {
+                finalizeSale(propertyToManageIndex, currentOfferForProperty);
+            }
         }
 
         rejectOfferBtn.onclick = function() {
@@ -2170,48 +2604,131 @@
             if (propertyToManageIndex === -1 || currentOfferForProperty === null) return;
             const prop = player.properties[propertyToManageIndex];
             const playerCounter = parseFloat(offerCounterInputEl.value);
-            if (isNaN(playerCounter) || playerCounter <= 0) { showModal("Invalid Counter", "Please enter a valid positive amount.", 'warning'); return; }
-            if (playerCounter < currentOfferForProperty) {
-                 showModal("Low Counter-Offer", `Buyer accepts your lower counter of $${formatCurrency(playerCounter)}!`, 'success');
-                 finalizeSale(propertyToManageIndex, playerCounter); return;
+
+            if (isNaN(playerCounter) || playerCounter <= 0) {
+                showModal("Invalid Counter", "Please enter a valid positive amount.", 'warning'); return;
             }
+            if (playerCounter <= currentOfferForProperty) {
+                 showModal("Buyer Accepts!", `The buyer was happy to accept your lower counter of $${formatCurrency(playerCounter)}!`, 'success');
+                 if (prop.monthsOwned < 12) {
+                    openFlippingPenaltyModal(propertyToManageIndex, playerCounter);
+                 } else {
+                    finalizeSale(propertyToManageIndex, playerCounter);
+                 }
+                 return;
+            }
+
             addLogEntry(`Countered $${formatCurrency(playerCounter)} for ${prop.name} (Offer: $${formatCurrency(currentOfferForProperty)}).`);
-            let chanceOfAcceptance = 0.5;
-            if (playerCounter <= currentOfferForProperty * COUNTER_OFFER_ACCEPT_THRESHOLD_GOOD_DEAL) chanceOfAcceptance = 0.85;
-            else if (playerCounter >= currentOfferForProperty * COUNTER_OFFER_REJECT_THRESHOLD_BAD_DEAL || playerCounter > prop.currentMarketValue * 1.1) chanceOfAcceptance = 0.1;
-            else {
-                const range = COUNTER_OFFER_REJECT_THRESHOLD_BAD_DEAL - COUNTER_OFFER_ACCEPT_THRESHOLD_GOOD_DEAL;
-                const positionInRange = ( (playerCounter / currentOfferForProperty) - COUNTER_OFFER_ACCEPT_THRESHOLD_GOOD_DEAL) / range;
-                chanceOfAcceptance = 0.85 - (positionInRange * 0.75);
-                chanceOfAcceptance = Math.max(0.1, Math.min(0.85, chanceOfAcceptance));
+
+            let chanceOfAcceptance = 0;
+            const buyerOffer = currentOfferForProperty;
+            const askingPrice = prop.askingPrice;
+
+            if (playerCounter > askingPrice) {
+                chanceOfAcceptance = COUNTER_OFFER_MIN_ACCEPT_CHANCE;
+            } else {
+                const negotiationRange = askingPrice - buyerOffer;
+                const counterPosition = playerCounter - buyerOffer;
+                if (negotiationRange <= 0) {
+                    chanceOfAcceptance = COUNTER_OFFER_MIN_ACCEPT_CHANCE;
+                } else {
+                    const percentIntoRange = counterPosition / negotiationRange;
+                    const chanceRange = COUNTER_OFFER_NEGOTIATION_MAX_CHANCE - COUNTER_OFFER_NEGOTIATION_MIN_CHANCE;
+                    chanceOfAcceptance = COUNTER_OFFER_NEGOTIATION_MAX_CHANCE - (percentIntoRange * chanceRange);
+                }
             }
-            if (prop.condition > 90) chanceOfAcceptance += 0.05;
+             // *** MODIFIED: Counter offer chance affected by market state ***
+            if (marketState === MARKET_STATES.BOOM) {
+                chanceOfAcceptance *= 0.8; // Buyers less likely to accept high counters in boom
+            } else if (marketState === MARKET_STATES.BUST) {
+                 chanceOfAcceptance *= 1.5; // Buyers more desperate, more likely to accept in bust
+            }
+
+            chanceOfAcceptance = Math.max(COUNTER_OFFER_MIN_ACCEPT_CHANCE, Math.min(COUNTER_OFFER_NEGOTIATION_MAX_CHANCE, chanceOfAcceptance));
+            console.log(`Counter debug: Offer=${buyerOffer}, Asking=${askingPrice}, Counter=${playerCounter}, Chance=${chanceOfAcceptance}`);
+
             if (Math.random() < chanceOfAcceptance) {
                 addLogEntry(`Buyer accepted counter of $${formatCurrency(playerCounter)} for ${prop.name}!`);
-                finalizeSale(propertyToManageIndex, playerCounter);
+                if (prop.monthsOwned < 12) {
+                    openFlippingPenaltyModal(propertyToManageIndex, playerCounter);
+                } else {
+                    finalizeSale(propertyToManageIndex, playerCounter);
+                }
             } else {
                 addLogEntry(`Buyer rejected counter of $${formatCurrency(playerCounter)} for ${prop.name}. Remains listed.`);
-                showModal("Counter Rejected", `The buyer rejected your counter. ${prop.name} remains on the market.`, 'warning');
+                showModal("Counter Rejected", `The buyer rejected your counter of $${formatCurrency(playerCounter)} (${(chanceOfAcceptance*100).toFixed(0)}% chance). ${prop.name} remains on the market.`, 'warning');
             }
             offerModal.style.display = 'none'; propertyToManageIndex = -1; currentOfferForProperty = null; updateAllUI();
         }
 
+
+        function openFlippingPenaltyModal(propertyIndex, salePrice) {
+            const prop = player.properties[propertyIndex];
+            if (!prop || prop.monthsOwned >= 12) {
+                finalizeSale(propertyIndex, salePrice);
+                return;
+            }
+
+            const basePenaltyPercent = 0.12;
+            const penaltyReductionPerMonth = 0.01;
+            const currentPenaltyPercent = basePenaltyPercent - (prop.monthsOwned * penaltyReductionPerMonth);
+            const penaltyAmount = prop.purchasePrice * currentPenaltyPercent;
+
+            confirmFlippingSaleBtn.dataset.propertyIndex = propertyIndex;
+            confirmFlippingSaleBtn.dataset.salePrice = salePrice;
+            confirmFlippingSaleBtn.dataset.penaltyAmount = penaltyAmount;
+
+            flippingPenaltyMessage.innerHTML = `
+                You have only owned this property for <strong>${prop.monthsOwned} months</strong>.
+                <br>Selling before 12 months incurs a penalty.
+                <br>Your current penalty is <strong>${(currentPenaltyPercent * 100).toFixed(1)}%</strong> of the purchase price.
+                <br><br>Purchase Price: $${formatCurrency(prop.purchasePrice)}
+                <br><strong>Flipping Penalty: $${formatCurrency(penaltyAmount)}</strong>
+                <br><br>Sale Price: $${formatCurrency(salePrice)}
+                <br><strong>Net Sale (before loan): $${formatCurrency(salePrice - penaltyAmount)}</strong>
+                <br><br>Do you want to proceed?`;
+
+            flippingPenaltyModal.style.display = 'block';
+            offerModal.style.display = 'none';
+        }
+
+        confirmFlippingSaleBtn.onclick = function() {
+            const propertyIndex = parseInt(this.dataset.propertyIndex);
+            const salePrice = parseFloat(this.dataset.salePrice);
+            const penaltyAmount = parseFloat(this.dataset.penaltyAmount);
+
+            if (isNaN(propertyIndex) || isNaN(salePrice) || isNaN(penaltyAmount)) {
+                console.error("Flipping penalty modal error: Invalid data.");
+                flippingPenaltyModal.style.display = 'none';
+                return;
+            }
+
+            player.cash -= penaltyAmount;
+            addLogEntry(`Paid a flipping penalty of $${formatCurrency(penaltyAmount)} for selling ${player.properties[propertyIndex].name} too early.`);
+
+            finalizeSale(propertyIndex, salePrice);
+            flippingPenaltyModal.style.display = 'none';
+        }
+
+        cancelFlippingSaleBtn.onclick = function() {
+            flippingPenaltyModal.style.display = 'none';
+            propertyToManageIndex = -1;
+            currentOfferForProperty = null;
+            addLogEntry("Sale cancelled to avoid flipping penalty.");
+            showModal("Sale Cancelled", "You decided not to sell the property and avoid the flipping penalty.", 'info');
+        }
+
         function finalizeSale(propertyIndex, salePrice) {
             const prop = player.properties[propertyIndex];
-
-            // Fee was paid upfront for marketing. No fee calculation needed here.
-
             const netCashFromSale = salePrice - prop.remainingLoan;
             player.cash += netCashFromSale;
-            addLogEntry(`SOLD ${prop.name} for $${formatCurrency(salePrice)}. Net cash: $${formatCurrency(netCashFromSale)}.`);
+            addLogEntry(`SOLD ${prop.name} for $${formatCurrency(salePrice)}. Net cash (after loan): $${formatCurrency(netCashFromSale)}.`);
             showModal("Property Sold!", `${prop.name} sold for $${formatCurrency(salePrice)}. Received $${formatCurrency(netCashFromSale)} after loan payoff.`, 'success');
             player.properties.splice(propertyIndex, 1);
             propertyToManageIndex = -1; currentOfferForProperty = null;
             listSaleModal.style.display = 'none'; offerModal.style.display = 'none';
             updateAllUI(); saveGame();
         }
-
-        // --- Marketing Modal Functions (Updated) ---
 
         window.openMarketingConfirmModal = function(index) {
             propertyToManageIndex = index;
@@ -2223,13 +2740,9 @@
                 return;
             }
 
-            let fee = 0;
-            let campaignType = "";
-            let details = "";
-            let canMarket = true; // Flag
+            let fee = 0; let campaignType = ""; let details = ""; let canMarket = true;
 
             if (prop.isListedForRent) {
-                // Calculate rent fee: 1 month's estimated rent
                 const estimatedRent = getEstimatedMonthlyRent(prop.currentMarketValue, prop.condition);
                 fee = estimatedRent;
                 campaignType = "Fast Rent Campaign";
@@ -2237,35 +2750,28 @@
                 marketingConfirmModalTitleEl.textContent = `Market for Rent: ${prop.name}`;
 
             } else if (prop.isListedForSale) {
-                // Calculate sale fee
                 const price = prop.askingPrice;
                 if (price <= 0) {
                     showModal("Invalid Price", "You must set a valid Asking Price before marketing for sale.", 'warning');
-                    openListSaleModal(index); // Open the list sale modal for them
+                    openListSaleModal(index);
                     return;
                 }
 
-                 // NEW: Check asking price vs market value
                  const maxAllowedPrice = prop.currentMarketValue * MARKETING_ASKING_PRICE_CAP_PERCENT;
                  if (price > maxAllowedPrice) {
                      showModal("Price Too High for Marketing", `Your asking price ($${formatCurrency(price)}) is more than ${MARKETING_ASKING_PRICE_CAP_PERCENT * 100}% of the market value ($${formatCurrency(prop.currentMarketValue)}). Max allowed for marketing: $${formatCurrency(maxAllowedPrice)}. Please adjust the price first.`, 'warning');
-                     canMarket = false; // Prevent modal from showing
-                     openListSaleModal(index, true); // Open adjust price modal
-                     return; // Stop processing
+                     canMarket = false;
+                     openListSaleModal(index, true);
+                     return;
                  }
 
-
-                if (price < 100000) {
-                    fee = 1000;
-                } else if (price >= 100000 && price <= 1000000) {
-                    fee = price * 0.01;
-                } else { // price > 1,000,000
-                    fee = 10000 + (price * 0.01);
-                }
+                if (price < 100000) { fee = 1000; }
+                else if (price >= 100000 && price <= 1000000) { fee = price * 0.01; }
+                else { fee = 10000 + (price * 0.01); }
                 fee = Math.round(fee);
 
                 campaignType = "Fast Sale Campaign";
-                details = `This campaign has a 70% chance to find a buyer within 2 months (50% chance next month, 40% chance the 2nd month). The buyer will make an offer between 95-100% of your asking price. If unsuccessful after 2 months, the campaign ends.`; // UPDATED details
+                details = `This campaign has a 70% chance to find a buyer within 2 months (50% chance next month, 40% chance the 2nd month). The buyer will make an offer between 95-100% of your asking price. If unsuccessful after 2 months, the campaign ends.`;
                 marketingConfirmModalTitleEl.textContent = `Market for Sale: ${prop.name}`;
             }
 
@@ -2283,31 +2789,27 @@
             `;
             marketingConfirmDetailsEl.textContent = details;
             marketingConfirmFeeEl.textContent = `$${formatCurrency(fee)}`;
-
             marketingConfirmModal.style.display = 'block';
-
         }
-
-        confirmMarketingBtn.onclick = function() {
+		
+		confirmMarketingBtn.onclick = function() {
             if (propertyToManageIndex === -1) return;
             const prop = player.properties[propertyToManageIndex];
             if (!prop) return;
 
-            let fee = 0;
-            let logMessage = "";
+            let fee = 0; let logMessage = "";
 
             if (prop.isListedForRent) {
                 fee = getEstimatedMonthlyRent(prop.currentMarketValue, prop.condition);
                 prop.wasListedForRent = true;
                 logMessage = `Paid $${formatCurrency(fee)} marketing campaign fee to find a tenant for ${prop.name}.`;
             } else if (prop.isListedForSale) {
-                 // RE-CHECK PRICE CAP (in case market value changed)
                  const price = prop.askingPrice;
                  const maxAllowedPrice = prop.currentMarketValue * MARKETING_ASKING_PRICE_CAP_PERCENT;
                  if (price > maxAllowedPrice) {
                      showModal("Price Too High for Marketing", `Market value changed! Your asking price ($${formatCurrency(price)}) is now more than ${MARKETING_ASKING_PRICE_CAP_PERCENT * 100}% of the market value ($${formatCurrency(prop.currentMarketValue)}). Max allowed for marketing: $${formatCurrency(maxAllowedPrice)}. Please adjust the price first.`, 'error');
                      marketingConfirmModal.style.display = 'none';
-                     openListSaleModal(propertyToManageIndex, true); // Open adjust price modal
+                     openListSaleModal(propertyToManageIndex, true);
                      return;
                  }
 
@@ -2329,14 +2831,10 @@
             player.cash -= fee;
             prop.isBeingMarketed = true;
             prop.marketingMonths = 0;
-
-            // Stop normal listings
             prop.isListedForRent = false;
             prop.isListedForSale = false;
-
             addLogEntry(logMessage);
             showModal("Campaign Started!", `Your 2-month marketing campaign for ${prop.name} has begun! The fee of $${formatCurrency(fee)} has been paid.`, 'success');
-
             marketingConfirmModal.style.display = 'none';
             propertyToManageIndex = -1;
             updateAllUI();
@@ -2477,7 +2975,8 @@
 
         window.openJobApplicationConfirmModal = function(jobId) {
             jobToApplyForId = jobId;
-            const targetJob = JOBS.find(j => j.id === jobId);
+            // *** MODIFIED: Use gameJobs ***
+            const targetJob = gameJobs.find(j => j.id === jobId);
             if (!targetJob) {
                 console.error("Target job not found for confirmation:", jobId);
                 return;
@@ -2504,8 +3003,9 @@
         }
 
         function processJobApplication(jobId) {
-            const targetJob = JOBS.find(j => j.id === jobId);
-            const currentPlayerJob = JOBS.find(j => j.id === player.currentJobId);
+            // *** MODIFIED: Use gameJobs ***
+            const targetJob = gameJobs.find(j => j.id === jobId);
+            const currentPlayerJob = gameJobs.find(j => j.id === player.currentJobId);
             if (!targetJob || !currentPlayerJob) {
                 console.error("Job application error: Target or current job not found.");
                 return;
@@ -2537,6 +3037,14 @@
                 successChance += extraExperienceFactor * 0.05;
             }
             if (targetJob.field === currentPlayerJob.field && targetJob.level === currentPlayerJob.level + 1) successChance += 0.15;
+
+            // *** MODIFIED: Job application chance affected by market state ***
+            if (marketState === MARKET_STATES.BUST) {
+                successChance *= 0.6; // Harder to get jobs in a bust
+            } else if (marketState === MARKET_STATES.BOOM) {
+                 successChance *= 1.2; // Easier to get jobs in a boom
+            }
+
             successChance = Math.min(0.95, successChance);
 
             if (Math.random() < successChance) {
@@ -2567,6 +3075,7 @@
 
         const SAVE_KEY = "propertyTycoonSaveData";
 
+        // *** MODIFIED: Save new inflation and market data ***
         function saveGame() {
             try {
                 const gameState = {
@@ -2575,7 +3084,17 @@
                     gameLog: gameLog,
                     firstMonthAdvanced: firstMonthAdvanced,
                     availableProperties: availableProperties,
-                    availableJobs: availableJobs
+                    availableJobs: availableJobs,
+                    // Inflation-related data
+                    gamePropertyTypes: gamePropertyTypes,
+                    gameJobs: gameJobs,
+                    currentInflationRate: currentInflationRate,
+                    CLEANING_FEE_MIN: CLEANING_FEE_MIN,
+                    CLEANING_FEE_MAX: CLEANING_FEE_MAX,
+                    BANK_LOAN_APPLICATION_FEE: BANK_LOAN_APPLICATION_FEE,
+                    // Market Cycle data
+                    marketState: marketState,
+                    marketStateMonths: marketStateMonths
                 };
                 localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
             } catch (e) {
@@ -2584,6 +3103,7 @@
             }
         }
 
+        // *** MODIFIED: Load new inflation and market data w/ backwards compatibility ***
         function loadGame() {
             try {
                 const savedData = localStorage.getItem(SAVE_KEY);
@@ -2596,12 +3116,17 @@
                     player.bankLoanCooldown = gameState.player.bankLoanCooldown || 0;
                     player.lastMonthCashChange = gameState.player.lastMonthCashChange || 0;
 
-                    // NEW: Ensure all loaded properties have the new marketing flags
+                    // Backwards compatibility for disaster icons & monthsOwned
                     player.properties.forEach(prop => {
                         if (prop.isBeingMarketed === undefined) prop.isBeingMarketed = false;
                         if (prop.marketingMonths === undefined) prop.marketingMonths = 0;
                         if (prop.wasListedForRent === undefined) prop.wasListedForRent = false;
                         if (prop.tenantFirstMonthFree === undefined) prop.tenantFirstMonthFree = false;
+                        if (prop.monthsOwned === undefined) {
+                            prop.monthsOwned = prop.monthsPaid || 0;
+                        }
+                        if (prop.hasDisasterIcon === undefined) prop.hasDisasterIcon = false;
+                        if (prop.disasterIcon === undefined) prop.disasterIcon = '';
                     });
 
                     currentMonth = gameState.currentMonth;
@@ -2610,6 +3135,28 @@
 
                     availableProperties = gameState.availableProperties || [];
                     availableJobs = gameState.availableJobs || [];
+
+                    // Load inflation data, with fallback for old saves
+                    if (gameState.gameJobs) {
+                        gameJobs = gameState.gameJobs;
+                    } else {
+                        gameJobs = JSON.parse(JSON.stringify(JOBS)); // Deep copy
+                    }
+                    if (gameState.gamePropertyTypes) {
+                        gamePropertyTypes = gameState.gamePropertyTypes;
+                    } else {
+                        gamePropertyTypes = JSON.parse(JSON.stringify(PROPERTY_TYPES)); // Deep copy
+                    }
+                    currentInflationRate = gameState.currentInflationRate || 0.0;
+                    CLEANING_FEE_MIN = gameState.CLEANING_FEE_MIN || 100;
+                    CLEANING_FEE_MAX = gameState.CLEANING_FEE_MAX || 500;
+                    BANK_LOAN_APPLICATION_FEE = gameState.BANK_LOAN_APPLICATION_FEE || 500;
+
+                    // *** NEW: Load Market Cycle data, with fallback ***
+                    marketState = gameState.marketState || MARKET_STATES.NORMAL;
+                    marketStateMonths = gameState.marketStateMonths || 0;
+                    applyMarketStateEffects(); // Apply effects from loaded state
+                    // *** END NEW ***
 
                     if (firstMonthAdvanced && gameHeaderEl) {
                         gameHeaderEl.classList.add('header-hidden');
@@ -2647,7 +3194,7 @@
 
         function updateAllUI() {
             try {
-                renderPlayerStats();
+                renderPlayerStats(); // Updated to show market state
                 calculateAndRenderCashflow();
                 renderPropertyListings();
                 renderOwnedProperties();
@@ -2677,6 +3224,7 @@
             initializeGame(true);
         });
 
+        // *** MODIFIED: Initialize new game state vars, including market state ***
         function initializeGame(forceNew = false) {
             try {
                 let gameWasLoaded = false;
@@ -2688,7 +3236,6 @@
                     console.log("Game was loaded. Skipping full new game initialization.");
                     if (!availableProperties || availableProperties.length === 0) generateNewProperties();
                     if (!availableJobs || availableJobs.length === 0) generateJobOpportunities();
-                    // NEW: Ensure collapsible section is set correctly on load
                     loanSectionToggleBtn.classList.add('collapsed');
                     loanSectionContentEl.classList.add('collapsed');
                     updateAllUI();
@@ -2697,9 +3244,24 @@
                 }
 
                 console.log("Initializing a new game...");
-                const startingJob = JOBS.find(j => j.id === "unskilled0");
+
+                // Deep copy const data into mutable game state
+                gamePropertyTypes = JSON.parse(JSON.stringify(PROPERTY_TYPES));
+                gameJobs = JSON.parse(JSON.stringify(JOBS));
+                currentInflationRate = 0.0;
+                CLEANING_FEE_MIN = 100;
+                CLEANING_FEE_MAX = 500;
+                BANK_LOAN_APPLICATION_FEE = 500;
+
+                // *** NEW: Initialize market state ***
+                marketState = MARKET_STATES.NORMAL;
+                marketStateMonths = 0;
+                applyMarketStateEffects(); // Apply initial normal effects
+                // *** END NEW ***
+
+                const startingJob = gameJobs.find(j => j.id === "unskilled0");
                 if (!startingJob) {
-                    console.error("CRITICAL ERROR: Starting job 'unskilled0' not found in JOBS array!");
+                    console.error("CRITICAL ERROR: Starting job 'unskilled0' not found in gameJobs array!");
                     alert("CRITICAL ERROR: Starting job definition missing. Game cannot start.");
                     return;
                 }
@@ -2714,7 +3276,7 @@
                     deathAgeYears: deathAgeYears,
                     deathAgeMonths: deathAgeMonths,
                     bankLoanCooldown: 0,
-                    lastMonthCashChange: 0 // NEW: Initialize cash change
+                    lastMonthCashChange: 0
                 };
                 availableProperties = []; availableJobs = [];
                 gameLog = ["Game started. Good luck!"]; currentMonth = 0;
@@ -2727,16 +3289,12 @@
                     gameHeaderEl.classList.remove('header-hidden');
                 }
                 gameOverOverlayEl.style.display = 'none';
-
-                // NEW: Collapse the loan section by default on new game
                 loanSectionToggleBtn.classList.add('collapsed');
                 loanSectionContentEl.classList.add('collapsed');
 
                 generateNewProperties();
                 generateJobOpportunities();
                 updateAllUI();
-
-                // Hide cash change indicator on first load
                 cashChangeIndicatorEl.classList.remove('visible');
 
                 const initialJobTitle = startingJob.title;
@@ -2752,6 +3310,7 @@
                 }
             }
         }
+        // *** END MODIFIED FUNCTION ***
 
         window.addEventListener('DOMContentLoaded', (event) => {
             console.log('DOM fully loaded and parsed. Initializing game...');
@@ -2764,7 +3323,6 @@
                 console.error("Could not find tab buttons to attach listeners.");
             }
 
-            // NEW: Add click listener for collapsible loan section
             if (loanSectionToggleBtn && loanSectionContentEl) {
                 loanSectionToggleBtn.addEventListener('click', () => {
                     loanSectionToggleBtn.classList.toggle('collapsed');
@@ -2774,6 +3332,8 @@
                 console.error("Could not find loan section toggle elements.");
             }
         });
+
+
     </script>
 </body>
 </html>
