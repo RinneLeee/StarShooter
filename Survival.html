@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survival Simulation</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        /* Use Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+        }
+
+        /* --- 3D Canvas Background --- */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6; /* Dim it so text is readable */
+        }
+        
+        /* --- Landing Screen --- */
+        #landing-screen {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,1));
+            z-index: 100;
+        }
+        
+        /* Landing screen title */
+        #landing-title {
+            animation: pulse-light 3s infinite ease-in-out;
+        }
+        
+        /* Keyframe for title pulse */
+        @keyframes pulse-light {
+            0%, 100% { text-shadow: 0 0 10px #fff, 0 0 15px #fff; }
+            50% { text-shadow: 0 0 20px #fff, 0 0 30px #fff; }
+        }
+        
+        /* --- Main Game UI --- */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        /* Main UI panel styling */
+        .panel {
+            background-color: rgba(17, 24, 39, 0.8); /* bg-gray-900 with opacity */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(55, 65, 81, 0.5); /* gray-700 */
+            border-radius: 0.75rem; /* rounded-xl */
+        }
+        
+        /* Stat bar styling */
+        .stat-bar-bg {
+            background-color: #374151; /* gray-700 */
+            border-radius: 9999px;
+            overflow: hidden;
+            height: 20px;
+        }
+        .stat-bar-fg {
+            height: 100%;
+            border-radius: 9999px;
+            /* Smoother transition for health/food bars */
+            transition: width 0.5s ease-in-out; 
+        }
+        /* Fire bar has no transition for smooth 1-sec updates */
+        #warmth-bar {
+            transition: none;
+        }
+        
+        /* --- Bottom Log Bar --- */
+        #log-bar {
+            height: 120px; /* Fixed height for the log */
+            flex-shrink: 0; /* Prevent log bar from shrinking */
+            padding: 0.75rem; /* p-3 */
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column-reverse; /* New messages at bottom */
+            background-color: rgba(17, 24, 39, 0.9); /* Darker */
+        }
+        
+        /* Log message styling */
+        .log-message {
+            margin-top: 4px;
+            animation: fade-in 0.5s ease;
+        }
+        .log-message:first-child { /* Most recent message */
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            color: #f3f4f6; /* gray-100 */
+        }
+        .log-message:not(:first-child) {
+            color: #9ca3af; /* gray-400 */
+            font-size: 0.875rem; /* text-sm */
+        }
+        
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Custom Scrollbars --- */
+        
+        /* Main body scrollbar (for mobile/overflow) */
+        /* Note: This styles the main browser scrollbar */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+        body::-webkit-scrollbar-track {
+            background: #1f2937; /* gray-800 */
+        }
+        body::-webkit-scrollbar-thumb {
+            background: #4b5563; /* gray-600 */
+            border-radius: 4px;
+        }
+        body::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* gray-500 */
+        }
+
+        /* Custom scrollbar for the log */
+        #log-bar::-webkit-scrollbar {
+            width: 8px;
+        }
+        #log-bar::-webkit-scrollbar-track {
+            background: #374151; /* gray-700 */
+            border-radius: 4px;
+        }
+        #log-bar::-webkit-scrollbar-thumb {
+            background: #6b7280; /* gray-500 */
+            border-radius: 4px;
+        }
+        #log-bar::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af; /* gray-400 */
+        }
+        
+        /* How to Play scrollbar */
+        #instructions-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        #instructions-content::-webkit-scrollbar-track {
+            background: #374151; /* gray-700 */
+            border-radius: 4px;
+        }
+        #instructions-content::-webkit-scrollbar-thumb {
+            background: #6b7280; /* gray-500 */
+            border-radius: 4px;
+        }
+        #instructions-content::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af; /* gray-400 */
+        }
+
+        /* --- Modals (Minigame, Action) --- */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Minigame styles */
+        #minigame-bar-container {
+            width: 100%;
+            height: 40px;
+            background-color: #4b5563; /* gray-600 */
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid white;
+        }
+        #minigame-green-zone {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background-color: rgba(74, 222, 128, 0.7); /* green-400 */
+            z-index: 1;
+        }
+        #minigame-arrow {
+            position: absolute;
+            top: -5px;
+            width: 4px;
+            height: 50px; /* Taller than bar */
+            background-color: #ef4444; /* red-500 */
+            z-index: 2;
+            box-shadow: 0 0 10px #ef4444;
+        }
+
+        /* --- Inventory & Fire --- */
+        .inventory-slot {
+            position: relative;
+            aspect-square: 1 / 1; /* Makes slot responsive and square */
+            background-color: rgba(55, 65, 81, 0.8); /* gray-700 */
+            border-radius: 0.5rem; /* rounded-lg */
+            border: 2px solid #4b5563; /* gray-600 */
+            display: flex;
+            flex-direction: column; /* Stack item and durability bar */
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem; /* text-2xl */
+        }
+        @media (min-width: 640px) { /* sm: */
+            .inventory-slot {
+                font-size: 1.875rem; /* text-3xl */
+            }
+        }
+        
+        .inventory-slot .font-bold { /* Item count */
+            position: absolute;
+            bottom: 2px; /* bottom-0.5 */
+            right: 2px; /* right-0.5 */
+            font-size: 0.75rem; /* text-xs */
+            background-color: rgba(0,0,0,0.7);
+            border-radius: 99px;
+            padding: 0 4px;
+        }
+        @media (min-width: 640px) { /* sm: */
+            .inventory-slot .font-bold {
+                font-size: 0.875rem; /* text-sm */
+            }
+        }
+        
+        .inventory-item {
+            cursor: grab;
+            user-select: none;
+        }
+        .inventory-item.clickable {
+            cursor: pointer;
+        }
+        .inventory-item.disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+        
+        .inventory-slot.disabled {
+            opacity: 0.4;
+        }
+
+        /* Tool Durability Bar */
+        .durability-bar-bg {
+            position: absolute;
+            bottom: 4px;
+            left: 10%;
+            width: 80%;
+            height: 6px;
+            background-color: #374151; /* gray-700 */
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .durability-bar-fg {
+            height: 100%;
+            background-color: #22c55e; /* green-500 */
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Fire pit styling */
+        /* Outer dotted dropzone */
+        #fire-pit {
+            width: 8rem; /* w-32 */
+            height: 8rem; /* h-32 */
+            font-size: 3.75rem; /* text-5xl */
+            border-radius: 9999px;
+            border: 4px dashed #4b5563; /* gray-600 */
+            transition: all 0.5s ease;
+            position: relative; /* For visual timer */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(31, 41, 55, 0.5); /* gray-800 */
+        }
+        @media (min-width: 1024px) { /* lg: */
+            #fire-pit {
+                width: 10rem; /* w-40 */
+                height: 10rem; /* h-40 */
+                font-size: 4.5rem; /* text-7xl */
+            }
+        }
+        
+        #fire-pit.drag-over {
+            border-color: #f59e0b; /* amber-500 */
+            background-color: rgba(55, 65, 81, 0.7); /* gray-700 */
+            box-shadow: 0 0 10px #f59e0b;
+        }
+
+        /* Inner visual timer circle */
+        #fire-visual-timer {
+            width: 100%;
+            height: 100%;
+            border-radius: 9999px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Removed transition for smooth 1-sec scaling */
+            transition: background-color 0.5s ease, box-shadow 0.5s ease; 
+            transform: scale(1); /* Will be controlled by JS */
+            z-index: 1; /* Below emoji */
+        }
+        
+        /* The emoji itself */
+        #fire-emoji {
+            z-index: 2; /* On top of the visual timer */
+            position: relative; /* To ensure z-index applies */
+        }
+        
+        /* Button to start fire */
+        #start-fire-btn {
+            z-index: 3;
+            /* Tailwind classes equivalent */
+            background-color: #ca8a04; /* yellow-600 */
+            color: white;
+            font-weight: 600; /* font-semibold */
+            padding: 0.5rem 1rem; /* py-2 px-4 */
+            border-radius: 0.5rem; /* rounded-lg */
+            border: 2px solid #fde047; /* yellow-300 */
+            font-size: 0.875rem; /* text-sm */
+        }
+        #start-fire-btn:hover {
+            background-color: #eab308; /* yellow-500 */
+        }
+        #start-fire-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+
+        /* --- New Action Card CSS --- */
+        .action-card {
+            background-color: rgba(31, 41, 55, 0.8); /* gray-800 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.75rem; /* p-3 */
+            width: 100%;
+            border: 1px solid #4b5563; /* gray-600 */
+            transition: all 0.2s;
+            /* Added for grid layout */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .action-card:hover:not(.disabled) {
+            border-color: #9ca3af; /* gray-400 */
+        }
+        .action-btn {
+            width: 100%;
+            font-weight: bold;
+            padding-top: 0.5rem; /* py-2 */
+            padding-bottom: 0.5rem;
+            border-radius: 0.375rem; /* rounded-md */
+            transition: all 0.2s;
+            color: white;
+            margin-top: 0.5rem; /* Added margin-top */
+        }
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-green { background-color: #166534; }
+        .btn-green:hover:not(:disabled) { background-color: #15803d; }
+        .btn-blue { background-color: #1e40af; }
+        .btn-blue:hover:not(:disabled) { background-color: #1d4ed8; }
+        .btn-purple { background-color: #581c87; }
+        .btn-purple:hover:not(:disabled) { background-color: #7e22ce; }
+        .btn-gray { background-color: #4b5563; }
+        .btn-gray:hover:not(:disabled) { background-color: #6b7280; }
+        
+        /* Instructions Modal Styles */
+        #instructions-content {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #instructions-content ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        #instructions-content li {
+            padding: 8px 0;
+            border-bottom: 1px solid #374151; /* gray-700 */
+        }
+        #instructions-content li:last-child {
+            border-bottom: none;
+        }
+        #instructions-content strong {
+            color: #f59e0b; /* amber-500 */
+            font-weight: 600;
+        }
+        
+        /* Pause/Help Button Styles */
+        .control-btn {
+            background: none;
+            border: 2px solid #6b7280; /* gray-500 */
+            color: #d1d5db; /* gray-300 */
+            border-radius: 9999px; /* rounded-full */
+            width: 40px;
+            height: 40px;
+            font-size: 1.25rem; /* text-xl */
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .control-btn:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+    </style>
+</head>
+<body class="text-white overflow-hidden">
+
+    <!-- 3D Background Canvas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- 
+      LANDING SCREEN 
+    -->
+    <div id="landing-screen" class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-center p-8">
+        <h1 id="landing-title" class="text-6xl md:text-8xl font-bold text-white mb-6">
+            THE LONG COLD
+        </h1>
+        <p class="text-xl text-gray-300 mb-10 max-w-2xl">
+            The fire is dying. The snow is falling. How long can you survive?
+        </p>
+        <!-- "How to Play" button removed, only "Begin" remains -->
+        <button id="begin-btn" class="bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-10 rounded-lg text-2xl transition-all duration-300 transform hover:scale-105">
+            Begin
+        </button>
+    </div>
+
+    <!-- 
+      MAIN GAME UI
+    -->
+    <div id="game-container" class="hidden">
+        
+        <!-- TOP STATS BAR -->
+        <div class="panel w-full max-w-6xl mx-auto mt-4 p-4 flex-shrink-0">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                
+                <!-- Stats: 2x2 Grid -->
+                <div class="md:col-span-2 grid grid-cols-2 gap-4">
+                    <!-- Warmth -->
+                    <div>
+                        <div class="flex justify-between font-bold mb-1 text-sm sm:text-base">
+                            <span>🔥 Warmth</span>
+                            <span id="warmth-percent">100%</span>
+                        </div>
+                        <div class="stat-bar-bg">
+                            <div id="warmth-bar" class="stat-bar-fg bg-yellow-500" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <!-- Health -->
+                    <div>
+                        <div class="flex justify-between font-bold mb-1 text-sm sm:text-base">
+                            <div>
+                                <span>❤️ Health</span>
+                                <span id="poison-icon" class="hidden ml-1">💀</span> <!-- Poison Icon -->
+                            </div>
+                            <span id="health-percent">100%</span>
+                        </div>
+                        <div class="stat-bar-bg">
+                            <div id="health-bar" class="stat-bar-fg bg-red-600" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <!-- Hunger (was Food) -->
+                    <div>
+                        <div class="flex justify-between font-bold mb-1 text-sm sm:text-base">
+                            <span>🥩 Hunger</span>
+                            <span id="hunger-percent">100%</span>
+                        </div>
+                        <div class="stat-bar-bg">
+                            <div id="hunger-bar" class="stat-bar-fg bg-green-500" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <!-- Stamina (NEW) -->
+                    <div>
+                        <div class="flex justify-between font-bold mb-1 text-sm sm:text-base">
+                            <span>⚡ Stamina</span>
+                            <span id="stamina-percent">100%</span>
+                        </div>
+                        <div class="stat-bar-bg">
+                            <div id="stamina-bar" class="stat-bar-fg bg-blue-500" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Time/Temp/Controls -->
+                <div class="md:col-span-1 flex flex-col items-end">
+                    <div class="bg-gray-800 p-3 rounded-lg text-right w-full mb-2">
+                        <div id="time-survived" class="text-base sm:text-lg font-bold">Day 1, 1:00</div>
+                        <div id="temp-indicator" class="text-2xl sm:text-3xl font-bold text-blue-300">-5°C</div>
+                    </div>
+                    <!-- New Pause/Help Buttons -->
+                    <div class="flex space-x-2">
+                        <button id="help-btn" class="control-btn">❓</button>
+                        <button id="pause-btn" class="control-btn">⏸️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- MAIN GAME AREA: Interactive -->
+        <!-- This area will scroll on mobile if content is too tall -->
+        <div id="main-game-area" class="flex-grow flex items-start justify-center py-4 overflow-y-auto">
+            <!-- This grid handles mobile (1-col) and desktop (3-col) layouts -->
+            <div class="w-full max-w-5xl grid grid-cols-1 xl:grid-cols-3 gap-4 xl:gap-6 items-start text-center p-4 xl:p-0">
+                
+                <!-- 1. Actions Panel (2x2 GRID) -->
+                <div class="panel p-4 h-auto">
+                    <h2 class="text-xl font-semibold mb-2 text-center">Actions</h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- Action: Gather Wood -->
+                        <div class="action-card">
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <h3 class="text-lg font-semibold">Gather Wood</h3>
+                                    <span class="text-xs font-bold text-green-400">Low Risk</span>
+                                </div>
+                                <p class="text-sm text-gray-400 mb-2">Costs 10 Stamina & 2 Hunger. Low risk.</p>
+                            </div>
+                            <button id="gather-wood-btn" class="action-btn btn-green">
+                                Gather
+                            </button>
+                        </div>
+
+                        <!-- Action: Go Hunting -->
+                        <div class="action-card">
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <h3 class="text-lg font-semibold">Go Hunting</h3>
+                                    <span class="text-xs font-bold text-yellow-400">Medium Risk</span>
+                                </div>
+                                <p class="text-sm text-gray-400 mb-2">Costs 20 Stamina & 5 Hunger. Success depends on skill.</p>
+                            </div>
+                            <button id="hunt-btn" class="action-btn btn-blue">
+                                Hunt
+                            </button>
+                        </div>
+
+                        <!-- Action: Explore Mountains -->
+                        <div class="action-card">
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <h3 class="text-lg font-semibold">Explore</h3>
+                                    <span class="text-xs font-bold text-red-500">High Risk</span>
+                                </div>
+                                <p class="text-sm text-gray-400 mb-2">Costs 30 Stamina & 10 Hunger. High danger, high reward.</p>
+                            </div>
+                            <button id="explore-mountains-btn" class="action-btn btn-purple">
+                                Explore
+                            </button>
+                        </div>
+                        
+                        <!-- Action: Craft -->
+                        <div class="action-card">
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <h3 class="text-lg font-semibold">Craft Items</h3>
+                                    <span class="text-xs font-bold text-gray-300">Safe</span>
+                                </div>
+                                <p class="text-sm text-gray-400 mb-2">Combine materials. Opens crafting panel.</p>
+                            </div>
+                            <button id="craft-btn" class="action-btn btn-gray">
+                                Craft
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Fire Pit (Drop Zone) -->
+                <!-- On desktop, h-full keeps it aligned. On mobile, py-8 gives it space -->
+                <div id="fire-pit-container" class="h-auto xl:h-full flex flex-col justify-center items-center py-8 xl:py-0">
+                    <!-- Outer Dotted Circle / Dropzone -->
+                    <div id="fire-pit">
+                        <!-- Inner Visual Timer -->
+                        <div id="fire-visual-timer">
+                            <span id="fire-emoji">🔥</span>
+                        </div>
+                        <!-- Start Fire Button (hidden by default) -->
+                        <button id="start-fire-btn" class="hidden">Start Fire</button>
+                    </div>
+                    <div id="fire-status-text" class="text-lg font-semibold text-yellow-300">Roaring</div>
+                </div>
+                
+                <!-- 3. Inventory (80/20 SPLIT) -->
+                <div class="panel p-4 h-auto flex flex-col justify-start">
+                    <!-- <h2 class="text-xl font-semibold mb-2 text-center">Inventory</h2> --> <!-- Removed title -->
+
+                    <div class="flex w-full space-x-3">
+                        
+                        <!-- Consumables Section (80%) - Now in its own box -->
+                        <div class="w-[80%] bg-gray-800 rounded-lg p-2 border border-gray-700">
+                            <h3 class="text-lg font-semibold mb-2 w-full text-left">Consumables</h3>
+                            <div class="grid grid-cols-4 gap-2 w-full">
+                                <!-- Wood Slot -->
+                                <div id="wood-slot" class="inventory-slot" title="Fuel for the fire.">
+                                    <span id="wood-count" class="font-bold text-lg">0</span>
+                                    <div id="draggable-wood" draggable="true" class="inventory-item">
+                                        🪵
+                                    </div>
+                                </div>
+                                <!-- Raw Meat Slot -->
+                                <div id="raw-meat-slot" class="inventory-slot hidden" title="Cook on the fire or eat raw (risky!).">
+                                    <span id="raw-meat-count" class="font-bold text-lg">0</span>
+                                    <div id="draggable-raw-meat" draggable="true" class="inventory-item clickable">
+                                        🥩
+                                    </div>
+                                </div>
+                                <!-- Cooked Meat Slot -->
+                                <div id="cooked-meat-slot" class="inventory-slot hidden" title="Restores 30 Hunger.">
+                                    <span id="cooked-meat-count" class="font-bold text-lg">0</span>
+                                    <div id="clickable-cooked-meat" class="inventory-item clickable">
+                                        🍖
+                                    </div>
+                                </div>
+                                <!-- Medkit Slot (NEW) -->
+                                <div id="medkit-slot" class="inventory-slot hidden" title="Restores Health to 100%.">
+                                    <span id="medkit-count" class="font-bold text-lg">0</span>
+                                    <div id="clickable-medkit" class="inventory-item clickable">
+                                        🩹
+                                    </div>
+                                </div>
+                                <!-- Rock Slot -->
+                                <div id="rock-slot" class="inventory-slot hidden" title="Crafting material. Used to start a fire.">
+                                    <span id="rock-count" class="font-bold text-lg">0</span>
+                                    <div id="item-rock" class="inventory-item disabled">
+                                        🪨
+                                    </div>
+                                </div>
+                                <!-- Brick Slot -->
+                                <div id="brick-slot" class="inventory-slot hidden" title="Crafting material.">
+                                    <span id="brick-count" class="font-bold text-lg">0</span>
+                                    <div id="item-brick" class="inventory-item disabled">
+                                        🧱
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Utility Section (20%) - Now in its own box -->
+                        <div class="w-[20%] bg-gray-800 rounded-lg p-2 border border-gray-700">
+                            <h3 class="text-lg font-semibold mb-2 w-full text-left">Utility</h3>
+                            <div class="grid grid-cols-1 gap-2 w-full">
+                                <!-- Axe Slot -->
+                                <div id="axe-slot" class="inventory-slot hidden" title="Gathers 4-8 wood. Has 10 uses.">
+                                    <div class="inventory-item">
+                                        🪓
+                                    </div>
+                                    <span class="text-xs font-bold">Axe</span>
+                                    <div class="durability-bar-bg">
+                                        <div id="axe-durability-bar" class="durability-bar-fg" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                                <!-- Knife Slot -->
+                                <div id="knife-slot" class="inventory-slot hidden" title="50% chance to scare off animals. 5 uses (1 for wolf, 2 for bear).">
+                                    <div class="inventory-item">
+                                        🔪
+                                    </div>
+                                    <span class="text-xs font-bold">Knife</span>
+                                    <div class="durability-bar-bg">
+                                        <div id="knife-durability-bar" class="durability-bar-fg" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                                <!-- Fire Wall Slot -->
+                                <div id="fire-wall-slot" class="inventory-slot hidden" title="Reduces fire warmth decay by 20%.">
+                                    <div class="inventory-item">
+                                        🛡️
+                                    </div>
+                                    <span class="text-xs font-bold">Fire Wall</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM LOG BAR -->
+        <div id="log-bar" class="panel w-full">
+            <!-- Messages will be added here by JS -->
+        </div>
+    </div>
+    
+    <!-- 
+      MINIGAME MODAL 
+    -->
+    <div id="minigame-modal" class="modal opacity-0 pointer-events-none p-4">
+        <div class="panel w-full max-w-lg p-6">
+            <h2 id="minigame-title" class="text-3xl font-bold text-center mb-4">You are being attacked!</h2>
+            <p id="minigame-description" class="text-center text-gray-300 mb-6">Click STOP in the green zone to defend yourself!</p>
+            
+            <div id="minigame-bar-container" class="mb-6">
+                <div id="minigame-green-zone"></div>
+                <div id="minigame-arrow" style="left: 0%;"></div>
+            </div>
+            
+            <button id="minigame-click-btn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded text-xl">
+                STOP
+            </button>
+        </div>
+    </div>
+    
+    <!-- 
+      ACTION CONFIRM MODAL 
+    -->
+    <div id="action-modal" class="modal opacity-0 pointer-events-none p-4">
+        <div class="panel w-full max-w-md p-6 text-center">
+            <h2 id="action-title" class="text-2xl font-bold mb-4">Eat Raw Meat?</h2>
+            <p id="action-description" class="text-gray-300 mb-6">There is a 50% chance you will get sick and lose 20 Health.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="action-confirm-btn" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-6 rounded">
+                    Confirm
+                </button>
+                <button id="action-cancel-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 
+      CRAFTING MODAL 
+    -->
+    <div id="crafting-modal" class="modal opacity-0 pointer-events-none p-4">
+        <div class="panel w-full max-w-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-3xl font-bold">Crafting</h2>
+                <button id="crafting-close-btn" class="text-3xl font-bold text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <div class="space-y-3">
+                <!-- Crafting Recipe: Brick -->
+                <div class="flex justify-between items-center bg-gray-800 p-3 rounded-lg">
+                    <div>
+                        <span class="text-lg font-semibold">1 🧱 Brick</span>
+                        <span class="text-sm text-gray-400 ml-2">(Needs: 5 🪨 Rocks)</span>
+                    </div>
+                    <button id="craft-brick-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                        Craft
+                    </button>
+                </div>
+                <!-- Crafting Recipe: Fire Wall -->
+                <div class="flex justify-between items-center bg-gray-800 p-3 rounded-lg">
+                    <div>
+                        <span class="text-lg font-semibold">1 🛡️ Fire Wall</span>
+                        <span class="text-sm text-gray-400 ml-2">(Needs: 10 🧱 Bricks)</span>
+                    </div>
+                    <button id="craft-fire-wall-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                        Craft
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 
+      INSTRUCTIONS MODAL (NEW)
+    -->
+    <div id="instructions-modal" class="modal opacity-0 pointer-events-none p-4">
+        <div class="panel w-full max-w-2xl">
+            <div class="flex justify-between items-center border-b border-gray-700 p-4">
+                <h2 class="text-3xl font-bold">How to Play</h2>
+                <button id="instructions-close-btn" class="text-3xl font-bold text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <div id="instructions-content" class="p-6 text-left text-gray-200">
+                <ul class="space-y-3">
+                    <li><strong>Objective:</strong> Survive as long as possible by managing your four stats: Warmth, Health, Hunger, and Stamina.</li>
+                    <li><strong>The Fire:</strong> Your <strong>🔥 Warmth</strong> drops constantly. The colder it gets, the faster it drops.</li>
+                    <li><strong>Feed the Fire:</strong> To add warmth, <strong>Drag 🪵 Wood</strong> from your consumables and drop it onto the 🔥 fire pit.</li>
+                    <li><strong>Start a Fire:</strong> If the fire goes out, you must restart it. This costs <strong>1 🪵 Wood</strong> and <strong>1 🪨 Rock</strong> and only has a 40% chance of success.</li>
+                    <li><strong>Actions:</strong> Use the "Actions" panel to survive. All actions cost Stamina and make you Hungrier.
+                        <ul>
+                            <li>- <strong>Gather Wood:</strong> Your main way to get 🪵 Wood. An 🪓 Axe makes it *much* more effective.</li>
+                            <li>- <strong>Go Hunting:</strong> Play a minigame to get 🥩 Raw Meat.</li>
+                            <li>- <strong>Explore:</strong> A high-risk action. You might find rare tools (🪓, 🔪) or a 🩹 Medkit at a crash site, or you might get injured.</li>
+                            <li>- <strong>Craft:</strong> Combine materials, like 🪨 Rocks into 🧱 Bricks.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Food & Health:</strong>
+                        <ul>
+                            <li>- Drag 🥩 Raw Meat to the fire to cook it into 🍖 Cooked Meat.</li>
+                            <li>- Eating 🍖 Cooked Meat restores Hunger.</li>
+                            <li>- If your <strong>Hunger is above 80%</strong>, you will slowly regenerate ❤️ Health.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Dangers:</strong>
+                        <ul>
+                            <li>- If your 🔥 Warmth hits 0, you'll rapidly lose ❤️ Health.</li>
+                            <li>- If your 🥩 Hunger hits 0, you'll starve and lose ❤️ Health.</li>
+                            <li>- <strong>FOOD POISONING:</strong> Eating 🥩 Raw Meat has a 50% chance to poison you (💀). You'll lose health over time and your ⚡ Stamina will be capped at 70%.</li>
+                            <li>- <strong>Animal Attacks:</strong> You can be randomly attacked by Wolves or Bears. A 🔪 Knife gives you a chance to automatically scare them off.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // --- 1. SETUP ---
+        
+        // Three.js setup
+        const canvas = document.getElementById('bg-canvas');
+        let scene, camera, renderer, snowParticles;
+        const clock = new THREE.Clock();
+
+        // Game state variables
+        let stats = { warmth: 100, health: 100, hunger: 100, stamina: 100 };
+        let inventory = { 
+            wood: 3, rawMeat: 0, cookedMeat: 0, rocks: 0, bricks: 0, medkit: 0,
+            axe: { found: false, durability: 10 }, 
+            knife: { found: false, durability: 5 }, 
+            fireWall: false 
+        };
+        let gameTime = { day: 1, hour: 0 };
+        let currentTemperature = -5; // Starting temp
+        let targetTemperature = -5; // Target temp for smooth ticking
+        
+        // Debuff states
+        let isPoisoned = false;
+        let poisonDamageTotal = 0;
+        let poisonDamageDone = 0;
+        
+        let isGamePaused = false;
+        let isGameOver = false;
+        let activeModal = null; // 'minigame', 'action', 'crafting', 'instructions'
+        let actionCallback = null; // For the action confirm modal
+        const MAX_LOG_MESSAGES = 30;
+        let threeSecondLoopTickCounter = 0; // For health regen
+
+        // DOM element references
+        const landingScreen = document.getElementById('landing-screen');
+        const beginBtn = document.getElementById('begin-btn');
+        // const howToPlayBtn = document.getElementById('how-to-play-btn'); // REMOVED
+        const gameContainer = document.getElementById('game-container');
+        
+        // Stats
+        const warmthBar = document.getElementById('warmth-bar');
+        const healthBar = document.getElementById('health-bar');
+        const hungerBar = document.getElementById('hunger-bar'); // Renamed
+        const staminaBar = document.getElementById('stamina-bar'); // New
+        const warmthPercent = document.getElementById('warmth-percent');
+        const healthPercent = document.getElementById('health-percent');
+        const hungerPercent = document.getElementById('hunger-percent'); // Renamed
+        const staminaPercent = document.getElementById('stamina-percent'); // New
+        const tempIndicator = document.getElementById('temp-indicator');
+        const poisonIcon = document.getElementById('poison-icon'); // New
+        
+        // Controls (New)
+        const pauseBtn = document.getElementById('pause-btn');
+        const helpBtn = document.getElementById('help-btn');
+        
+        // Fire & Actions
+        const firePit = document.getElementById('fire-pit');
+        const fireVisualTimer = document.getElementById('fire-visual-timer');
+        const fireEmoji = document.getElementById('fire-emoji');
+        const startFireBtn = document.getElementById('start-fire-btn');
+        const gatherWoodBtn = document.getElementById('gather-wood-btn');
+        const huntBtn = document.getElementById('hunt-btn');
+        const exploreMountainsBtn = document.getElementById('explore-mountains-btn');
+        const craftBtn = document.getElementById('craft-btn');
+        const logBar = document.getElementById('log-bar'); 
+        
+        // Inventory Refs
+        const woodSlot = document.getElementById('wood-slot');
+        const woodCount = document.getElementById('wood-count');
+        const rawMeatSlot = document.getElementById('raw-meat-slot');
+        const rawMeatCount = document.getElementById('raw-meat-count');
+        const cookedMeatSlot = document.getElementById('cooked-meat-slot');
+        const cookedMeatCount = document.getElementById('cooked-meat-count');
+        const medkitSlot = document.getElementById('medkit-slot'); // New
+        const medkitCount = document.getElementById('medkit-count'); // New
+        const draggableWood = document.getElementById('draggable-wood');
+        const draggableRawMeat = document.getElementById('draggable-raw-meat');
+        const clickableCookedMeat = document.getElementById('clickable-cooked-meat');
+        const clickableMedkit = document.getElementById('clickable-medkit'); // New
+        const rockSlot = document.getElementById('rock-slot');
+        const rockCount = document.getElementById('rock-count');
+        const itemRock = document.getElementById('item-rock');
+        const brickSlot = document.getElementById('brick-slot');
+        const brickCount = document.getElementById('brick-count');
+        const itemBrick = document.getElementById('item-brick');
+        const axeSlot = document.getElementById('axe-slot');
+        const knifeSlot = document.getElementById('knife-slot');
+        const fireWallSlot = document.getElementById('fire-wall-slot');
+        const axeDurabilityBar = document.getElementById('axe-durability-bar');
+        const knifeDurabilityBar = document.getElementById('knife-durability-bar');
+
+        // Minigame Refs
+        const minigameModal = document.getElementById('minigame-modal');
+        const minigameTitle = document.getElementById('minigame-title');
+        const minigameDescription = document.getElementById('minigame-description');
+        const minigameBarContainer = document.getElementById('minigame-bar-container');
+        const minigameGreenZone = document.getElementById('minigame-green-zone');
+        const minigameArrow = document.getElementById('minigame-arrow');
+        const minigameClickBtn = document.getElementById('minigame-click-btn');
+        
+        // Action Modal Refs
+        const actionModal = document.getElementById('action-modal');
+        const actionTitle = document.getElementById('action-title');
+        const actionDescription = document.getElementById('action-description');
+        const actionConfirmBtn = document.getElementById('action-confirm-btn');
+        const actionCancelBtn = document.getElementById('action-cancel-btn');
+        
+        // Crafting Modal Refs
+        const craftingModal = document.getElementById('crafting-modal');
+        const craftingCloseBtn = document.getElementById('crafting-close-btn');
+        const craftBrickBtn = document.getElementById('craft-brick-btn');
+        const craftFireWallBtn = document.getElementById('craft-fire-wall-btn');
+        
+        // Instructions Modal Refs (New)
+        const instructionsModal = document.getElementById('instructions-modal');
+        const instructionsCloseBtn = document.getElementById('instructions-close-btn');
+
+
+        // --- 6. THREE.JS FUNCTIONS ---
+
+        function initThree() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0); // Transparent background
+
+            // Create snow particles
+            const snowGeometry = new THREE.BufferGeometry();
+            const snowVertices = [];
+            const particleCount = 5000;
+
+            for (let i = 0; i < particleCount; i++) {
+                const x = (Math.random() - 0.5) * 20;
+                const y = (Math.random() - 0.5) * 20;
+                const z = (Math.random() - 0.5) * 20;
+                snowVertices.push(x, y, z);
+            }
+
+            snowGeometry.setAttribute('position', new THREE.Float32BufferAttribute(snowVertices, 3));
+            
+            const snowMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.05,
+                transparent: true,
+                opacity: 0.7
+            });
+
+            snowParticles = new THREE.Points(snowGeometry, snowMaterial);
+            scene.add(snowParticles);
+
+            window.addEventListener('resize', onWindowResize, false);
+            animate();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            if (isGameOver) return; // Stop animation if game over
+            
+            requestAnimationFrame(animate);
+
+            // Only animate if not paused
+            if (!isGamePaused) {
+                const delta = clock.getDelta();
+    
+                // Animate snow
+                if (snowParticles) {
+                    snowParticles.rotation.y += delta * 0.02;
+                    snowParticles.position.y -= delta * 0.1;
+                    if (snowParticles.position.y < -10) {
+                        snowParticles.position.y = 10;
+                    }
+                }
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // --- 2. GAME LOOP & CORE LOGIC ---
+
+        function startGame() {
+            // Fade out landing screen
+            landingScreen.style.opacity = 0;
+            landingScreen.style.pointerEvents = 'none';
+            // Fade in game UI
+            gameContainer.classList.remove('hidden');
+            
+            initThree(); // Start 3D background
+            
+            addLog("The fire is lit. Keep it going.", 'info');
+            updateUI();
+            
+            // Start game loops
+            setInterval(hourlyGameLoop, 30000); // 30 seconds = 1 game hour
+            setInterval(fastGameLoop, 2000); // Every 2 seconds for random attacks
+            setInterval(threeSecondLoop, 3000); // Handles health/poison/cold
+            setInterval(secondTickLoop, 1000); // Handles temp/fire/stamina
+        }
+        
+        // Runs every 1 second
+        function secondTickLoop() {
+            if (isGamePaused || isGameOver) return;
+
+            // 1. Tick Temperature
+            if (currentTemperature < targetTemperature) {
+                currentTemperature++;
+            } else if (currentTemperature > targetTemperature) {
+                currentTemperature--;
+            }
+            // Update temp display text
+            tempIndicator.textContent = `${currentTemperature}°C`;
+            
+            // 2. Tick Warmth
+            let wasFireLit = stats.warmth > 0;
+            if (wasFireLit) {
+                let tempModifier = 0;
+                if (currentTemperature < -5) {
+                    tempModifier = Math.round(Math.abs(currentTemperature) / 5);
+                }
+                // Per-second decay rate
+                let perSecondDecay = (48 + tempModifier) / 30;
+                
+                // Apply Fire Wall buff
+                if (inventory.fireWall) {
+                    perSecondDecay *= 0.8; // 20% reduction
+                }
+                
+                stats.warmth -= perSecondDecay;
+                
+                if (stats.warmth <= 0) {
+                    stats.warmth = 0;
+                    addLog("The fire has gone out!", "danger");
+                }
+            }
+
+            // 3. Regenerate Stamina
+            let maxStamina = isPoisoned ? 70 : 100; // Stamina cap
+            if (stats.hunger > 0 && stats.stamina < maxStamina) {
+                stats.stamina += 1; // 1 stamina per second
+            } else if (stats.stamina > maxStamina) {
+                stats.stamina = maxStamina; // Enforce cap
+            }
+            
+            // 4. Update UI every second
+            // This will smoothly update temp, fire visual, stamina and "Start Fire" button state.
+            updateUI();
+        }
+        
+        // Runs every game hour (30s)
+        function hourlyGameLoop() {
+            if (isGamePaused || isGameOver) return;
+            
+            // 1. Advance time
+            gameTime.hour++;
+            if (gameTime.hour >= 24) {
+                gameTime.hour = 0;
+                gameTime.day++;
+            }
+            
+            // 2. Update TARGET temperature
+            updateTemperature();
+
+            // 3. Decrease stats (Hunger only)
+            stats.hunger -= 3;   // Hourly decay
+            
+            // 5. Check hunger level
+            if (stats.hunger <= 0) {
+                stats.hunger = 0;
+                stats.health -= 5; // Starving
+                addLog("You are starving. Your health is fading.", 'danger');
+            } 
+            // Health regen moved to threeSecondLoop
+            
+            // 7. Trigger random hourly event
+            hourlyRandomEvent();
+            
+            // 8. Update UI (for food/time/health changes)
+            updateUI();
+            
+            // 9. Check for game over
+            if (stats.health <= 0) {
+                stats.health = 0;
+                if (!isGameOver) gameOver("You succumbed to the cold and hunger.");
+            }
+        }
+        
+        // Runs every 2 seconds
+        function fastGameLoop() {
+            if (isGamePaused || isGameOver) return;
+            
+            // 10% chance of an animal attack event *check* every 2 seconds
+            if (Math.random() < 0.1) {
+                triggerRandomEvent(); // This function now handles *if* an attack happens
+            }
+        }
+        
+        // Runs every 3 seconds (handles cold, poison, and health regen)
+        function threeSecondLoop() {
+            if (isGamePaused || isGameOver) return;
+            
+            threeSecondLoopTickCounter++;
+            let healthChanged = false;
+
+            // 1. Cold Damage
+            if (stats.warmth <= 0) {
+                stats.health -= 2;
+                addLog("You're freezing... -2 Health.", 'danger');
+                healthChanged = true;
+                if (stats.health <= 0 && !isGameOver) {
+                    gameOver("You froze to death.");
+                }
+            }
+            
+            // 2. Poison Damage
+            if (isPoisoned) {
+                stats.health -= 1; // 1 damage every 3 seconds
+                poisonDamageDone += 1;
+                addLog("You feel sick... 💀 -1 Health.", 'danger');
+                healthChanged = true;
+                
+                if (poisonDamageDone >= poisonDamageTotal) {
+                    isPoisoned = false;
+                    poisonDamageDone = 0;
+                    poisonDamageTotal = 0;
+                    addLog("You've recovered from the food poisoning.", 'info');
+                }
+                
+                if (stats.health <= 0 && !isGameOver) {
+                    gameOver("You died from food poisoning.");
+                }
+            }
+            
+            // 3. Health Regeneration
+            if (stats.hunger > 80 && stats.health < 100) {
+                if (stats.health < 50) {
+                    stats.health += 2; // Fast regen (2HP / 3s)
+                    addLog("You feel well-fed. Your body is recovering quickly. +2 Health.", 'info');
+                    healthChanged = true;
+                } else {
+                    if (threeSecondLoopTickCounter % 2 === 0) { // Slow regen (1HP / 6s)
+                        stats.health += 1;
+                        addLog("You feel well-fed. You are slowly recovering. +1 Health.", 'info');
+                        healthChanged = true;
+                    }
+                }
+            }
+            
+            if(healthChanged) {
+                updateUI(); // Update health bar
+            }
+        }
+        
+        // New Pause Function
+        function togglePause() {
+            // Don't allow pausing/unpausing if a major modal is up
+            if (activeModal && activeModal !== 'pause' && activeModal !== 'instructions') return;
+            
+            isGamePaused = !isGamePaused;
+            
+            if (isGamePaused) {
+                pauseBtn.textContent = '▶️';
+                activeModal = 'pause';
+                addLog("Game Paused.", 'info');
+            } else {
+                pauseBtn.textContent = '⏸️';
+                activeModal = null;
+                addLog("Game Resumed.", 'info');
+                // Manually call animate once to restart the render loop
+                animate();
+            }
+        }
+
+        // Animal attack event
+        function triggerRandomEvent() {
+            if (isGamePaused || isGameOver) return; // Don't trigger if modal is open
+
+            const chance = Math.random();
+            let animalType = null;
+            
+            if (chance < 0.2) { // 20% chance
+                animalType = 'wolf';
+            } else if (chance < 0.25) { // 5% chance
+                animalType = 'bear';
+            }
+
+            // If no animal attack, do nothing
+            if (animalType === null) {
+                return;
+            }
+
+            // Check for knife defense
+            if (inventory.knife.found && inventory.knife.durability > 0 && Math.random() < 0.5) {
+                if (animalType === 'wolf') {
+                    inventory.knife.durability -= 1;
+                    addLog("Your knife prevented an attack from a wolf! (-1 durability)");
+                } else if (animalType === 'bear') {
+                    if (inventory.knife.durability >= 2) {
+                        inventory.knife.durability -= 2;
+                        addLog("Your knife saved you from a bear, but it's damaged! (-2 durability)");
+                    } else {
+                        // Not enough durability for a bear, fight proceeds
+                        addLog("A bear attacks! Your knife isn't strong enough to stop it!");
+                        startMinigame('fight', animalType);
+                        return;
+                    }
+                }
+
+                if (inventory.knife.durability <= 0) {
+                    inventory.knife.found = false;
+                    addLog("Your knife broke!");
+                }
+                updateUI();
+                return; // Fight avoided
+            }
+            
+            // If we're here, an attack happens
+            startMinigame('fight', animalType);
+        }
+        
+        // Hourly non-combat events
+        function hourlyRandomEvent() {
+            const chance = Math.random();
+            
+            if (chance < 0.1) { // 10%
+                addLog("A fierce blizzard rages! The temperature plummets.");
+                targetTemperature = -40; // Set TARGET temp
+                stats.warmth -= 15; // Extra warmth loss from wind (instant)
+            } else if (chance < 0.15) { // 5%
+                addLog("The night is calm and clear. You feel a moment of peace.");
+            } else if (chance < 0.2) { // 5%
+                addLog("You found a dry log near your camp. +1 Wood.");
+                inventory.wood++;
+            } else if (chance < 0.23) { // 3%
+                if (inventory.rawMeat > 0 || inventory.cookedMeat > 0) {
+                    addLog("Rats got into your food! You lost some supplies.");
+                    if (inventory.rawMeat > 0) inventory.rawMeat--;
+                    if (inventory.cookedMeat > 0) inventory.cookedMeat--;
+                }
+            }
+        }
+        
+        function updateTemperature() {
+            // Simple cycle: -5 at noon, -20 at midnight
+            const baseTemp = -12.5;
+            const amplitude = 7.5;
+            let hourlyTemp = baseTemp - amplitude * Math.cos((gameTime.hour / 24) * 2 * Math.PI);
+            
+            // Get colder as days pass
+            let dayPenalty = (gameTime.day - 1) * 0.5;
+            
+            // Add random fluctuation
+            let randomFluctuation = (Math.random() - 0.5) * 6; // +/- 3 degrees
+                
+            targetTemperature = Math.round(hourlyTemp - dayPenalty + randomFluctuation);
+            
+            // Clamp temp during a blizzard (which sets it manually)
+            if (targetTemperature > -40) {
+                // If not a blizzard, it slowly recovers
+            }
+        }
+
+        function gameOver(message) {
+            isGameOver = true;
+            isGamePaused = true;
+            
+            // Show game over message in a modal
+            showActionModal('gameOver', { title: "Game Over", description: message });
+            
+            // Disable all buttons
+            setButtonsDisabled(true);
+            
+            // Stop game loops (by checking isGameOver flag)
+        }
+
+        // --- 3. UI & EVENT HANDLERS ---
+        
+        function updateUI() {
+            if (isGameOver) return; // Don't update UI if game is over
+            
+            // Clamp stats
+            stats.warmth = Math.max(0, Math.min(100, stats.warmth));
+            stats.health = Math.max(0, Math.min(100, stats.health));
+            stats.hunger = Math.max(0, Math.min(100, stats.hunger));
+            
+            // Stamina cap
+            let maxStamina = isPoisoned ? 70 : 100;
+            if (stats.stamina > maxStamina) {
+                stats.stamina = maxStamina;
+            }
+            stats.stamina = Math.max(0, Math.min(100, stats.stamina));
+            
+            // Update Stat Bars
+            warmthBar.style.width = `${stats.warmth}%`;
+            healthBar.style.width = `${stats.health}%`;
+            hungerBar.style.width = `${stats.hunger}%`;
+            staminaBar.style.width = `${stats.stamina}%`;
+            
+            warmthPercent.textContent = `${Math.round(stats.warmth)}%`;
+            healthPercent.textContent = `${Math.round(stats.health)}%`;
+            hungerPercent.textContent = `${Math.round(stats.hunger)}%`;
+            staminaPercent.textContent = `${Math.round(stats.stamina)}%`;
+            
+            // Show/hide poison icon
+            poisonIcon.classList.toggle('hidden', !isPoisoned);
+            
+            // Update Time
+            let displayHour = gameTime.hour === 0 ? 12 : (gameTime.hour > 12 ? gameTime.hour - 12 : gameTime.hour);
+            let ampm = gameTime.hour < 12 || gameTime.hour === 24 ? "AM" : "PM";
+            if (gameTime.hour === 0 || gameTime.hour === 12) ampm = gameTime.hour === 0 ? "AM" : "PM"; // Midnight/Noon fix
+            
+            document.getElementById('time-survived').textContent = `Day ${gameTime.day}, ${displayHour}:00 ${ampm}`;
+            // Temp is updated in secondTickLoop for smoothness
+            
+            // Update Inventory UI
+            woodCount.textContent = inventory.wood;
+            rawMeatCount.textContent = inventory.rawMeat;
+            cookedMeatCount.textContent = inventory.cookedMeat;
+            medkitCount.textContent = inventory.medkit;
+            rockCount.textContent = inventory.rocks;
+            brickCount.textContent = inventory.bricks;
+            
+            // --- Dynamic Inventory Slots ---
+            // Hide/show consumable slots if they are empty
+            woodSlot.classList.toggle('hidden', inventory.wood <= 0);
+            rawMeatSlot.classList.toggle('hidden', inventory.rawMeat <= 0);
+            cookedMeatSlot.classList.toggle('hidden', inventory.cookedMeat <= 0);
+            medkitSlot.classList.toggle('hidden', inventory.medkit <= 0);
+            rockSlot.classList.toggle('hidden', inventory.rocks <= 0);
+            brickSlot.classList.toggle('hidden', inventory.bricks <= 0);
+            
+            // Update draggable/clickable states
+            draggableWood.draggable = inventory.wood > 0;
+            draggableWood.classList.toggle('disabled', inventory.wood <= 0);
+            
+            draggableRawMeat.draggable = inventory.rawMeat > 0;
+            draggableRawMeat.classList.toggle('disabled', inventory.rawMeat <= 0);
+            
+            clickableCookedMeat.classList.toggle('disabled', inventory.cookedMeat <= 0);
+            clickableMedkit.classList.toggle('disabled', inventory.medkit <= 0);
+            
+            itemRock.classList.toggle('disabled', inventory.rocks <= 0);
+            
+            // Update tool slots - Toggle 'hidden' class based on inventory
+            axeSlot.classList.toggle('hidden', !inventory.axe.found);
+            knifeSlot.classList.toggle('hidden', !inventory.knife.found);
+            fireWallSlot.classList.toggle('hidden', !inventory.fireWall);
+
+            // Update durability bars
+            if (inventory.axe.found) {
+                axeDurabilityBar.style.width = `${(inventory.axe.durability / 10) * 100}%`;
+            }
+            if (inventory.knife.found) {
+                knifeDurabilityBar.style.width = `${(inventory.knife.durability / 5) * 100}%`;
+            }
+
+
+            // Update fire visual
+            const fireText = document.getElementById('fire-status-text');
+            const warmthPercentage = stats.warmth / 100.0; // 0.0 to 1.0
+
+            if (stats.warmth > 0) {
+                // FIRE IS LIT
+                startFireBtn.classList.add('hidden');
+                fireVisualTimer.classList.remove('hidden');
+                fireEmoji.classList.remove('hidden');
+
+                if (stats.warmth > 75) {
+                    fireText.textContent = 'Roaring';
+                    fireEmoji.textContent = '🔥';
+                } else if (stats.warmth > 40) {
+                    fireText.textContent = 'Burning';
+                    fireEmoji.textContent = '🔥';
+                } else {
+                    fireText.textContent = 'Dwindling';
+                    fireEmoji.textContent = '🔥';
+                }
+
+                // DYNAMIC VISUALS based on warmth percentage
+                // Interpolate color from red-900 (127, 29, 29) to orange-500 (249, 115, 22)
+                const r = Math.round(127 + (warmthPercentage * (249 - 127)));
+                const g = Math.round(29 + (warmthPercentage * (115 - 29)));
+                const b = Math.round(29 + (warmthPercentage * (22 - 29)));
+                
+                const bgOpacity = 0.2 + (warmthPercentage * 0.4);     // 0.2 (dim) to 0.6 (bright)
+                const glowSize = 10 + (warmthPercentage * 20);      // 10px to 30px
+                const glowSpread = 5 + (warmthPercentage * 5);        // 5px to 10px
+                const glowOpacity = 0.1 + (warmthPercentage * 0.3);   // 0.1 to 0.4
+
+                fireVisualTimer.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${bgOpacity})`;
+                fireVisualTimer.style.boxShadow = `0 0 ${glowSize}px ${glowSpread}px rgba(${r}, ${g}, ${b}, ${glowOpacity})`;
+                fireVisualTimer.style.transform = `scale(${warmthPercentage})`;
+
+            } else {
+                // FIRE IS OUT
+                fireText.textContent = 'Out';
+                fireEmoji.classList.add('hidden');
+                fireVisualTimer.classList.add('hidden');
+                startFireBtn.classList.remove('hidden');
+                
+                // Check if player has materials to start fire
+                startFireBtn.disabled = (inventory.wood < 1 || inventory.rocks < 1 || isGamePaused);
+            }
+        }
+
+        // Log messages to the bottom bar
+        function addLog(message, type = 'normal') {
+            const msgEl = document.createElement('div');
+            msgEl.textContent = message;
+            msgEl.classList.add('log-message');
+            
+            if (type === 'danger') msgEl.classList.add('text-red-400');
+            if (type === 'info') msgEl.classList.add('text-yellow-300');
+            
+            logBar.prepend(msgEl); // Add new messages directly to the logBar
+            
+            // Limit log messages
+            if (logBar.children.length > MAX_LOG_MESSAGES) {
+                logBar.removeChild(logBar.lastChild);
+            }
+        }
+        
+        function setButtonsDisabled(disabled) {
+            // This function is now only for *action* disabling, not game pausing
+            
+            // Disable action buttons
+            gatherWoodBtn.disabled = disabled || stats.stamina < 10;
+            huntBtn.disabled = disabled || stats.stamina < 20;
+            exploreMountainsBtn.disabled = disabled || stats.stamina < 30;
+            craftBtn.disabled = disabled;
+            
+            // Check startFireBtn separately
+            startFireBtn.disabled = disabled || (inventory.wood < 1 || inventory.rocks < 1);
+        }
+
+        // --- 4. ACTION HANDLERS ---
+        
+        function attemptStartFire() {
+            if (isGamePaused || isGameOver) return;
+            
+            if (inventory.wood < 1 || inventory.rocks < 1) {
+                addLog("You need 1 Wood and 1 Rock to start the fire.", 'danger');
+                return;
+            }
+            
+            inventory.wood--;
+            inventory.rocks--;
+            
+            setButtonsDisabled(true);
+            // isGamePaused = true; // REMOVED
+            addLog("You try to light a fire with a rock and some wood...");
+            updateUI(); // Show consumed items
+            
+            setTimeout(() => {
+                if (Math.random() < 0.4) { // 40% success
+                    stats.warmth = 25; // Start with 25 warmth
+                    addLog("Success! The fire is lit.", 'info');
+                } else {
+                    addLog("You failed to light the fire...");
+                }
+                setButtonsDisabled(false);
+                // isGamePaused = false; // REMOVED
+                updateUI(); // Show new fire or nothing
+            }, 2000);
+        }
+
+        // Drag and Drop
+        let draggedItemType = null;
+        
+        function setupDragAndDrop() {
+            // DragStart: Pick up an item
+            draggableWood.addEventListener('dragstart', (e) => {
+                if (inventory.wood > 0 && !isGamePaused) {
+                    draggedItemType = 'wood';
+                    e.dataTransfer.effectAllowed = 'move';
+                }
+            });
+            draggableRawMeat.addEventListener('dragstart', (e) => {
+                if (inventory.rawMeat > 0 && !isGamePaused) {
+                    draggedItemType = 'rawMeat';
+                    e.dataTransfer.effectAllowed = 'move';
+                }
+            });
+
+            // DragOver: Entering the fire pit
+            firePit.addEventListener('dragover', (e) => {
+                e.preventDefault(); // Necessary to allow drop
+                if (isGamePaused || stats.warmth <= 0) return; // Can't drop if paused or fire is out
+
+                if (draggedItemType === 'wood' || draggedItemType === 'rawMeat') {
+                    e.dataTransfer.dropEffect = 'move';
+                    firePit.classList.add('drag-over');
+                }
+            });
+
+            // DragLeave: Leaving the fire pit
+            firePit.addEventListener('dragleave', () => {
+                firePit.classList.remove('drag-over');
+            });
+
+            // Drop: Releasing the item on the fire
+            firePit.addEventListener('drop', (e) => {
+                e.preventDefault();
+                firePit.classList.remove('drag-over');
+                
+                if (isGamePaused || stats.warmth <= 0) return; // Double check
+                
+                if (draggedItemType === 'wood') {
+                    // Add wood to fire
+                    if (inventory.wood > 0) {
+                        inventory.wood--;
+                        stats.warmth += 25;
+                        addLog("You add a log to the fire. The warmth is comforting.", 'info');
+                        updateUI();
+                    }
+                } else if (draggedItemType === 'rawMeat') {
+                    // Cook raw meat
+                    if (inventory.rawMeat > 0) {
+                        inventory.rawMeat--;
+                        addLog("You place the meat over the fire to cook...");
+                        // Simulate cooking time & chance of burning
+                        setButtonsDisabled(true);
+                        // isGamePaused = true; // REMOVED
+                        setTimeout(() => {
+                            if (Math.random() > 0.15) { // 85% success
+                                inventory.cookedMeat++;
+                                addLog("Cooked successfully! +1 Cooked Meat.", 'info');
+                            } else {
+                                addLog("You burned the meat! It's ruined.");
+                            }
+                            setButtonsDisabled(false);
+                            // isGamePaused = false; // REMOVED
+                            updateUI();
+                        }, 2000);
+                    }
+                }
+                
+                draggedItemType = null; // Clear dragged item
+            });
+        }
+        
+        // --- Minigame Logic ---
+        let minigameLoop = null;
+        let minigameTimer = null; // Auto-fail timer
+        let arrowPosition = 0;
+        let arrowDirection = 1;
+        let greenZoneStart, greenZoneEnd;
+        let minigameCallback;
+        
+        const animalData = {
+            // Huntable
+            rabbit: { green: 70, meat: 1 },
+            squirrel: { green: 60, meat: 1 },
+            deer: { green: 40, meat: 3 },
+            elk: { green: 30, meat: 5 },
+            // Hostile
+            wolf: { green: 50, damage: 20, meat: 2 },
+            bear: { green: 20, damage: 50, meat: 4 }
+        };
+
+        function startMinigame(type, animal) {
+            if (isGamePaused) return; // Should be handled by caller, but double check
+            
+            setButtonsDisabled(true);
+            isGamePaused = true; // Pause game during minigame
+            activeModal = 'minigame';
+            
+            const data = animalData[animal];
+            const greenZoneWidth = data.green; // 70%
+            greenZoneStart = (100 - greenZoneWidth) / 2; // 15%
+            greenZoneEnd = greenZoneStart + greenZoneWidth; // 15 + 70 = 85%
+            
+            minigameGreenZone.style.left = `${greenZoneStart}%`;
+            minigameGreenZone.style.width = `${greenZoneWidth}%`;
+            
+            // Set modal text
+            if (type === 'hunt') {
+                minigameTitle.textContent = `You found a ${animal}!`;
+                minigameDescription.textContent = `Click STOP in the green zone to hunt it!`;
+            } else { // 'fight'
+                minigameTitle.textContent = `A ${animal} attacks!`;
+                minigameDescription.textContent = `Click STOP in the green zone to defend yourself!`;
+            }
+
+            // Reset arrow
+            arrowPosition = 0;
+            arrowDirection = 1;
+            minigameArrow.style.left = '0%';
+            
+            minigameModal.classList.remove('opacity-0', 'pointer-events-none');
+            
+            // Set callback
+            minigameCallback = (isSuccess) => {
+                handleMinigameResult(type, animal, isSuccess);
+            };
+
+            // Clear any old timer just in case
+            if (minigameTimer) clearTimeout(minigameTimer);
+            
+            // Set 5-second auto-fail timer
+            minigameTimer = setTimeout(() => {
+                if (minigameLoop) { // Check if minigame is still running
+                    addLog("You hesitated too long!", 'danger');
+                    clearInterval(minigameLoop);
+                    minigameLoop = null;
+                    minigameModal.classList.add('opacity-0', 'pointer-events-none');
+                    activeModal = null;
+                    isGamePaused = false; // Unpause
+                    if(minigameCallback) minigameCallback(false); // Force failure
+                }
+            }, 5000);
+
+            // Start animation loop
+            minigameLoop = setInterval(() => {
+                arrowPosition += arrowDirection * 2; // Speed
+                if (arrowPosition >= 100) {
+                    arrowPosition = 100;
+                    arrowDirection = -1;
+                }
+                if (arrowPosition <= 0) {
+                    arrowPosition = 0;
+                    arrowDirection = 1;
+                }
+                minigameArrow.style.left = `${arrowPosition}%`;
+            }, 20); // Loop speed
+        }
+
+        function stopMinigame() {
+            if (minigameTimer) clearTimeout(minigameTimer); // Clear auto-fail timer
+            minigameTimer = null;
+            
+            if (!minigameLoop) return; // Already stopped by timer
+
+            clearInterval(minigameLoop);
+            minigameLoop = null;
+            
+            minigameModal.classList.add('opacity-0', 'pointer-events-none');
+            activeModal = null;
+            
+            const isSuccess = arrowPosition >= greenZoneStart && arrowPosition <= greenZoneEnd;
+            
+            if (minigameCallback) {
+                minigameCallback(isSuccess);
+            }
+        }
+        
+        function handleMinigameResult(type, animal, isSuccess) {
+            const data = animalData[animal];
+
+            if (type === 'hunt') {
+                if (isSuccess) {
+                    const meatFound = data.meat || 1;
+                    inventory.rawMeat += meatFound;
+                    addLog(`Successful hunt! +${meatFound} Raw Meat.`, 'info');
+                } else {
+                    addLog(`The ${animal} got away...`);
+                }
+            } else { // 'fight'
+                if (isSuccess) {
+                    addLog(`You successfully fought off the ${animal}!`);
+                    if (Math.random() > 0.5) {
+                        const meatFound = data.meat || 1;
+                        inventory.rawMeat += meatFound;
+                        addLog(`You scavenged ${meatFound} Raw Meat from the ${animal}.`);
+                    }
+                } else {
+                    stats.health -= data.damage;
+                    addLog(`You were hit! -${data.damage} Health.`, 'danger');
+                }
+            }
+            
+            minigameCallback = null; // Prevent double calls
+            
+            setButtonsDisabled(false);
+            isGamePaused = false; // Unpause
+            updateUI();
+            
+            // Reset button text
+            huntBtn.textContent = 'Hunt';
+            
+            // Check for game over after fight
+            if (stats.health <= 0) {
+                gameOver("You died from your injuries.");
+            }
+        }
+        
+        // --- Action Confirm Modal ---
+        function showActionModal(type, data = {}) {
+            if (isGamePaused && type !== 'gameOver') return; // Don't allow new modals
+            
+            setButtonsDisabled(true);
+            isGamePaused = true;
+            activeModal = 'action';
+            
+            if (type === 'eatRaw') {
+                actionTitle.textContent = "Eat Raw Meat?";
+                actionDescription.textContent = "There is a 50% chance you will get sick (💀) and lose 15-40 Health over time. Restores 15 Hunger.";
+                actionConfirmBtn.textContent = "Confirm";
+                actionCancelBtn.classList.remove('hidden');
+
+                actionCallback = () => {
+                    inventory.rawMeat--;
+                    stats.hunger += 15;
+                    if (stats.hunger > 100) stats.hunger = 100;
+                    
+                    if (Math.random() < 0.5) {
+                        // Got sick!
+                        isPoisoned = true;
+                        poisonDamageTotal = Math.floor(Math.random() * (40 - 15 + 1)) + 15; // 15-40
+                        poisonDamageDone = 0;
+                        addLog("The raw meat was tainted... You feel sick. 💀", 'danger');
+                    } else {
+                        addLog("You stomach the raw meat. +15 Hunger.", 'info');
+                    }
+                };
+            } else if (type === 'eatCooked') {
+                actionTitle.textContent = "Eat Cooked Meat?";
+                actionDescription.textContent = "Restores 30 Hunger.";
+                actionConfirmBtn.textContent = "Confirm";
+                actionCancelBtn.classList.remove('hidden');
+                
+                actionCallback = () => {
+                    inventory.cookedMeat--;
+                    stats.hunger += 30;
+                    if (stats.hunger > 100) stats.hunger = 100;
+                    addLog("The cooked meat is delicious. +30 Hunger.", 'info');
+                };
+            } else if (type === 'useMedkit') {
+                actionTitle.textContent = "Use Medkit?";
+                actionDescription.textContent = "Restores your health to 100%. This is a one-time use.";
+                actionConfirmBtn.textContent = "Confirm";
+                actionCancelBtn.classList.remove('hidden');
+                
+                actionCallback = () => {
+                    inventory.medkit--;
+                    stats.health = 100;
+                    addLog("You used the medkit. You feel fully healed.", 'info');
+                };
+            } else if (type === 'gameOver') {
+                actionTitle.textContent = data.title;
+                actionDescription.textContent = data.description;
+                actionConfirmBtn.textContent = "Restart";
+                actionCancelBtn.classList.add('hidden');
+                
+                actionCallback = () => {
+                    window.location.reload(); // Easiest way to restart
+                };
+            }
+            
+            actionModal.classList.remove('opacity-0', 'pointer-events-none');
+        }
+        
+        function hideActionModal() {
+            actionModal.classList.add('opacity-0', 'pointer-events-none');
+            activeModal = null;
+            actionCallback = null;
+            
+            if (!isGameOver) {
+                setButtonsDisabled(false);
+                isGamePaused = false; // Unpause
+            }
+        }
+        
+        
+        // --- 5. EVENT LISTENERS ---
+        
+        // Start Button
+        beginBtn.addEventListener('click', startGame);
+
+        // How to Play Button (Landing Screen)
+        // REMOVED
+        
+        // Instructions Modal Close Button (handles both landing and in-game)
+        instructionsCloseBtn.addEventListener('click', () => {
+            instructionsModal.classList.add('opacity-0', 'pointer-events-none');
+            // If we were paused by the help button, unpause
+            if (activeModal === 'instructions' && isGamePaused) {
+                togglePause(); // Unpauses and sets activeModal to null
+            } else {
+                activeModal = null; // Just clear modal if on landing
+            }
+        });
+        
+        // Pause/Help Buttons (In-Game)
+        pauseBtn.addEventListener('click', togglePause);
+        
+        helpBtn.addEventListener('click', () => {
+            // Can't open help if another modal is already open
+            if (activeModal && activeModal !== 'pause') return; 
+            
+            if (!isGamePaused) {
+                togglePause(); // Pause the game
+            }
+            activeModal = 'instructions'; // Set modal type
+            instructionsModal.classList.remove('opacity-0', 'pointer-events-none');
+        });
+
+        
+        // Setup Drag & Drop
+        setupDragAndDrop();
+        
+        // Fire Starting
+        startFireBtn.addEventListener('click', attemptStartFire);
+        
+        // Minigame Stop Button
+        minigameClickBtn.addEventListener('click', stopMinigame);
+        
+        // Action Modal Buttons
+        actionConfirmBtn.addEventListener('click', () => {
+            if (actionCallback) {
+                actionCallback();
+            }
+            hideActionModal();
+            updateUI();
+        });
+        actionCancelBtn.addEventListener('click', hideActionModal);
+        
+        // Inventory Click Handlers
+        draggableRawMeat.addEventListener('click', () => {
+            if (inventory.rawMeat > 0 && !isGamePaused) showActionModal('eatRaw');
+        });
+        
+        clickableCookedMeat.addEventListener('click', () => {
+            if (inventory.cookedMeat > 0 && !isGamePaused) showActionModal('eatCooked');
+        });
+        
+        clickableMedkit.addEventListener('click', () => {
+            if (inventory.medkit > 0 && !isGamePaused) showActionModal('useMedkit');
+        });
+
+        // Crafting Modal Buttons
+        craftBtn.addEventListener('click', () => {
+            if (isGamePaused) return;
+            setButtonsDisabled(true);
+            isGamePaused = true; // PAUSE for modal
+            activeModal = 'crafting';
+            // Update button states
+            craftBrickBtn.disabled = (inventory.rocks < 5);
+            craftFireWallBtn.disabled = (inventory.bricks < 10 || inventory.fireWall); 
+            craftingModal.classList.remove('opacity-0', 'pointer-events-none');
+        });
+        
+        craftingCloseBtn.addEventListener('click', () => {
+            setButtonsDisabled(false);
+            isGamePaused = false; // UNPAUSE
+            activeModal = null;
+            craftingModal.classList.add('opacity-0', 'pointer-events-none');
+        });
+        
+        craftBrickBtn.addEventListener('click', () => {
+            if (inventory.rocks >= 5) {
+                inventory.rocks -= 5;
+                inventory.bricks++;
+                addLog("You crafted 1 Brick from 5 Rocks.");
+                updateUI();
+                // Re-check button states
+                craftBrickBtn.disabled = (inventory.rocks < 5);
+                craftFireWallBtn.disabled = (inventory.bricks < 10 || inventory.fireWall);
+            }
+        });
+        
+        craftFireWallBtn.addEventListener('click', () => {
+            if (inventory.bricks >= 10 && !inventory.fireWall) {
+                inventory.bricks -= 10;
+                inventory.fireWall = true;
+                addLog("You built a Fire Wall! It will help conserve heat.", 'info');
+                updateUI();
+                // Re-check button states
+                craftBrickBtn.disabled = (inventory.rocks < 5);
+                craftFireWallBtn.disabled = true; // Can't build more than one
+            }
+        });
+
+        // Explore Mountains Button
+        exploreMountainsBtn.addEventListener('click', () => {
+            if (isGamePaused || isGameOver) return;
+            if (stats.stamina < 30) {
+                addLog("You are too tired to explore the mountains.", "danger");
+                return;
+            }
+            
+            setButtonsDisabled(true);
+            // isGamePaused = true; // REMOVED
+            exploreMountainsBtn.textContent = 'Exploring...';
+            addLog("You begin the treacherous climb up the mountains...");
+            
+            stats.stamina -= 30;
+            stats.hunger -= 10;
+            updateUI();
+
+            setTimeout(() => {
+                const chance = Math.random();
+                if (chance > 0.9) { // 10% chance
+                    if (Math.random() < 0.2) { // 2% overall chance for medkit
+                        inventory.medkit++;
+                        addLog("At the crash site, you find an intact Medkit!");
+                    } else if (Math.random() > 0.5) { // Find Axe
+                        if (!inventory.axe.found) {
+                            inventory.axe.found = true;
+                            inventory.axe.durability = 10; // Reset durability
+                            addLog("You stumble upon a helicopter crash site... You find a sturdy axe!");
+                        } else {
+                            addLog("You find another axe at the crash site, but one is all you need.");
+                        }
+                    } else { // Find Knife
+                        if (!inventory.knife.found) {
+                            inventory.knife.found = true;
+                            inventory.knife.durability = 5; // Reset durability
+                            addLog("You stumble upon a helicopter crash site... You find a sharp knife!");
+                        } else {
+                             addLog("You find another knife at the crash site, but your current one is fine.");
+                        }
+                    }
+                } else if (chance > 0.5) { // 40% chance
+                    const rocksFound = Math.floor(Math.random() * 5) + 2; // 2-6 rocks
+                    inventory.rocks += rocksFound;
+                    addLog(`You find ${rocksFound} useful rocks.`);
+                } else if (chance > 0.2) { // 30% chance
+                    addLog("You explore for hours but find nothing.");
+                } else { // 20% chance
+                    stats.health -= 25;
+                    addLog("You slip and fall, getting badly injured. -25 Health.", 'danger');
+                    if (stats.health <= 0 && !isGameOver) gameOver("You died exploring the mountains.");
+                }
+                
+                if (!isGameOver) {
+                    exploreMountainsBtn.textContent = 'Explore';
+                    setButtonsDisabled(false);
+                    // isGamePaused = false; // REMOVED
+                }
+                updateUI();
+            }, 5000); // 5 seconds
+        });
+
+        // Gather Wood Button
+        gatherWoodBtn.addEventListener('click', () => {
+            if (isGamePaused || isGameOver) return;
+            if (stats.stamina < 10) {
+                addLog("You are too tired to gather wood.", "danger");
+                return;
+            }
+            
+            setButtonsDisabled(true);
+            // isGamePaused = true; // REMOVED
+            gatherWoodBtn.textContent = 'Gathering...';
+            addLog("You head into the forest to find wood...");
+            
+            stats.stamina -= 10;
+            stats.hunger -= 2; // Cost of gathering
+            updateUI();
+
+            // Check for working axe BEFORE timeout
+            let hasWorkingAxe = inventory.axe.found && inventory.axe.durability > 0;
+
+            setTimeout(() => {
+                let successChance = 0.7; // 70% base chance
+                let woodFound = 0;
+                
+                if (hasWorkingAxe) {
+                    successChance += 0.15; // Axe increases success
+                }
+                
+                const chance = Math.random();
+                
+                if (chance < successChance) {
+                    if (hasWorkingAxe) {
+                        woodFound = Math.floor(Math.random() * 5) + 4; // 4-8 wood
+                        addLog(`Your axe makes the work easy. +${woodFound} Wood.`);
+                        inventory.axe.durability -= 1;
+                        if (inventory.axe.durability <= 0) {
+                            inventory.axe.found = false;
+                            addLog("Your axe handle broke!");
+                        }
+                    } else {
+                        // Check if axe *just* broke and we didn't know
+                        if (inventory.axe.found && inventory.axe.durability <= 0) {
+                            inventory.axe.found = false;
+                            addLog("Your axe handle broke!");
+                        }
+                        woodFound = Math.floor(Math.random() * 2) + 1; // 1-2 wood
+                        addLog(`You found ${woodFound} wood.`);
+                    }
+                    inventory.wood += woodFound;
+                } else if (chance < 0.9) {
+                    addLog("You searched but couldn't find any dry wood.");
+                } else {
+                    stats.health -= 10;
+                    addLog("You slipped and twisted your ankle. Ouch.");
+                    if (stats.health <= 0 && !isGameOver) gameOver("You died from your injuries.");
+                }
+                
+                if (!isGameOver) {
+                    gatherWoodBtn.textContent = 'Gather';
+                    setButtonsDisabled(false);
+                    // isGamePaused = false; // REMOVED
+                }
+                updateUI();
+            }, 3000); // 3 seconds
+        });
+
+        // Hunt Button
+        huntBtn.addEventListener('click', () => {
+            if (isGamePaused || isGameOver) return;
+            if (stats.stamina < 20) {
+                addLog("You are too tired to hunt.", "danger");
+                return;
+            }
+            
+            setButtonsDisabled(true);
+            // isGamePaused = true; // REMOVED - This was the bug
+            huntBtn.textContent = 'Hunting...';
+            addLog("You search for tracks...");
+            
+            stats.stamina -= 20;
+            stats.hunger -= 5; // Cost of hunting
+            updateUI();
+            
+            setTimeout(() => {
+                if (isGameOver) { // Check in case game over happened during timeout
+                    setButtonsDisabled(false);
+                    huntBtn.textContent = 'Hunt';
+                    return;
+                } 
+                
+                const chance = Math.random();
+                let animal;
+                if (chance < 0.4) {
+                    animal = 'rabbit';
+                } else if (chance < 0.7) {
+                    animal = 'squirrel';
+                } else if (chance < 0.9) {
+                    animal = 'deer';
+                } else {
+                    animal = 'elk';
+                }
+                
+                // Don't auto-reset buttons, minigame will handle it
+                startMinigame('hunt', animal);
+                
+            }, 5000); // 5 seconds
+        });
+        
+    </script>
+</body>
+</html>
+
