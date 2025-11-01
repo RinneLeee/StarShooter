@@ -207,7 +207,7 @@
         .button-list-sell { 
             background: linear-gradient(to bottom, #f472b6, #db2777); 
             border-color: #be185d; 
-        }
+        } 
         .button-list-sell:hover { background: linear-gradient(to bottom, #f9a8d4, #db2777); }
         
         .button-rent { 
@@ -350,6 +350,35 @@
             }
         }
         /* --- END NEW PLAYER STATS --- */
+
+        <!-- MODIFICATION: Added new CSS classes for the refactored ledger -->
+        /* --- NEW: Stat Card Text Sizing --- */
+        .stat-value.stat-value-small-text {
+            font-size: 1.25rem; /* Slightly smaller for long text */
+            line-height: 1.4;
+            font-family: 'Inter', sans-serif; /* Use Inter for better readability of long text */
+            font-weight: 600;
+        }
+        .stat-value-container.stat-value-container-col {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+        }
+        /* MODIFIED: Updated cash change indicator for new vertical layout */
+        #cash-change-indicator {
+            font-size: 0.9rem; /* Make this slightly larger */
+            font-weight: 700;
+            margin-left: 0; 
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, transform 0.3s ease-out;
+            transform: translateY(-5px); /* Start slightly up */
+        }
+        #cash-change-indicator.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* --- END NEW STAT CARD TEXT SIZING --- */
 
 
         #monthly-cashflow {
@@ -626,16 +655,24 @@
                 <h2 class="section-title !mb-0 !border-b-0 !pb-0">Your Ledger</h2>
                 <button id="new-life-btn" class="button button-new-life mb-4">Start New Life</button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4"> 
+            <!-- 
+                MODIFICATION: 
+                Changed grid from "lg:grid-cols-7" to "lg:grid-cols-4 xl:grid-cols-7"
+                This makes it 2-col (mobile), 3-col (sm), 4-col (lg), and 7-col (xl)
+                This provides a much-needed intermediate step for standard laptop/desktop screens.
+            -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4"> 
                 <div class="stat-card">
                     <span class="stat-label">Age</span>
                     <div class="stat-value-container">
-                        <span class="stat-value" id="player-age">18 years</span>
+                        <!-- MODIFICATION: Added stat-value-small-text for better wrapping -->
+                        <span class="stat-value stat-value-small-text" id="player-age">18 years</span>
                     </div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">Cash</span>
-                    <div class="stat-value-container">
+                    <!-- MODIFICATION: Added stat-value-container-col for vertical layout -->
+                    <div class="stat-value-container stat-value-container-col">
                         <span class="stat-value" id="player-cash">$20,000</span>
                         <span id="cash-change-indicator">($0)</span>
                     </div>
@@ -643,7 +680,8 @@
                 <div class="stat-card">
                     <span class="stat-label">Job</span>
                     <div class="stat-value-container">
-                        <span class="stat-value" id="player-job-title">Unskilled Labor</span>
+                        <!-- MODIFICATION: Added stat-value-small-text for better wrapping -->
+                        <span class="stat-value stat-value-small-text" id="player-job-title">Unskilled Labor</span>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -968,7 +1006,7 @@
 			
 			{ id: "ent0", title: "Small Business Dreamer", field: JOB_FIELDS.ENTREPRENEURSHIP, level: 0, salary: 1000, annualIncrementPercent: 0.00, prerequisites: null, promotionChanceMonths: 18, promotionChance: 0.25, promotionTo: "ent1" },
 			{ id: "ent1", title: "Startup Founder", field: JOB_FIELDS.ENTREPRENEURSHIP, level: 1, salary: 2000, annualIncrementPercent: 0.02, prerequisites: { previousJobLevel: 0, field: JOB_FIELDS.ENTREPRENEURSHIP, minExperienceInFieldMonths: 12 }, promotionChanceMonths: 24, promotionChance: 0.2, promotionTo: "ent2" },
-			{ id: "ent2", title: "Startup CEO", field: JOB_FIELDS.ENTREPRENEURSHIP, level: 2, salary: 6000, annualIncrementPercent: 0.05, companyAnnualBonusChance: 0.4, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.ENTREPRENEURSHIP, minExperienceInFieldMonths: 36 }, promotionChanceMonths: 36, promotionChance: 0.15, promotionTo: "ent3" },
+			{ id: "ent2", title: "Startup CEO", field: JOB_FIELDS.ENTREPRENEURSHIP, level: 2, salary: 6000, annualIncrementPercent: 0.05, companyAnnualBonusChance: 0.4, companyAnnualBonusPercent: 0.10, prerequisites: { previousJobLevel: 1, field: JOB_FIELDS.ENTREPRENENDSHIP, minExperienceInFieldMonths: 36 }, promotionChanceMonths: 36, promotionChance: 0.15, promotionTo: "ent3" },
 			{ id: "ent3", title: "Tech Founder / Angel Investor", field: JOB_FIELDS.ENTREPRENEURSHIP, level: 3, salary: 15000, annualIncrementPercent: 0.07, companyAnnualBonusChance: 0.6, companyAnnualBonusPercent: 0.25, prerequisites: { previousJobLevel: 2, field: JOB_FIELDS.ENTREPRENEURSHIP, minExperienceInFieldMonths: 72 }, promotionChanceMonths: 48, promotionChance: 0.1, promotionTo: "ent4", firingRisk: 0.02 },
 			{ id: "ent4", title: "Venture Capital Mogul", field: JOB_FIELDS.ENTREPRENEURSHIP, level: 4, salary: 40000, annualIncrementPercent: 0.05, companyAnnualBonusChance: 0.9, companyAnnualBonusPercent: 0.40, prerequisites: { previousJobLevel: 3, field: JOB_FIELDS.ENTREPRENEURSHIP, minExperienceInFieldMonths: 120 }, firingRisk: 0.03 },
 
@@ -1119,7 +1157,9 @@
         const loanSectionContentEl = document.getElementById('loan-section-content');
 
         const tabBtnMarket = document.getElementById('tab-btn-market');
-        const tabBtnJobs = document.getElementById('tab-btn-jobs');
+
+
+		const tabBtnJobs = document.getElementById('tab-btn-jobs');
         const tabPanelMarket = document.getElementById('tab-panel-market');
         const tabPanelJobs = document.getElementById('tab-panel-jobs');
         
@@ -1367,9 +1407,18 @@
                 const newMarketStatus = marketState; // *** NEW ***
 
                 // Helper function to update value and trigger animation
-                const updateStat = (element, newValue) => {
+                const updateStat = (element, newValue, useSmallText = false) => {
+                    // MODIFICATION: Logic to handle new small text class
                     if (element.textContent !== newValue) {
                         element.textContent = newValue;
+                        
+                        // Add/remove small text class based on flag
+                        if (useSmallText) {
+                            element.classList.add('stat-value-small-text');
+                        } else {
+                            element.classList.remove('stat-value-small-text');
+                        }
+
                         element.classList.add('animated-flip');
                         setTimeout(() => {
                             element.classList.remove('animated-flip');
@@ -1378,9 +1427,10 @@
                 };
 
                 // Update stats
-                updateStat(ageEl, newAge);
+                // MODIFICATION: Pass 'true' for Age and Job Title
+                updateStat(ageEl, newAge, true); 
                 updateStat(cashEl, newCash);
-                updateStat(playerJobTitleEl, newJobTitle);
+                updateStat(playerJobTitleEl, newJobTitle, true);
                 updateStat(salaryEl, newSalary);
                 updateStat(netWorthEl, newNetWorth);
                 updateStat(inflationRateEl, newInflation); // NEW: Update inflation display
@@ -2888,7 +2938,8 @@
             externalLoanEstPaymentEl.textContent = formatCurrency(monthlyPayment) + " (approx.)";
         }
 
-        bankLoanAmountInputEl.addEventListener('input', () => {
+
+	        bankLoanAmountInputEl.addEventListener('input', () => {
             const principal = parseFloat(bankLoanAmountInputEl.value) || 0;
             if (principal <= 0) {
                 bankLoanEstPaymentEl.textContent = '0';
@@ -3337,3 +3388,4 @@
     </script>
 </body>
 </html>
+
