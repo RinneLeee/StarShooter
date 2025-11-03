@@ -183,7 +183,7 @@
         .button-external-loan { 
             background: linear-gradient(to bottom, var(--color-accent-gold), var(--color-accent-gold-dark)); 
             border-color: #b45309; 
-        }
+        } 
         .button-external-loan:hover { background: linear-gradient(to bottom, #fbbf24, var(--color-accent-gold-dark)); }
         
         .button-new-life { 
@@ -281,6 +281,8 @@
             text-align: center;
             border: 1px solid var(--color-border-light);
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            /* *** NEW: Add transition for tooltip *** */
+            cursor: help;
         }
         .stat-label {
             font-size: 0.8rem;
@@ -351,7 +353,6 @@
         }
         /* --- END NEW PLAYER STATS --- */
 
-        <!-- MODIFICATION: Added new CSS classes for the refactored ledger -->
         /* --- NEW: Stat Card Text Sizing --- */
         .stat-value.stat-value-small-text {
             font-size: 1.25rem; /* Slightly smaller for long text */
@@ -459,6 +460,12 @@
         .condition-good { color: var(--color-success); }
         .condition-fair { color: var(--color-accent-gold); }
         .condition-poor { color: var(--color-danger); }
+        
+        /* --- NEW: Event Status Colors --- */
+        .stat-value.event-positive { color: var(--color-success-dark); }
+        .stat-value.event-negative { color: var(--color-danger-dark); }
+        .stat-value.event-neutral { color: #1d4ed8; } /* Blue */
+
 
         /* --- MODALS --- */
         .modal { 
@@ -655,57 +662,54 @@
                 <h2 class="section-title !mb-0 !border-b-0 !pb-0">Your Ledger</h2>
                 <button id="new-life-btn" class="button button-new-life mb-4">Start New Life</button>
             </div>
-            <!-- 
-                MODIFICATION: 
-                Changed grid from "lg:grid-cols-7" to "lg:grid-cols-4 xl:grid-cols-7"
-                This makes it 2-col (mobile), 3-col (sm), 4-col (lg), and 7-col (xl)
-                This provides a much-needed intermediate step for standard laptop/desktop screens.
-            -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4"> 
-                <div class="stat-card">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4"> 
+                <div class="stat-card" title="Your current age.">
                     <span class="stat-label">Age</span>
                     <div class="stat-value-container">
-                        <!-- MODIFICATION: Added stat-value-small-text for better wrapping -->
                         <span class="stat-value stat-value-small-text" id="player-age">18 years</span>
                     </div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" title="Your available cash.">
                     <span class="stat-label">Cash</span>
-                    <!-- MODIFICATION: Added stat-value-container-col for vertical layout -->
                     <div class="stat-value-container stat-value-container-col">
                         <span class="stat-value" id="player-cash">$20,000</span>
                         <span id="cash-change-indicator">($0)</span>
                     </div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" title="Your current job.">
                     <span class="stat-label">Job</span>
                     <div class="stat-value-container">
-                        <!-- MODIFICATION: Added stat-value-small-text for better wrapping -->
                         <span class="stat-value stat-value-small-text" id="player-job-title">Unskilled Labor</span>
                     </div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" title="Your monthly income before expenses.">
                     <span class="stat-label">Salary (Monthly)</span>
                     <div class="stat-value-container">
                         <span class="stat-value" id="player-salary">$1,200</span>
                     </div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" title="Your total assets (Cash + Property Value) minus your total debts (Loans).">
                     <span class="stat-label">Net Worth</span>
                     <div class="stat-value-container">
                         <span class="stat-value" id="player-net-worth">$20,000</span>
                     </div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" id="inflation-stat-card" title="Annual inflation. Affects salaries, property prices, and fees.">
                     <span class="stat-label">Annual Inflation</span>
                     <div class="stat-value-container">
                         <span class="stat-value" id="current-inflation-rate">0.0%</span>
                     </div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" id="market-stat-card" title="The current economic market state.">
                     <span class="stat-label">Market Status</span>
                     <div class="stat-value-container">
                         <span class="stat-value" id="current-market-status">Normal</span>
+                    </div>
+                </div>
+                <div class="stat-card" id="event-stat-card" title="Special events affecting the economy.">
+                    <span class="stat-label">Current Event</span>
+                    <div class="stat-value-container">
+                        <span class="stat-value stat-value-small-text" id="current-event-status">None</span>
                     </div>
                 </div>
                 </div>
@@ -745,7 +749,7 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-red-700 mb-2">Risky Cash Loan</h3>
-                            <p class="text-sm text-slate-600 mb-3">Guaranteed approval, but comes with a dangerously high, unknown interest rate. Repaid over 36 months. It might be risky!</p>
+                            <p id="risky-loan-description" class="text-sm text-slate-600 mb-3">Guaranteed approval, but comes with a dangerously high, unknown interest rate. Repaid over 36 months. It might be risky!</p>
                             <button id="external-loan-btn" class="button button-external-loan w-full">Get Risky Cash Loan</button>
                         </div>
                     </div>
@@ -835,7 +839,7 @@
         <p id="flippingPenaltyMessage" class="text-lg mb-4">Warning: Selling this property so soon will incur a hefty penalty. Do you want to proceed?</p>
         <div class="modal-buttons">
             <button id="confirmFlippingSaleBtn" class="modal-button">Yes, Sell & Pay Penalty</button>
-            <button id="cancelFlippingSaleBtn" class="modal-button modal-cancel-button">Cancel Sale</button>
+            <button id="cancelFlippingSaleBtn" class="modal-button modal-cancel-button">Cancel</button>
         </div>
     </div></div>
 
@@ -919,7 +923,8 @@
         
         const JOBS = [
             // General
-            { id: "unskilled0", title: "Unskilled Labor", field: JOB_FIELDS.UNSKILLED, level: 0, salary: 1200, annualIncrementPercent: 0.01, prerequisites: null, promotionChanceMonths: 24, promotionChance: 0.1, promotionTo: "it0" },
+            // *** MODIFIED: Removed promotion path from Unskilled Labor ***
+            { id: "unskilled0", title: "Unskilled Labor", field: JOB_FIELDS.UNSKILLED, level: 0, salary: 1200, annualIncrementPercent: 0.01, prerequisites: null },
             
             // IT Track
             { id: "it0", title: "IT Intern", field: JOB_FIELDS.IT, level: 0, salary: 2200, annualIncrementPercent: 0.02, prerequisites: null, promotionChanceMonths: 12, promotionChance: 0.3, promotionTo: "it1" },
@@ -1012,11 +1017,23 @@
 
 		
 		];
-        
-        // --- GAME PARAMETERS ---
+		
+		
+		// --- GAME PARAMETERS ---
         const INITIAL_CASH = 20000;
         const PROPERTY_DOWN_PAYMENT_PERCENTAGE = 0.20;
-        const AVAILABLE_LOAN_TERMS = [ { years: 10, months: 120 }, { years: 15, months: 180 }, { years: 20, months: 240 }, { years: 30, months: 360 }];
+        
+        // *** MODIFIED: Added baseInterestRate to each term per your request ***
+        const AVAILABLE_LOAN_TERMS = [ 
+            { years: 0, months: 0, baseInterestRate: 0 }, // All Cash
+            { years: 10, months: 120, baseInterestRate: 0.025 }, // 2.5%
+            { years: 15, months: 180, baseInterestRate: 0.03375 }, // 3.375%
+            { years: 20, months: 240, baseInterestRate: 0.0425 }, // 4.25%
+            { years: 30, months: 360, baseInterestRate: 0.06 }  // 6.0%
+        ];
+        // *** NEW: Hard floor for property interest rates ***
+        const MIN_PROPERTY_LOAN_INTEREST = 0.02; // 2.0%
+        
         const PROPERTY_FEES_PERCENTAGE_ANNUAL = 0.01;
         const MAX_LOG_ENTRIES = 35; 
         const PROPERTIES_PER_MONTH_MIN = 1;
@@ -1070,8 +1087,11 @@
         const CONDITION_THRESHOLD_TO_CURE_DELINQUENCY = 50; 
         const CHANCE_CURE_DELINQUENCY_IF_RENOVATED = 0.75; 
 
-        const EXTERNAL_LOAN_MIN_MONTHLY_INTEREST = 0.01;
-        const EXTERNAL_LOAN_MAX_MONTHLY_INTEREST = 0.15;
+        // *** NEW: Base interest rates (const) and current rates (let) ***
+        const BASE_EXTERNAL_LOAN_MIN_MONTHLY_INTEREST = 0.01;
+        const BASE_EXTERNAL_LOAN_MAX_MONTHLY_INTEREST = 0.15;
+        let EXTERNAL_LOAN_MIN_MONTHLY_INTEREST = 0.01;
+        let EXTERNAL_LOAN_MAX_MONTHLY_INTEREST = 0.15;
         const EXTERNAL_LOAN_TERM_MONTHS = 36;
         const LOAN_AD_CHANCE = 0.03; 
         const MIN_MONTHS_FOR_LOAN_AD = 6; 
@@ -1080,7 +1100,8 @@
         // *** NEW: Made this `let` for inflation ***
         let BANK_LOAN_APPLICATION_FEE = 500;
         const BANK_LOAN_COOLDOWN_MONTHS = 3;
-        const BANK_LOAN_ANNUAL_INTEREST_RATE = 0.08;
+        const BASE_BANK_LOAN_ANNUAL_INTEREST_RATE = 0.08; // *** NEW ***
+        let BANK_LOAN_ANNUAL_INTEREST_RATE = 0.08; // *** NEW (was const) ***
         const BANK_LOAN_TERM_MONTHS = 60; // 5 years
 
         const MAX_JOB_LISTINGS = 4;
@@ -1097,6 +1118,10 @@
         const MARKET_STATE_MIN_DURATION_MONTHS = 12;
         const MARKET_STATE_NORMAL_TO_CHANGE_CHANCE = 0.15;
         const MARKET_STATE_BOOM_BUST_TO_NORMAL_CHANCE = 0.40;
+
+        // *** NEW: Event Definitions (will be added in Part 3) ***
+        const EVENT_TYPES = { POSITIVE: 'positive', NEGATIVE: 'negative', NEUTRAL: 'neutral' };
+        let EVENTS = []; // Defined in Part 3
 
 
         // --- GAME STATE VARIABLES ---
@@ -1122,6 +1147,10 @@
         // *** NEW: Economic Cycle State ***
         let marketState = MARKET_STATES.NORMAL;
         let marketStateMonths = 0;
+
+        // *** NEW: Event State ***
+        let activeEvent = null;
+        let activeEventDuration = 0;
         
         let availableProperties = [];
         let availableJobs = []; 
@@ -1129,6 +1158,7 @@
         let currentMonth = 0;
         let propertyToManageIndex = -1; 
         let currentOfferForProperty = null; 
+        // *** MODIFIED: Default loan term is now 20 years ***
         let selectedLoanTermMonths = AVAILABLE_LOAN_TERMS.find(t => t.years === 20).months;
         let jobToApplyForId = null; 
         let firstMonthAdvanced = false; 
@@ -1142,12 +1172,20 @@
         const netWorthEl = document.getElementById('player-net-worth');
         const inflationRateEl = document.getElementById('current-inflation-rate'); // NEW: Inflation DOM
         const marketStatusEl = document.getElementById('current-market-status'); // *** NEW: Market Status DOM ***
+        const currentEventEl = document.getElementById('current-event-status'); // *** NEW: Event DOM ***
+        
+        // *** NEW: Tooltip stat cards ***
+        const inflationStatCardEl = document.getElementById('inflation-stat-card');
+        const marketStatCardEl = document.getElementById('market-stat-card');
+        const eventStatCardEl = document.getElementById('event-stat-card');
+        
         const propertyListingsEl = document.getElementById('property-listings');
         const jobMarketListingsEl = document.getElementById('job-market-listings'); 
         const ownedPropertiesEl = document.getElementById('owned-properties');
         const noOwnedPropertiesMsgEl = document.getElementById('no-owned-properties-msg');
         const nextMonthBtn = document.getElementById('next-month-btn');
         const externalLoanBtn = document.getElementById('external-loan-btn');
+        const riskyLoanDescriptionEl = document.getElementById('risky-loan-description'); // *** NEW: Risky Loan Desc DOM ***
         const bankLoanBtn = document.getElementById('bank-loan-btn'); 
         const newLifeBtn = document.getElementById('new-life-btn'); 
         const gameLogEl = document.getElementById('game-log');
@@ -1273,9 +1311,16 @@
         
         function calculateMonthlyPayment(principal, annualInterestRate, termMonths) {
             if (termMonths <= 0) return principal; 
-            if (annualInterestRate <= 0) return principal / termMonths;
+            // *** MODIFIED: Handle 0% interest for all-cash or events ***
+            if (annualInterestRate === 0) return principal / termMonths;
             
             const monthlyRate = annualInterestRate / 12;
+            // *** NEW: Handle zero or negative monthly rate from events ***
+            if (monthlyRate <= 0) {
+                return principal / termMonths;
+            }
+            // *** END NEW ***
+
             const payment = principal * (monthlyRate * Math.pow(1 + monthlyRate, termMonths)) / (Math.pow(1 + monthlyRate, termMonths) - 1);
             return payment;
         }
@@ -1316,7 +1361,9 @@
         }
 
         function showModal(title, message, type = 'info') { 
-            modalTitleEl.textContent = title; modalMessageEl.textContent = message;
+            modalTitleEl.textContent = title; 
+            // *** NEW: Allow HTML in modal message for tooltips ***
+            modalMessageEl.innerHTML = message; // Use .innerHTML instead of .textContent
             messageModalContentEl.classList.remove('modal-success', 'modal-error', 'modal-warning', 'modal-info');
             // Reset modal button classes to base
             modalCloseBtn.className = 'modal-button'; 
@@ -1348,8 +1395,9 @@
         }
         function addLogEntry(message) { gameLog.unshift(message); if (gameLog.length > MAX_LOG_ENTRIES) gameLog.pop(); renderGameLog(); }
         function getConditionClass(condition) { if (condition >= 70) return 'condition-good'; if (condition >= 40) return 'condition-fair'; return 'condition-poor'; }
-
-        // --- RENDER FUNCTIONS ---
+		
+		
+		// --- RENDER FUNCTIONS ---
 
         function calculateAndRenderCashflow() {
             try {
@@ -1392,7 +1440,7 @@
             }
         }
 		
-		// *** MODIFIED: To include market status ***
+		// *** MODIFIED: To include market status and event status + tooltips ***
         function renderPlayerStats() { 
             try {
                 const currentJob = gameJobs.find(j => j.id === player.currentJobId); // MODIFIED: Use gameJobs
@@ -1405,6 +1453,7 @@
                 const newNetWorth = `$${formatCurrency(calculateNetWorth())}`;
                 const newInflation = `${(currentInflationRate * 100).toFixed(1)}%`; // NEW: Inflation
                 const newMarketStatus = marketState; // *** NEW ***
+                const newEventStatus = activeEvent ? activeEvent.name : "None"; // *** NEW ***
 
                 // Helper function to update value and trigger animation
                 const updateStat = (element, newValue, useSmallText = false) => {
@@ -1447,6 +1496,24 @@
                 }
                 // *** END NEW ***
 
+                // *** NEW: Update event status display ***
+                updateStat(currentEventEl, newEventStatus, true);
+                currentEventEl.classList.remove('event-positive', 'event-negative', 'event-neutral', 'text-slate-700');
+                if (activeEvent) {
+                    switch(activeEvent.type) {
+                        case EVENT_TYPES.POSITIVE: currentEventEl.classList.add('event-positive'); break;
+                        case EVENT_TYPES.NEGATIVE: currentEventEl.classList.add('event-negative'); break;
+                        case EVENT_TYPES.NEUTRAL: currentEventEl.classList.add('event-neutral'); break;
+                        default: currentEventEl.classList.add('text-slate-700');
+                    }
+                } else {
+                    currentEventEl.classList.add('text-slate-700');
+                }
+                // *** END NEW ***
+                
+                // *** NEW: Update Tooltips ***
+                updateStatTooltips();
+
 
                 // Logic for the cash change indicator
                 if (player.lastMonthCashChange !== 0 && firstMonthAdvanced) {
@@ -1467,6 +1534,35 @@
                 console.error("Error in renderPlayerStats:", e);
             }
         }
+        
+        // *** NEW: Tooltip Update Function ***
+        function updateStatTooltips() {
+            // Inflation
+            inflationStatCardEl.title = `Current Annual Inflation: ${(currentInflationRate * 100).toFixed(1)}%\n- Affects all job salaries.\n- Affects all property base prices.\n- Affects renovation & other fees.`;
+            
+            // Market Status
+            let marketTooltip = `Market: ${marketState}\n`;
+            if (marketState === MARKET_STATES.BOOM) {
+                marketTooltip += "- Property prices higher.\n- Easier to sell properties.\n- Easier to find tenants.\n- Lower firing risk.";
+            } else if (marketState === MARKET_STATES.BUST) {
+                marketTooltip += "- Property prices lower.\n- Harder to sell properties.\n- Harder to find tenants.\n- Higher firing risk.\n- Higher tenant delinquency risk.";
+            } else {
+                marketTooltip += "- All economic factors are at baseline.";
+            }
+            marketStatCardEl.title = marketTooltip;
+            
+            // Event Status
+            let eventTooltip = "No active global events.";
+            if (activeEvent) {
+                eventTooltip = `Event: ${activeEvent.name} (${activeEventDuration} months left)\n${activeEvent.messageBody}`;
+                // Add specific modifiers to tooltip
+                if(activeEvent.modifiers.tenantFindChance) eventTooltip += `\n- Tenant Find Chance: ${activeEvent.modifiers.tenantFindChance > 1 ? '+' : ''}${((activeEvent.modifiers.tenantFindChance - 1) * 100).toFixed(0)}%`;
+                if(activeEvent.modifiers.saleOfferChance) eventTooltip += `\n- Sale Offer Chance: ${activeEvent.modifiers.saleOfferChance > 1 ? '+' : ''}${((activeEvent.modifiers.saleOfferChance - 1) * 100).toFixed(0)}%`;
+                if(activeEvent.modifiers.tenantLeaveChance) eventTooltip += `\n- Tenant Leave Chance: ${activeEvent.modifiers.tenantLeaveChance > 1 ? '+' : ''}${((activeEvent.modifiers.tenantLeaveChance - 1) * 100).toFixed(0)}%`;
+                if(activeEvent.modifiers.delinquencyChance) eventTooltip += `\n- Delinquency Risk: ${activeEvent.modifiers.delinquencyChance > 1 ? '+' : ''}${((activeEvent.modifiers.delinquencyChance - 1) * 100).toFixed(0)}%`;
+            }
+            eventStatCardEl.title = eventTooltip;
+        }
 
         function renderLoanButtons() {
             // Update fee text in case of inflation
@@ -1481,6 +1577,15 @@
                 bankLoanBtn.disabled = false;
                 bankLoanBtn.textContent = 'Apply for Bank Loan';
             }
+
+            // *** NEW: Update loan descriptions based on current interest rates from events ***
+            const currentBankRate = (BANK_LOAN_ANNUAL_INTEREST_RATE * 100).toFixed(1);
+            bankLoanModal.querySelector('p').innerHTML = `Bank loans have a <strong>50% success rate</strong> and are repaid over <strong>60 months (5 years)</strong> at a fixed <strong>${currentBankRate}% annual interest</strong>.`;
+            
+            const currentMinRisky = (EXTERNAL_LOAN_MIN_MONTHLY_INTEREST * 100).toFixed(1);
+            const currentMaxRisky = (EXTERNAL_LOAN_MAX_MONTHLY_INTEREST * 100).toFixed(1);
+            riskyLoanDescriptionEl.textContent = `Guaranteed approval, but comes with a dangerously high, unknown interest rate (between ${currentMinRisky}% and ${currentMaxRisky}% per month!). Repaid over 36 months.`;
+            // *** END NEW ***
         }
 		
 		function renderPropertyListings() {
@@ -1492,6 +1597,38 @@
                 availableProperties.forEach((prop, index) => {
                     if (!prop) { console.error("Undefined property in availableProperties at index:", index); return; }
                     const downPayment = prop.price * PROPERTY_DOWN_PAYMENT_PERCENTAGE;
+                    
+                    // *** NEW: Check for all-cash purchase ***
+                    const canBuyCash = player.cash >= prop.price;
+                    const canBuyLoan = player.cash >= downPayment;
+                    
+                    let buttonHTML = '';
+                    if (canBuyCash) {
+                        // Show "Buy Now" button (which opens modal) and "Finance" button
+                        buttonHTML = `
+                        <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <button class="button button-buy w-full" onclick="openLoanTermModal(${index}, true)">
+                                Buy Cash ($${formatCurrency(prop.price)})
+                            </button>
+                            <button class="button button-secondary w-full" onclick="openLoanTermModal(${index})">
+                                Finance (Down: $${formatCurrency(downPayment)})
+                            </button>
+                        </div>`;
+                    } else if (canBuyLoan) {
+                        // Show only "Finance" button
+                        buttonHTML = `
+                        <button class="button button-buy mt-3 w-full" onclick="openLoanTermModal(${index})">
+                            Finance (Down: $${formatCurrency(downPayment)})
+                        </button>`;
+                    } else {
+                        // Show disabled button
+                        buttonHTML = `
+                        <button class="button button-buy mt-3 w-full button-disabled" disabled>
+                            Not Enough Cash (Need $${formatCurrency(downPayment)})
+                        </button>`;
+                    }
+                    // *** END NEW ***
+                    
                     const card = document.createElement('div');
                     card.className = `card ${prop.isGolden ? 'golden-opportunity' : ''}`;
                     card.innerHTML = `
@@ -1499,12 +1636,7 @@
                         <p><span class="price">Price: $${formatCurrency(prop.price)}</span></p>
                         <p><span class="rent-estimate">Est. Monthly Rent: $${formatCurrency(prop.estimatedRent)}</span></p>
                         <p>Initial Condition: <span class="${getConditionClass(prop.initialCondition)} font-semibold">${prop.initialCondition.toFixed(1)}%</span></p>
-                        <p>Down Payment (20%): $${formatCurrency(downPayment)}</p>
-                        <button class="button button-buy mt-3 w-full ${player.cash < downPayment ? 'button-disabled' : ''}"
-                                onclick="openLoanTermModal(${index})"
-                                ${player.cash < downPayment ? 'disabled' : ''}>
-                            ${player.cash < downPayment ? 'Not Enough Cash' : 'Consider Purchase'}
-                        </button>`;
+                        ${buttonHTML}`; // *** MODIFIED: Use new button HTML ***
                     propertyListingsEl.appendChild(card);
                 });
             } catch (e) {
@@ -1611,13 +1743,25 @@
                         saleActionButtonHTML = `<button class="button button-list-sell w-full" onclick="openListSaleModal(${index})">List for Sale</button>`;
                         marketingButtonHTML = `<button class="button button-marketing w-full button-disabled" disabled title="List property to start marketing">Start Marketing</button>`;
                     }
+                    
+                    // *** MODIFIED: Show "Fully Paid Off!" if no loan ***
+                    let loanHTML = '';
+                    if (prop.loanTermMonths > 0) {
+                        loanHTML = `
+                            <p>Loan: $${formatCurrency(prop.remainingLoan)} (${prop.monthsPaid}/${prop.loanTermMonths} paid)</p>
+                            <p>Monthly Installment: $${formatCurrency(prop.monthlyInstallment)}</p>
+                            ${prop.remainingLoan <= 0 ? '<p class="font-bold text-green-600 mt-2">Fully Paid Off!</p>' : ''}
+                        `;
+                    } else {
+                        loanHTML = '<p class="font-bold text-green-600 mt-2">Bought with Cash (No Loan)</p>';
+                    }
+                    // *** END MODIFIED ***
 
                     card.innerHTML = `
                         ${disasterIconHTML} <h3>${prop.name} (ID: ${prop.id})</h3>
                         <p>Market Value: $${formatCurrency(prop.currentMarketValue)} (Bought for $${formatCurrency(prop.purchasePrice)})</p>
-                        <p>Loan: $${formatCurrency(prop.remainingLoan)} (${prop.monthsPaid}/${prop.loanTermMonths} paid)</p>
+                        ${loanHTML}
                         <p>Months Owned: ${prop.monthsOwned || 0}</p>
-                        <p>Monthly Installment: $${formatCurrency(prop.monthlyInstallment)}</p>
                         <p>Monthly Fees: $${formatCurrency(prop.monthlyFees)}</p>
                         <p>Condition: <span class="${getConditionClass(prop.condition)} font-semibold">${prop.condition.toFixed(1)}%</span></p>
                         <p>${statusHTML}</p>
@@ -1627,7 +1771,6 @@
                             ${saleActionButtonHTML}
                             ${marketingButtonHTML}
                         </div>
-                        ${prop.remainingLoan <= 0 ? '<p class="font-bold text-green-600 mt-2">Fully Paid Off!</p>' : ''}
                     `;
                     ownedPropertiesEl.appendChild(card);
                 });
@@ -1646,12 +1789,12 @@
                     const li = document.createElement('li');
                     li.textContent = entry;
                     // *** MODIFIED: Added 'inflation' and market state change colors ***
-                    if (entry.toLowerCase().includes("bought") || entry.toLowerCase().includes("salary increase") || entry.toLowerCase().includes("rented out") || entry.toLowerCase().includes("rental income") || entry.toLowerCase().includes("sold") || entry.toLowerCase().includes("resumed payment") || entry.toLowerCase().includes("offer accepted") || entry.toLowerCase().includes("golden opportunity") || entry.toLowerCase().includes("got the job") || entry.toLowerCase().includes("promoted") || entry.toLowerCase().includes("bonus") || entry.toLowerCase().includes("bank loan approved") || entry.toLowerCase().includes("marketing success") || entry.toLowerCase().includes("market is booming")) {
+                    if (entry.toLowerCase().includes("bought") || entry.toLowerCase().includes("salary increase") || entry.toLowerCase().includes("rented out") || entry.toLowerCase().includes("rental income") || entry.toLowerCase().includes("sold") || entry.toLowerCase().includes("resumed payment") || entry.toLowerCase().includes("offer accepted") || entry.toLowerCase().includes("golden opportunity") || entry.toLowerCase().includes("got the job") || entry.toLowerCase().includes("promoted") || entry.toLowerCase().includes("bonus") || entry.toLowerCase().includes("bank loan approved") || entry.toLowerCase().includes("marketing success") || entry.toLowerCase().includes("market is booming") || entry.toLowerCase().includes("subsidy") || entry.toLowerCase().includes("interest rates drop") || entry.toLowerCase().includes("tech boom")) {
                         li.style.color = "#15803d"; // success-dark
                         li.style.fontWeight = "500";
-                    } else if (entry.toLowerCase().includes("paid") || entry.toLowerCase().includes("expenses") || entry.toLowerCase().includes("fee") || entry.toLowerCase().includes("renovation") || entry.toLowerCase().includes("external loan payment") || entry.toLowerCase().includes("bank loan payment") || entry.toLowerCase().includes("marketing campaign fee") || entry.toLowerCase().includes("flipping penalty")) {
+                    } else if (entry.toLowerCase().includes("paid") || entry.toLowerCase().includes("expenses") || entry.toLowerCase().includes("fee") || entry.toLowerCase().includes("renovation") || entry.toLowerCase().includes("external loan payment") || entry.toLowerCase().includes("bank loan payment") || entry.toLowerCase().includes("marketing campaign fee") || entry.toLowerCase().includes("flipping penalty") || entry.toLowerCase().includes("tax") || entry.toLowerCase().includes("interest rates rise")) {
                         li.style.color = "#b91c1c"; // danger-dark
-                    } else if (entry.toLowerCase().includes("tenant left") || entry.toLowerCase().includes("damage") || entry.toLowerCase().includes("deal fell through") || entry.toLowerCase().includes("offer rejected") || entry.toLowerCase().includes("delinquent") || entry.toLowerCase().includes("stopped paying") || entry.toLowerCase().includes("no offers") || entry.toLowerCase().includes("took risky loan") || entry.toLowerCase().includes("application rejected") || entry.toLowerCase().includes("fired") || entry.toLowerCase().includes("disaster") || entry.toLowerCase().includes("evicted tenant damaged") || entry.toLowerCase().includes("bank loan rejected") || entry.toLowerCase().includes("marketing failed") || entry.toLowerCase().includes("inflation") || entry.toLowerCase().includes("market enters bust") || entry.toLowerCase().includes("market cools")) {
+                    } else if (entry.toLowerCase().includes("tenant left") || entry.toLowerCase().includes("damage") || entry.toLowerCase().includes("deal fell through") || entry.toLowerCase().includes("offer rejected") || entry.toLowerCase().includes("delinquent") || entry.toLowerCase().includes("stopped paying") || entry.toLowerCase().includes("no offers") || entry.toLowerCase().includes("took risky loan") || entry.toLowerCase().includes("application rejected") || entry.toLowerCase().includes("fired") || entry.toLowerCase().includes("disaster") || entry.toLowerCase().includes("evicted tenant damaged") || entry.toLowerCase().includes("bank loan rejected") || entry.toLowerCase().includes("marketing failed") || entry.toLowerCase().includes("inflation") || entry.toLowerCase().includes("market enters bust") || entry.toLowerCase().includes("market cools") || entry.toLowerCase().includes("rental exodus") || entry.toLowerCase().includes("policy change")) {
                         li.style.color = "#b45309"; // gold-dark
                         li.style.fontWeight = "500";
                     }
@@ -1708,7 +1851,14 @@
 
 
             availableProperties = [];
-            const numPropsToGenerate = Math.floor(Math.random() * (PROPERTIES_PER_MONTH_MAX - PROPERTIES_PER_MONTH_MIN + 1)) + PROPERTIES_PER_MONTH_MIN;
+            let numPropsToGenerate = Math.floor(Math.random() * (PROPERTIES_PER_MONTH_MAX - PROPERTIES_PER_MONTH_MIN + 1)) + PROPERTIES_PER_MONTH_MIN;
+            
+            // *** NEW: Event modifier for property generation ***
+            if (activeEvent && activeEvent.id === "housingSubsidy") {
+                numPropsToGenerate += 2; // More properties on the market
+            }
+            // *** END NEW ***
+
             let goldenAppearedThisMonth = false;
 
             // *** NEW: Filter property types based on probabilities ***
@@ -1748,7 +1898,7 @@
                 // *** END NEW ***
 
 
-                if (!type) { console.error("Error: Could not find property type for index", typeIndex); continue; }
+                if (!type) { console.error("Error: Could not find property type for index", i); continue; }
                 let price, initialCondition, estimatedRent; let isGolden = false;
                 let basePrice = type.basePrice + Math.floor(Math.random() * type.priceRange);
 
@@ -1759,6 +1909,16 @@
                 } else if (marketState === MARKET_STATES.BUST) {
                     marketPriceMultiplier = 0.80; // 20% cheaper in bust
                 }
+                
+                // *** NEW: Event modifier for price ***
+                if (activeEvent && activeEvent.id === "housingSubsidy" && type.priceTier === 1) {
+                    marketPriceMultiplier *= 0.85; // 15% cheaper for subsidized (Tier 1) housing
+                }
+                if (activeEvent && activeEvent.id === "techBoom") {
+                    marketPriceMultiplier *= 1.1; // 10% more expensive
+                }
+                // *** END NEW ***
+
 
                 if (!goldenAppearedThisMonth && Math.random() < GOLDEN_OPPORTUNITY_CHANCE) {
                     isGolden = true; goldenAppearedThisMonth = true;
@@ -1801,6 +1961,13 @@
 
             const potentialJobs = gameJobs.filter(job => {
                 if (job.id === player.currentJobId) return false;
+                
+                // *** NEW: Unskilled labor can only apply for Level 0 jobs ***
+                if (currentPlayerJob.field === JOB_FIELDS.UNSKILLED && job.level > 0) {
+                    return false;
+                }
+                // *** END NEW ***
+                
                 let meetsPrereqs = true;
                 if (job.prerequisites) {
                     const currentJobField = currentPlayerJob.field;
@@ -1832,6 +1999,15 @@
                 } else if (marketState === MARKET_STATES.BUST) {
                      marketAvailabilityFactor = 0.6; // Fewer jobs in bust
                 }
+                
+                // *** NEW: Event modifier for job availability ***
+                if (activeEvent && activeEvent.id === "techBoom" && job.field === JOB_FIELDS.IT) {
+                    marketAvailabilityFactor *= 2.5; // Way more IT jobs
+                }
+                if (activeEvent && activeEvent.id === "rentalExodus") {
+                    marketAvailabilityFactor *= 0.7; // Fewer jobs overall
+                }
+                // *** END NEW ***
 
 
                 if (job.field === currentPlayerJob.field && job.level === currentPlayerJob.level + 1 && Math.random() < marketAvailabilityFactor) return true;
@@ -1858,8 +2034,21 @@
         
         // *** NEW: Function to update market state ***
         function updateMarketState() {
+            // Events can override market state
+            if (activeEvent && activeEvent.overrideMarketState) {
+                if (marketState !== activeEvent.overrideMarketState) {
+                     addLogEntry(`EVENT: The ${activeEvent.name} is driving the market into a ${activeEvent.overrideMarketState} state!`);
+                     marketState = activeEvent.overrideMarketState;
+                     marketStateMonths = 0;
+                }
+                // Re-apply effects even if state doesn't change, to ensure event modifiers are active
+                applyMarketStateEffects();
+                return; // Event is controlling the market
+            }
+
             marketStateMonths++;
             if (marketStateMonths < MARKET_STATE_MIN_DURATION_MONTHS) {
+                applyMarketStateEffects(); // Re-apply effects
                 return; // Don't change state too quickly
             }
 
@@ -1887,7 +2076,8 @@
                 }
             }
             
-            // Apply effects of the current market state
+            // Apply effects of the current market state (only if no change, or change happened)
+            // This is slightly redundant but ensures effects are set
             applyMarketStateEffects();
         }
 
@@ -1896,6 +2086,7 @@
             let firingRiskMultiplier = 1.0;
             let delinquencyMultiplier = 1.0;
 
+            // Base values from market state
             if (marketState === MARKET_STATES.BOOM) {
                 BASE_CHANCE_OF_RECEIVING_OFFER = 0.30; // Easier to sell
                 BUYER_OFFER_DISCOUNT_BASE_FROM_MARKET = 0.02; // Buyers offer closer to market value
@@ -1915,6 +2106,23 @@
                 firingRiskMultiplier = 1.0;
                 delinquencyMultiplier = 1.0;
             }
+            
+            // *** NEW: Apply event modifiers on top of market state ***
+            if (activeEvent) {
+                if (activeEvent.modifiers.tenantFindChance) {
+                    BASE_TENANT_FIND_CHANCE *= activeEvent.modifiers.tenantFindChance;
+                }
+                if (activeEvent.modifiers.saleOfferChance) {
+                    BASE_CHANCE_OF_RECEIVING_OFFER *= activeEvent.modifiers.saleOfferChance;
+                }
+                if (activeEvent.modifiers.tenantLeaveChance) {
+                    // This is handled directly in advanceMonth
+                }
+                if (activeEvent.modifiers.delinquencyChance) {
+                    delinquencyMultiplier *= activeEvent.modifiers.delinquencyChance;
+                }
+            }
+            // *** END NEW ***
             
             // Apply multipliers (ensure base constants are defined appropriately)
             CHANCE_BECOME_DELINQUENT_IF_LOW_CONDITION = 0.20 * delinquencyMultiplier;
@@ -1954,12 +2162,188 @@
             CLEANING_FEE_MAX = Math.round(CLEANING_FEE_MAX * inflationFactor);
             BANK_LOAN_APPLICATION_FEE = Math.round(BANK_LOAN_APPLICATION_FEE * inflationFactor);
         }
+        
+        // *** NEW: Event Definitions ***
+        function defineEvents() {
+            EVENTS = [
+                {
+                    id: "interestRateHike",
+                    name: "Rate Hike",
+                    type: EVENT_TYPES.NEGATIVE,
+                    chance: 0.1, // Annual chance
+                    durationMonths: 12,
+                    isAnnual: true,
+                    messageTitle: "Interest Rates Rise!",
+                    messageBody: "The central bank has raised interest rates to combat inflation! Bank loans are now more expensive and risky loans are even riskier.",
+                    apply: () => {
+                        BANK_LOAN_ANNUAL_INTEREST_RATE = BASE_BANK_LOAN_ANNUAL_INTEREST_RATE * 1.5; // e.g., 8% -> 12%
+                        EXTERNAL_LOAN_MIN_MONTHLY_INTEREST = BASE_EXTERNAL_LOAN_MIN_MONTHLY_INTEREST * 1.2;
+                        EXTERNAL_LOAN_MAX_MONTHLY_INTEREST = BASE_EXTERNAL_LOAN_MAX_MONTHLY_INTEREST * 1.2;
+                    },
+                    remove: () => {
+                        BANK_LOAN_ANNUAL_INTEREST_RATE = BASE_BANK_LOAN_ANNUAL_INTEREST_RATE;
+                        EXTERNAL_LOAN_MIN_MONTHLY_INTEREST = BASE_EXTERNAL_LOAN_MIN_MONTHLY_INTEREST;
+                        EXTERNAL_LOAN_MAX_MONTHLY_INTEREST = BASE_EXTERNAL_LOAN_MAX_MONTHLY_INTEREST;
+                        addLogEntry("EVENT END: Interest rates have returned to normal.");
+                    },
+                    modifiers: {}
+                },
+                {
+                    id: "interestRateCut",
+                    name: "Rate Cut",
+                    type: EVENT_TYPES.POSITIVE,
+                    chance: 0.1, // Annual chance
+                    durationMonths: 12,
+                    isAnnual: true,
+                    messageTitle: "Interest Rates Drop!",
+                    messageBody: "The central bank has cut interest rates to stimulate the economy! Borrowing is now cheaper.",
+                    apply: () => {
+                        BANK_LOAN_ANNUAL_INTEREST_RATE = BASE_BANK_LOAN_ANNUAL_INTEREST_RATE * 0.7; // e.g., 8% -> 5.6%
+                        EXTERNAL_LOAN_MIN_MONTHLY_INTEREST = BASE_EXTERNAL_LOAN_MIN_MONTHLY_INTEREST * 0.8;
+                        EXTERNAL_LOAN_MAX_MONTHLY_INTEREST = BASE_EXTERNAL_LOAN_MAX_MONTHLY_INTEREST * 0.8;
+                    },
+                    remove: () => {
+                        BANK_LOAN_ANNUAL_INTEREST_RATE = BASE_BANK_LOAN_ANNUAL_INTEREST_RATE;
+                        EXTERNAL_LOAN_MIN_MONTHLY_INTEREST = BASE_EXTERNAL_LOAN_MIN_MONTHLY_INTEREST;
+                        EXTERNAL_LOAN_MAX_MONTHLY_INTEREST = BASE_EXTERNAL_LOAN_MAX_MONTHLY_INTEREST;
+                        addLogEntry("EVENT END: Interest rates have returned to normal.");
+                    },
+                    modifiers: {}
+                },
+                {
+                    id: "housingSubsidy",
+                    name: "Housing Subsidy",
+                    type: EVENT_TYPES.POSITIVE,
+                    chance: 0.08, // Annual chance
+                    durationMonths: 6,
+                    isAnnual: true,
+                    messageTitle: "Govt. Housing Subsidy!",
+                    messageBody: "The government announced a new subsidy for first-time home buyers! More affordable (Tier 1) properties are appearing on the market at lower prices.",
+                    apply: () => {}, // Effect is in generateNewProperties
+                    remove: () => {
+                         addLogEntry("EVENT END: The government housing subsidy program has ended.");
+                    },
+                    modifiers: {}
+                },
+                {
+                    id: "techBoom",
+                    name: "Tech Boom",
+                    type: EVENT_TYPES.POSITIVE,
+                    chance: 0.05, // Annual chance
+                    durationMonths: 18,
+                    isAnnual: true,
+                    messageTitle: "Local Tech Boom!",
+                    messageBody: "A major tech company is opening a new HQ! IT jobs are plentiful, and demand for housing is skyrocketing, pushing up prices.",
+                    apply: () => {}, // Effect is in generateNewProperties & generateJobOpportunities
+                    remove: () => {
+                        addLogEntry("EVENT END: The local tech boom has stabilized.");
+                    },
+                    modifiers: {
+                        tenantFindChance: 1.5, // 50% easier to find tenants
+                    },
+                    overrideMarketState: MARKET_STATES.BOOM // This event forces a boom
+                },
+                {
+                    id: "rentalExodus",
+                    name: "Rental Exodus",
+                    type: EVENT_TYPES.NEGATIVE,
+                    chance: 0.05, // Annual chance
+                    durationMonths: 12,
+                    isAnnual: true,
+                    messageTitle: "Rental Exodus!",
+                    messageBody: "A major local employer has shut down. Many tenants are leaving the city, jobs are scarce, and it's hard to find renters.",
+                    apply: () => {},
+                    remove: () => {
+                        addLogEntry("EVENT END: The job market has recovered from the rental exodus.");
+                    },
+                    modifiers: {
+                        tenantFindChance: 0.4, // 60% harder to find tenants
+                        tenantLeaveChance: 2.0, // 2x chance of tenants leaving
+                        delinquencyChance: 1.5, // 50% more likely
+                    },
+                    overrideMarketState: MARKET_STATES.BUST // This event forces a bust
+                },
+                {
+                    id: "propertyTaxHike",
+                    name: "Property Tax Hike",
+                    type: EVENT_TYPES.NEGATIVE,
+                    chance: 0.07, // Annual chance
+                    durationMonths: 24,
+                    isAnnual: true,
+                    messageTitle: "Property Tax Hike!",
+                    messageBody: "The city council has approved a 50% property tax hike to fund new projects. Your monthly fees on all properties have increased!",
+                    apply: () => {
+                        player.properties.forEach(prop => {
+                            // Store original fee if not already stored
+                            if (prop.originalMonthlyFees === undefined) {
+                                prop.originalMonthlyFees = prop.monthlyFees;
+                            }
+                            prop.monthlyFees = prop.originalMonthlyFees * 1.5;
+                        });
+                    },
+                    remove: () => {
+                        player.properties.forEach(prop => {
+                            // Restore original fee
+                            if (prop.originalMonthlyFees !== undefined) {
+                                prop.monthlyFees = prop.originalMonthlyFees;
+                                delete prop.originalMonthlyFees; // Clean up
+                            }
+                        });
+                        addLogEntry("EVENT END: The temporary property tax hike has expired.");
+                    },
+                    modifiers: {}
+                }
+            ];
+        }
+
+        // *** NEW: Event Handling Logic ***
+        function checkAndApplyEvents() {
+            // 1. Check if an active event should end
+            if (activeEvent) {
+                activeEventDuration--;
+                if (activeEventDuration <= 0) {
+                    addLogEntry(`EVENT: ${activeEvent.name} has ended.`);
+                    showModal(activeEvent.messageTitle.replace("!", " Has Ended"), `The effects of the ${activeEvent.name} event are over.`, 'info');
+                    activeEvent.remove();
+                    activeEvent = null;
+                } else {
+                    // Event is still active, just return
+                    return; 
+                }
+            }
+
+            // 2. Check for new MONTHLY events (none for now)
+            // ...
+
+            // 3. Check for new ANNUAL events (only in January - month 0)
+            if (currentMonth % 12 === 0 && currentMonth > 0) {
+                let eventTriggered = false;
+                // Shuffle events to check in random order
+                const shuffledEvents = [...EVENTS].sort(() => 0.5 - Math.random());
+                
+                shuffledEvents.forEach(event => {
+                    if (event.isAnnual && !eventTriggered && Math.random() < event.chance) {
+                        eventTriggered = true;
+                        activeEvent = event;
+                        activeEventDuration = event.durationMonths;
+                        addLogEntry(`EVENT: ${event.name} has begun! It will last for ${event.durationMonths} months.`);
+                        showModal(event.messageTitle, event.messageBody, event.type);
+                        event.apply();
+                    }
+                });
+            }
+        }
+        
+        // *** END NEW ***
 
         function advanceMonth() {
             try {
                 const cashBeforeMonth = player.cash;
 
-                // *** NEW: Update market state FIRST ***
+                // *** NEW: Check and apply/remove events FIRST ***
+                checkAndApplyEvents();
+                
+                // *** NEW: Update market state SECOND (which may be overridden by event) ***
                 updateMarketState();
 
                 // *** NEW: Clear all disaster icons at the start of the month ***
@@ -2048,6 +2432,7 @@
                     }
                     // *** END MODIFIED BONUS LOGIC ***
 
+                    // *** MODIFIED: Check if promotion path exists before trying to promote ***
                     if (currentJob.promotionTo && currentJob.promotionChance && currentJob.promotionChanceMonths &&
                         player.experienceInCurrentJobMonths >= currentJob.promotionChanceMonths &&
                         Math.random() < currentJob.promotionChance) {
@@ -2072,13 +2457,24 @@
                 let totalExternalLoanPayments = 0;
                 for (let i = player.externalLoans.length - 1; i >= 0; i--) {
                     const loan = player.externalLoans[i];
+                    
+                    // *** NEW: Recalculate monthly payment if interest rate was 0 and is now not ***
+                    if (loan.monthlyInterestRate === 0 && loan.type === 'bank' && BANK_LOAN_ANNUAL_INTEREST_RATE > 0) {
+                        loan.monthlyInterestRate = BANK_LOAN_ANNUAL_INTEREST_RATE / 12;
+                        loan.monthlyPayment = Math.round(calculateMonthlyPayment(loan.remainingBalance, BANK_LOAN_ANNUAL_INTEREST_RATE, loan.termMonths - loan.monthsPaid));
+                        addLogEntry(`Interest rates normalized. Your bank loan (ID: ${loan.id}) payment is now $${formatCurrency(loan.monthlyPayment)}.`);
+                    }
+                    // *** END NEW ***
+
                     const interestThisMonth = loan.remainingBalance * loan.monthlyInterestRate;
                     const principalPayment = loan.monthlyPayment - interestThisMonth;
+                    
                     player.cash -= loan.monthlyPayment;
                     loan.remainingBalance -= principalPayment;
                     loan.remainingBalance = Math.max(0, loan.remainingBalance);
                     loan.monthsPaid++;
                     totalExternalLoanPayments += loan.monthlyPayment;
+
                     if (loan.remainingBalance <= 0.01 || loan.monthsPaid >= loan.termMonths) {
                         const loanType = loan.type === 'risky' ? 'Risky Loan' : 'Bank Loan';
                         addLogEntry(`${loanType} (ID: ${loan.id}) of $${formatCurrency(loan.principal)} has been fully paid off!`);
@@ -2107,9 +2503,28 @@
                     player.properties.forEach(prop => {
                         // Appreciation is now inflation + market factor + small random factor
                         const randomFactor = (Math.random() * 0.04) - 0.02; // +/- 2% randomness
-                        const totalAppreciationRate = currentInflationRate + marketAppreciationRate + randomFactor;
+                        let totalAppreciationRate = currentInflationRate + marketAppreciationRate + randomFactor;
+                        
+                        // *** NEW: Event modifier for appreciation ***
+                        if (activeEvent && activeEvent.id === "techBoom") {
+                            totalAppreciationRate += 0.05; // Extra 5% appreciation
+                        }
+                        if (activeEvent && activeEvent.id === "rentalExodus") {
+                            totalAppreciationRate -= 0.05; // Extra 5% depreciation
+                        }
+                        // *** END NEW ***
 
                         prop.currentMarketValue = Math.round(prop.currentMarketValue * (1 + totalAppreciationRate));
+                        
+                        // *** NEW: Update monthly fees based on new value (if not overridden by event) ***
+                        if (!activeEvent || activeEvent.id !== "propertyTaxHike") {
+                            prop.monthlyFees = (prop.currentMarketValue * PROPERTY_FEES_PERCENTAGE_ANNUAL) / 12;
+                            if (prop.originalMonthlyFees !== undefined) {
+                                // Store new base fee in case tax hike ends
+                                prop.originalMonthlyFees = prop.monthlyFees;
+                            }
+                        }
+                        // *** END NEW ***
 
                         addLogEntry(`${prop.name} market value changed by ${(totalAppreciationRate * 100).toFixed(1)}% to $${formatCurrency(prop.currentMarketValue)}.`);
                     });
@@ -2121,6 +2536,15 @@
                 player.properties.forEach((prop, index) => {
                     if (prop.monthsOwned === undefined) { prop.monthsOwned = prop.monthsPaid || 0; }
                     prop.monthsOwned++;
+
+                    // *** NEW: Recalculate property loan payment if interest was 0 (from an event) ***
+                    if (prop.remainingLoan > 0 && prop.monthlyInstallment === prop.loanAmount / prop.loanTermMonths && prop.annualInterestRate > 0) {
+                         // This implies it was a 0% loan that is now reverting
+                         prop.monthlyInstallment = calculateMonthlyPayment(prop.remainingLoan, prop.annualInterestRate, prop.loanTermMonths - prop.monthsPaid);
+                         addLogEntry(`Promotional 0% interest on ${prop.name} ended. New payment: $${formatCurrency(prop.monthlyInstallment)}.`);
+                    }
+                    // *** END NEW ***
+
 
                     if (prop.remainingLoan > 0) {
                         const paymentThisMonth = Math.min(prop.monthlyInstallment, prop.remainingLoan);
@@ -2254,7 +2678,15 @@
                                 }
                             }
                             prop.tenantMonths++;
-                            if (prop.tenantMonths >= MIN_TENANT_STAY_MONTHS && Math.random() < CHANCE_TENANT_LEAVES_AFTER_MIN) {
+                            
+                            // *** NEW: Event modifier for tenant leaving ***
+                            let tenantLeaveChance = CHANCE_TENANT_LEAVES_AFTER_MIN;
+                            if (activeEvent && activeEvent.modifiers.tenantLeaveChance) {
+                                tenantLeaveChance *= activeEvent.modifiers.tenantLeaveChance;
+                            }
+                            // *** END NEW ***
+
+                            if (prop.tenantMonths >= MIN_TENANT_STAY_MONTHS && Math.random() < tenantLeaveChance) {
                                 addLogEntry(`Tenant left ${prop.name}.`); showModal("Tenant Left", `Tenant at ${prop.name} moved out.`, 'info');
                                 prop.isRented = false; prop.isListedForRent = true; prop.currentRent = 0; prop.tenantMonths = 0;
                                 prop.isDelinquent = false; prop.delinquentMonths = 0;
@@ -2279,8 +2711,8 @@
                 });
                 if (totalRentalIncome > 0) addLogEntry(`Total rental income: $${formatCurrency(totalRentalIncome)}.`);
                 if (totalPropertyExpenses > 0) addLogEntry(`Total property expenses: $${formatCurrency(totalPropertyExpenses)}.`);
-
-                if (currentMonth > MIN_MONTHS_FOR_LOAN_AD && Math.random() < LOAN_AD_CHANCE && externalLoanModal.style.display !== 'block' && loanAdModal.style.display !== 'block' && messageModal.style.display !== 'block') {
+				
+				if (currentMonth > MIN_MONTHS_FOR_LOAN_AD && Math.random() < LOAN_AD_CHANCE && externalLoanModal.style.display !== 'block' && loanAdModal.style.display !== 'block' && messageModal.style.display !== 'block') {
                     openLoanAdModal();
                 }
 
@@ -2336,64 +2768,172 @@
 
         // --- ACTION/MODAL FUNCTIONS ---
 
-        window.openLoanTermModal = function(index) {
+        // *** NEW: Helper function to get the dynamic interest rate for a property loan term ***
+        function getDynamicPropertyInterestRate(termMonths) {
+            const term = AVAILABLE_LOAN_TERMS.find(t => t.months === termMonths);
+            if (!term) return BASE_BANK_LOAN_ANNUAL_INTEREST_RATE; // Fallback
+
+            let baseRate = term.baseInterestRate;
+            
+            // Adjust based on the *bank* loan rate, which is affected by events
+            // This links property rates to the economy
+            const bankRateDifference = BANK_LOAN_ANNUAL_INTEREST_RATE - BASE_BANK_LOAN_ANNUAL_INTEREST_RATE;
+            let finalRate = baseRate + bankRateDifference;
+
+            // Ensure rate doesn't go below the hard floor
+            return Math.max(MIN_PROPERTY_LOAN_INTEREST, finalRate);
+        }
+
+        // *** MODIFIED: To handle all-cash (defaultCashBuy) and variable interest ***
+        window.openLoanTermModal = function(index, defaultCashBuy = false) {
             propertyToManageIndex = index;
             const prop = availableProperties[index];
             if (!prop) return;
+            
             const downPayment = prop.price * PROPERTY_DOWN_PAYMENT_PERCENTAGE;
-            if (player.cash < downPayment) {
-                showModal("Not Enough Cash", `Need $${formatCurrency(downPayment)}, have $${formatCurrency(player.cash)}.`, 'warning'); return;
+            const canBuyCash = player.cash >= prop.price;
+            
+            if (player.cash < downPayment && !canBuyCash) {
+                showModal("Not Enough Cash", `Need $${formatCurrency(downPayment)} for a down payment, but you only have $${formatCurrency(player.cash)}.`, 'warning');
+                return;
             }
+            
             loanTermModalTitleEl.textContent = `Finance Purchase: ${prop.name}`;
-            loanPropertyDetailsEl.innerHTML = `<p><strong>Price:</strong> $${formatCurrency(prop.price)}</p><p><strong>Est. Rent:</strong> $${formatCurrency(prop.estimatedRent)}/month</p><p><strong>Down Payment (20%):</strong> $${formatCurrency(downPayment)}</p><p><strong>Loan Amount:</strong> $${formatCurrency(prop.price - downPayment)}</p><p><strong>Initial Condition:</strong> ${prop.initialCondition.toFixed(1)}%</p>`;
+            
+            loanPropertyDetailsEl.innerHTML = `
+                <p><strong>Price:</strong> $${formatCurrency(prop.price)}</p>
+                <p><strong>Est. Rent:</strong> $${formatCurrency(prop.estimatedRent)}/month</p>
+                <p><strong>Down Payment (20%):</strong> $${formatCurrency(downPayment)}</p>
+                <p><strong>Loan Amount:</strong> $${formatCurrency(prop.price - downPayment)}</p>
+                <p><strong>Initial Condition:</strong> ${prop.initialCondition.toFixed(1)}%</p>`;
             loanTermOptionsContainerEl.innerHTML = '';
+            
+            let defaultTermMonths = selectedLoanTermMonths; // Default to 20 years
+            
             AVAILABLE_LOAN_TERMS.forEach(term => {
-                const loanAmount = prop.price - downPayment; const monthlyPayment = loanAmount / term.months;
-                const optionDiv = document.createElement('div'); optionDiv.className = 'loan-term-option';
-                optionDiv.innerHTML = `<input type="radio" id="term-${term.months}" name="loanTerm" value="${term.months}" ${term.months === selectedLoanTermMonths ? 'checked' : ''}><label for="term-${term.months}">${term.years} Years (Monthly: $${formatCurrency(monthlyPayment)})</label>`;
-                loanTermOptionsContainerEl.appendChild(optionDiv);
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'loan-term-option';
+                
+                if (term.years === 0) {
+                    // All Cash Option
+                    if (canBuyCash) {
+                        optionDiv.innerHTML = `<input type="radio" id="term-${term.months}" name="loanTerm" value="${term.months}" ${defaultCashBuy ? 'checked' : ''}><label for="term-${term.months}"><strong>Pay Full Price (All Cash)</strong></label>`;
+                        loanTermOptionsContainerEl.appendChild(optionDiv);
+                        if (defaultCashBuy) {
+                            defaultTermMonths = 0; // Set default selection to cash
+                        }
+                    }
+                } else {
+                    // Loan Term Option
+                    // *** MODIFIED: Get dynamic interest rate for this term ***
+                    const annualInterestRate = getDynamicPropertyInterestRate(term.months);
+                    const paymentNote = `(${(annualInterestRate * 100).toFixed(1)}% Interest)`;
+                    const loanAmount = prop.price - downPayment;
+                    const monthlyPayment = calculateMonthlyPayment(loanAmount, annualInterestRate, term.months);
+                    
+                    optionDiv.innerHTML = `<input type="radio" id="term-${term.months}" name="loanTerm" value="${term.months}" ${!defaultCashBuy && term.months === defaultTermMonths ? 'checked' : ''}><label for="term-${term.months}">${term.years} Years (Monthly: $${formatCurrency(monthlyPayment)}) ${paymentNote}</label>`;
+                    loanTermOptionsContainerEl.appendChild(optionDiv);
+                }
             });
+            
             document.querySelectorAll('input[name="loanTerm"]').forEach(radio => {
                 radio.addEventListener('change', function() {
                     selectedLoanTermMonths = parseInt(this.value);
-                    const loanAmount = prop.price - (prop.price * PROPERTY_DOWN_PAYMENT_PERCENTAGE);
-                    loanTermSelectedPaymentEl.textContent = formatCurrency(loanAmount / selectedLoanTermMonths);
+                    let payment = 0;
+                    if (selectedLoanTermMonths === 0) {
+                        payment = prop.price;
+                        loanTermSelectedPaymentEl.textContent = `${formatCurrency(payment)} (Full Price)`;
+                    } else {
+                        // *** MODIFIED: Get dynamic rate for payment display ***
+                        const annualInterestRate = getDynamicPropertyInterestRate(selectedLoanTermMonths);
+                        const loanAmount = prop.price - (prop.price * PROPERTY_DOWN_PAYMENT_PERCENTAGE);
+                        payment = calculateMonthlyPayment(loanAmount, annualInterestRate, selectedLoanTermMonths);
+                        loanTermSelectedPaymentEl.textContent = `${formatCurrency(payment)} / month`;
+                    }
                 });
             });
+            
             const defaultRadio = document.querySelector('input[name="loanTerm"]:checked');
-            if(defaultRadio) defaultRadio.dispatchEvent(new Event('change'));
+            if (defaultRadio) {
+                defaultRadio.dispatchEvent(new Event('change'));
+            } else {
+                // Fallback if no default is checked (e.g., player can't afford cash)
+                const firstLoanRadio = document.querySelector('input[name="loanTerm"][value="120"]');
+                if (firstLoanRadio) {
+                    firstLoanRadio.checked = true;
+                    firstLoanRadio.dispatchEvent(new Event('change'));
+                }
+            }
             loanTermModal.style.display = 'block';
         }
 
+        // *** MODIFIED: To handle all-cash (0-month term) and interest rate ***
         confirmLoanBtn.onclick = function() {
             const propToBuy = availableProperties[propertyToManageIndex];
             if (!propToBuy) return;
-            const downPayment = propToBuy.price * PROPERTY_DOWN_PAYMENT_PERCENTAGE;
-            const loanAmount = propToBuy.price - downPayment;
+            
             const chosenTermMonths = parseInt(document.querySelector('input[name="loanTerm"]:checked').value);
-            const monthlyInstallment = loanAmount / chosenTermMonths;
-            const monthlyFees = (propToBuy.price * PROPERTY_FEES_PERCENTAGE_ANNUAL) / 12;
-            player.cash -= downPayment;
+            
+            let downPayment, loanAmount, annualInterestRate, monthlyInstallment, logMessage, modalMessage;
+            
+            if (chosenTermMonths === 0) {
+                // ALL CASH PURCHASE
+                if (player.cash < propToBuy.price) {
+                    showModal("Error", "You no longer have enough cash to buy this property outright.", 'error');
+                    return;
+                }
+                // *** MODIFIED: Correctly deduct full price ***
+                downPayment = propToBuy.price;
+                player.cash -= downPayment;
+                
+                loanAmount = 0;
+                annualInterestRate = 0;
+                monthlyInstallment = 0;
+                
+                logMessage = `Bought ${propToBuy.name} for $${formatCurrency(propToBuy.price)} with cash.`;
+                modalMessage = `Purchase Successful! You bought ${propToBuy.name} with cash! Cash: $${formatCurrency(player.cash)}.`;
+                
+            } else {
+                // FINANCE PURCHASE
+                downPayment = propToBuy.price * PROPERTY_DOWN_PAYMENT_PERCENTAGE;
+                if (player.cash < downPayment) {
+                     showModal("Error", "You no longer have enough cash for the down payment.", 'error');
+                    return;
+                }
+                player.cash -= downPayment;
+                
+                loanAmount = propToBuy.price - downPayment;
+                // *** MODIFIED: Get and store the correct dynamic interest rate ***
+                annualInterestRate = getDynamicPropertyInterestRate(chosenTermMonths);
+                monthlyInstallment = calculateMonthlyPayment(loanAmount, annualInterestRate, chosenTermMonths);
+                
+                logMessage = `Bought ${propToBuy.name} for $${formatCurrency(propToBuy.price)} (${chosenTermMonths/12}-yr loan @ ${(annualInterestRate*100).toFixed(1)}%).`;
+                modalMessage = `Purchase Successful! Bought ${propToBuy.name}! Cash: $${formatCurrency(player.cash)}.`;
+            }
 
-            // *** NEW: Add disasterIcon flags to new property ***
+            const monthlyFees = (propToBuy.price * PROPERTY_FEES_PERCENTAGE_ANNUAL) / 12;
+
             const newOwnedProperty = {
                 id: propToBuy.id, name: propToBuy.name, purchasePrice: propToBuy.price,
                 currentMarketValue: propToBuy.price, baseRentability: propToBuy.baseRentability,
                 downPaymentPaid: downPayment, loanAmount: loanAmount, remainingLoan: loanAmount,
-                monthlyInstallment: monthlyInstallment, monthlyFees: monthlyFees, monthsPaid: 0,
+                annualInterestRate: annualInterestRate, // *** MODIFIED ***
+                monthlyInstallment: monthlyInstallment, 
+                monthlyFees: monthlyFees, 
+                originalMonthlyFees: monthlyFees,
+                monthsPaid: 0,
                 condition: propToBuy.initialCondition, isRented: false, isListedForRent: false,
                 currentRent: 0, tenantMonths: 0, isDelinquent: false, delinquentMonths: 0,
                 isListedForSale: false, askingPrice: 0, timeOnMarket: 0, loanTermMonths: chosenTermMonths,
                 isBeingMarketed: false, marketingMonths: 0, wasListedForRent: false, tenantFirstMonthFree: false,
                 monthsOwned: 0,
-                hasDisasterIcon: false, // NEW
-                disasterIcon: ''        // NEW
+                hasDisasterIcon: false,
+                disasterIcon: ''
             };
-            // *** END NEW ***
 
             player.properties.push(newOwnedProperty);
-            addLogEntry(`Bought ${propToBuy.name} for $${formatCurrency(propToBuy.price)} (${chosenTermMonths/12}-yr loan).`);
-            showModal("Purchase Successful!", `Bought ${propToBuy.name}! Cash: $${formatCurrency(player.cash)}.`, 'success');
+            addLogEntry(logMessage);
+            showModal("Purchase Successful!", modalMessage, 'success');
             availableProperties.splice(propertyToManageIndex, 1);
             loanTermModal.style.display = 'none'; propertyToManageIndex = -1; updateAllUI(); saveGame();
         }
@@ -2932,6 +3472,7 @@
         function updateExternalLoanEstPayment() {
             const principal = parseFloat(externalLoanAmountInputEl.value) || 0;
             if (principal <=0) { externalLoanEstPaymentEl.textContent = '0'; return; }
+            // *** NEW: Use current interest rate variables ***
             const avgMonthlyInterest = (EXTERNAL_LOAN_MIN_MONTHLY_INTEREST + EXTERNAL_LOAN_MAX_MONTHLY_INTEREST) / 2;
             const n = EXTERNAL_LOAN_TERM_MONTHS;
             let monthlyPayment = calculateMonthlyPayment(principal, avgMonthlyInterest * 12, n);
@@ -2945,6 +3486,7 @@
                 bankLoanEstPaymentEl.textContent = '0';
                 return;
             }
+            // *** NEW: Use current interest rate variable ***
             const monthlyPayment = calculateMonthlyPayment(principal, BANK_LOAN_ANNUAL_INTEREST_RATE, BANK_LOAN_TERM_MONTHS);
             bankLoanEstPaymentEl.textContent = formatCurrency(monthlyPayment);
         });
@@ -2954,6 +3496,7 @@
             if (isNaN(principal) || principal <= 0) { showModal("Invalid Amount", "Please enter a valid positive loan amount.", 'warning'); return; }
             if (principal > player.netWorth * 2 && principal > 50000) { showModal("Loan Too Large", "Lenders are hesitant to offer such a large loan.", 'warning'); return; }
 
+            // *** NEW: Use current interest rate variables ***
             const monthlyInterestRate = EXTERNAL_LOAN_MIN_MONTHLY_INTEREST + Math.random() * (EXTERNAL_LOAN_MAX_MONTHLY_INTEREST - EXTERNAL_LOAN_MIN_MONTHLY_INTEREST);
             const n = EXTERNAL_LOAN_TERM_MONTHS;
             let monthlyPayment = calculateMonthlyPayment(principal, monthlyInterestRate * 12, n);
@@ -2989,6 +3532,7 @@
             addLogEntry(`Paid $${formatCurrency(BANK_LOAN_APPLICATION_FEE)} non-refundable bank loan application fee.`);
 
             if (Math.random() < BANK_LOAN_SUCCESS_CHANCE) {
+                // *** NEW: Use current interest rate variable ***
                 const monthlyInterestRate = BANK_LOAN_ANNUAL_INTEREST_RATE / 12;
                 const monthlyPayment = Math.round(calculateMonthlyPayment(principal, BANK_LOAN_ANNUAL_INTEREST_RATE, BANK_LOAN_TERM_MONTHS));
 
@@ -3061,6 +3605,13 @@
                 console.error("Job application error: Target or current job not found.");
                 return;
             }
+            
+            // *** NEW: Unskilled labor can only apply for Level 0 jobs ***
+            if (currentPlayerJob.field === JOB_FIELDS.UNSKILLED && targetJob.level > 0) {
+                showModal("Cannot Apply", `You must get an entry-level (Level 0) job in a field before you can apply for higher-level positions.`, 'warning');
+                return;
+            }
+            // *** END NEW ***
 
             let canApply = true; let reason = "";
             if (targetJob.prerequisites) {
@@ -3095,6 +3646,16 @@
             } else if (marketState === MARKET_STATES.BOOM) {
                  successChance *= 1.2; // Easier to get jobs in a boom
             }
+            
+            // *** NEW: Event modifier for job application ***
+            if (activeEvent && activeEvent.id === "techBoom" && targetJob.field === JOB_FIELDS.IT) {
+                successChance *= 1.5; // 50% higher chance for IT jobs
+            }
+            if (activeEvent && activeEvent.id === "rentalExodus") {
+                successChance *= 0.7; // 30% lower chance
+            }
+            // *** END NEW ***
+
 
             successChance = Math.min(0.95, successChance);
 
@@ -3126,7 +3687,7 @@
 
         const SAVE_KEY = "propertyTycoonSaveData";
 
-        // *** MODIFIED: Save new inflation and market data ***
+        // *** MODIFIED: Save new inflation and market/event data ***
         function saveGame() {
             try {
                 const gameState = {
@@ -3145,7 +3706,14 @@
                     BANK_LOAN_APPLICATION_FEE: BANK_LOAN_APPLICATION_FEE,
                     // Market Cycle data
                     marketState: marketState,
-                    marketStateMonths: marketStateMonths
+                    marketStateMonths: marketStateMonths,
+                    // Event data
+                    activeEvent: activeEvent,
+                    activeEventDuration: activeEventDuration,
+                    // Interest Rates
+                    BANK_LOAN_ANNUAL_INTEREST_RATE: BANK_LOAN_ANNUAL_INTEREST_RATE,
+                    EXTERNAL_LOAN_MIN_MONTHLY_INTEREST: EXTERNAL_LOAN_MIN_MONTHLY_INTEREST,
+                    EXTERNAL_LOAN_MAX_MONTHLY_INTEREST: EXTERNAL_LOAN_MAX_MONTHLY_INTEREST
                 };
                 localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
             } catch (e) {
@@ -3154,7 +3722,7 @@
             }
         }
 
-        // *** MODIFIED: Load new inflation and market data w/ backwards compatibility ***
+        // *** MODIFIED: Load new inflation and market/event data w/ backwards compatibility ***
         function loadGame() {
             try {
                 const savedData = localStorage.getItem(SAVE_KEY);
@@ -3167,7 +3735,7 @@
                     player.bankLoanCooldown = gameState.player.bankLoanCooldown || 0;
                     player.lastMonthCashChange = gameState.player.lastMonthCashChange || 0;
 
-                    // Backwards compatibility for disaster icons & monthsOwned
+                    // Backwards compatibility for disaster icons, monthsOwned, and event data
                     player.properties.forEach(prop => {
                         if (prop.isBeingMarketed === undefined) prop.isBeingMarketed = false;
                         if (prop.marketingMonths === undefined) prop.marketingMonths = 0;
@@ -3178,6 +3746,15 @@
                         }
                         if (prop.hasDisasterIcon === undefined) prop.hasDisasterIcon = false;
                         if (prop.disasterIcon === undefined) prop.disasterIcon = '';
+                        // *** MODIFIED: Backwards compatibility for property interest ***
+                        if (prop.annualInterestRate === undefined) {
+                            // Old saves had 0% interest on properties
+                            prop.annualInterestRate = 0;
+                        }
+                        if (prop.originalMonthlyFees === undefined) {
+                            // If loading an old save, assume current fees are the original
+                            prop.originalMonthlyFees = prop.monthlyFees;
+                        }
                     });
 
                     currentMonth = gameState.currentMonth;
@@ -3206,6 +3783,31 @@
                     // *** NEW: Load Market Cycle data, with fallback ***
                     marketState = gameState.marketState || MARKET_STATES.NORMAL;
                     marketStateMonths = gameState.marketStateMonths || 0;
+                    
+                    // *** NEW: Load Event data, with fallback ***
+                    activeEvent = gameState.activeEvent || null;
+                    activeEventDuration = gameState.activeEventDuration || 0;
+                    
+                    // *** NEW: Load Interest Rate data, with fallback ***
+                    BANK_LOAN_ANNUAL_INTEREST_RATE = gameState.BANK_LOAN_ANNUAL_INTEREST_RATE || BASE_BANK_LOAN_ANNUAL_INTEREST_RATE;
+                    EXTERNAL_LOAN_MIN_MONTHLY_INTEREST = gameState.EXTERNAL_LOAN_MIN_MONTHLY_INTEREST || BASE_EXTERNAL_LOAN_MIN_MONTHLY_INTEREST;
+                    EXTERNAL_LOAN_MAX_MONTHLY_INTEREST = gameState.EXTERNAL_LOAN_MAX_MONTHLY_INTEREST || BASE_EXTERNAL_LOAN_MAX_MONTHLY_INTEREST;
+
+                    // *** NEW: Re-define events and re-apply active event if needed ***
+                    defineEvents();
+                    if (activeEvent) {
+                        // Find the event definition from the newly defined list
+                        const eventDefinition = EVENTS.find(e => e.id === activeEvent.id);
+                        if (eventDefinition) {
+                            activeEvent = eventDefinition; // Re-link to the function definitions
+                            addLogEntry(`Loaded game with active event: ${activeEvent.name} (${activeEventDuration} months left).`);
+                        } else {
+                            addLogEntry(`Loaded game with an unknown or outdated event (ID: ${activeEvent.id}). Event has been cleared.`);
+                            activeEvent = null; // Event is from an old version, clear it
+                            activeEventDuration = 0;
+                        }
+                    }
+                    
                     applyMarketStateEffects(); // Apply effects from loaded state
                     // *** END NEW ***
 
@@ -3245,13 +3847,13 @@
 
         function updateAllUI() {
             try {
-                renderPlayerStats(); // Updated to show market state
+                renderPlayerStats(); // Updated to show market state and event
                 calculateAndRenderCashflow();
                 renderPropertyListings();
                 renderOwnedProperties();
                 renderJobMarket();
                 renderGameLog();
-                renderLoanButtons();
+                renderLoanButtons(); // Updated to show current interest rates
             } catch (e) {
                 console.error("Error during updateAllUI:", e);
                 const body = document.querySelector('body');
@@ -3275,9 +3877,12 @@
             initializeGame(true);
         });
 
-        // *** MODIFIED: Initialize new game state vars, including market state ***
+        // *** MODIFIED: Initialize new game state vars, including market/event state ***
         function initializeGame(forceNew = false) {
             try {
+                // *** NEW: Define events on every init ***
+                defineEvents();
+
                 let gameWasLoaded = false;
                 if (!forceNew) {
                     gameWasLoaded = loadGame();
@@ -3307,6 +3912,16 @@
                 // *** NEW: Initialize market state ***
                 marketState = MARKET_STATES.NORMAL;
                 marketStateMonths = 0;
+                
+                // *** NEW: Initialize event state ***
+                activeEvent = null;
+                activeEventDuration = 0;
+
+                // *** NEW: Initialize interest rates ***
+                BANK_LOAN_ANNUAL_INTEREST_RATE = BASE_BANK_LOAN_ANNUAL_INTEREST_RATE;
+                EXTERNAL_LOAN_MIN_MONTHLY_INTEREST = BASE_EXTERNAL_LOAN_MIN_MONTHLY_INTEREST;
+                EXTERNAL_LOAN_MAX_MONTHLY_INTEREST = BASE_EXTERNAL_LOAN_MAX_MONTHLY_INTEREST;
+                
                 applyMarketStateEffects(); // Apply initial normal effects
                 // *** END NEW ***
 
@@ -3388,4 +4003,3 @@
     </script>
 </body>
 </html>
-
