@@ -9,6 +9,7 @@
             --primary: #4f46e5;
             --primary-dark: #4338ca;
             --accent: #10b981;
+            --secondary: #8b5cf6; /* New color for Cash Savings */
             --warning: #f59e0b;
             --error: #ef4444;
             --bg-grad-start: #f3f4f6;
@@ -270,7 +271,6 @@
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
-            /* Important for dragging logic */
             touch-action: pan-y; 
         }
 
@@ -283,7 +283,7 @@
             margin: 0 auto 25px auto;
         }
 
-        .result-header { text-align: center; margin-bottom: 30px; }
+        .result-header { text-align: center; margin-bottom: 20px; }
         
         .total-amount {
             font-size: 3rem;
@@ -291,8 +291,15 @@
             background: linear-gradient(135deg, var(--text-main) 0%, #4b5563 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin: 10px 0;
+            margin: 5px 0;
             letter-spacing: -1px;
+        }
+
+        .cash-amount {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--secondary);
+            margin: 5px 0;
         }
 
         .result-badge {
@@ -314,6 +321,16 @@
             justify-content: space-between;
         }
 
+        .cash-card {
+            background: #f5f3ff;
+            border: 1px solid #ddd6fe;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
         .comparison-card {
             background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
             border: 1px solid #c7d2fe;
@@ -332,7 +349,6 @@
             animation: fadeIn 0.5s ease;
         }
         
-        /* New Suggestion Card Styles */
         .suggestion-card {
             background: #f0f9ff;
             border: 1px solid #bae6fd;
@@ -345,7 +361,7 @@
         .suggestion-title {
             font-size: 0.95rem;
             font-weight: 700;
-            color: #0284c7; /* Sky-600 */
+            color: #0284c7; 
             margin-bottom: 15px;
             display: flex;
             align-items: center;
@@ -385,10 +401,21 @@
         .inflation-title {
             font-size: 0.95rem;
             font-weight: 700;
-            color: #c2410c; /* Orange-800 */
+            color: #c2410c; 
             margin-bottom: 15px;
             display: flex;
             align-items: center;
+            gap: 6px;
+        }
+        
+        .cash-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             gap: 6px;
         }
 
@@ -556,12 +583,19 @@
             <label>Monthly Gross Salary (RM)</label>
             <input type="number" id="salary" placeholder="5000" inputmode="decimal" required>
         </div>
-        <div class="form-group">
-            <label>Current KWSP Balance (RM)</label>
-            <input type="number" id="currentBalance" placeholder="50000" inputmode="decimal" required>
+        <div class="grid-2">
+             <div class="form-group">
+                <label>Current EPF (RM)</label>
+                <input type="number" id="currentBalance" placeholder="50000" inputmode="decimal" required>
+            </div>
+             <div class="form-group">
+                <label>Current Cash (RM)</label>
+                <input type="number" id="currentCashSavings" placeholder="10000" inputmode="decimal">
+                <span class="sub-label">Personal Savings</span>
+            </div>
         </div>
 
-        <div class="grid-2" style="margin-top: 25px;">
+        <div class="grid-2" style="margin-top: 15px;">
             <div class="form-group">
                 <label>Employee (%)</label>
                 <input type="number" id="employeeRate" value="11" inputmode="decimal">
@@ -660,9 +694,18 @@
         <div class="drag-handle"></div>
         
         <div class="result-header">
-            <span class="result-badge">Projected Total at Age 60</span>
+            <span class="result-badge">Projected KWSP Total</span>
             <div class="total-amount" id="finalAmountDisplay">RM 0</div>
             <p style="color: var(--text-sub); font-size: 0.9rem; margin-top: 5px;">Accumulated over <span id="yearsRemainingDisplay">0</span> years</p>
+        </div>
+
+        <!-- Personal Savings Card (New) -->
+        <div class="cash-card">
+            <div class="cash-title">💰 Personal Cash Savings</div>
+            <div class="cash-amount" id="finalCashDisplay">RM 0</div>
+            <p style="font-size:0.8rem; color:#6b7280; margin:5px 0 0 0;">
+                (Salary - EPF - Spending - Topup) accumulated
+            </p>
         </div>
 
         <!-- Inflation Analysis Card (Dynamic) -->
@@ -686,7 +729,7 @@
             <div id="resGapText" style="font-size: 0.8rem; margin-top: 8px; color: #666; font-style: italic;"></div>
         </div>
 
-        <!-- New: Smart Suggestions Card -->
+        <!-- Smart Suggestions Card -->
         <div id="suggestionCard" class="suggestion-card hidden">
             <div class="suggestion-title">💡 Smart Recommendations</div>
             <div id="lifestyleFixer" class="suggestion-item hidden">
@@ -723,7 +766,7 @@
 
         <div class="breakdown-card">
             <div>
-                <div style="font-size: 0.8rem; color: #6b7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px;">Projected Monthly Income</div>
+                <div style="font-size: 0.8rem; color: #6b7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px;">Projected EPF Monthly Income</div>
                 <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);" id="monthlyDrawdownDisplay">RM 0</div>
             </div>
             <div style="font-size: 2rem;">🏖️</div>
@@ -742,9 +785,10 @@
                     <thead>
                         <tr>
                             <th>Age</th>
-                            <th>Total Contrib.</th>
+                            <th>Contrib.</th>
                             <th>Dividend</th>
-                            <th>Balance</th>
+                            <th>EPF Bal.</th>
+                            <th>Cash Bal.</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -794,9 +838,6 @@
         const sheet = document.querySelector('.sheet-content');
         
         overlay.classList.remove('active');
-        // Reset transform to ensure CSS class transition works next open
-        // Wait for CSS transition to possibly start before clearing inline style?
-        // Actually, just clearing inline style allows the class-based transition (translateY 100%) to take over.
         sheet.style.transform = '';
         
         setTimeout(() => {
@@ -810,15 +851,11 @@
     }
 
     function formatSmallCurrency(num) {
-        // Shorter format for table
         if(num >= 1000000) return (num/1000000).toFixed(2) + "M";
         if(num >= 1000) return (num/1000).toFixed(1) + "k";
         return num.toFixed(0);
     }
 
-    // Helper: Reverse Calc - Get monthly savings needed to reach a Gap amount
-    // FV = P * ((1+r)^n - 1) / r
-    // P = (FV * r) / ((1+r)^n - 1)
     function getMonthlyContributionForGap(targetAmount, months, annualRate) {
         if(targetAmount <= 0) return 0;
         let r = annualRate / 12;
@@ -827,36 +864,36 @@
         return p;
     }
 
-    // Helper: Reverse Calc - Get Lump Sum needed for a specific Monthly Payout (20 years)
-    // P = PMT * ((1+r)^n - 1) / (r * (1+r)^n)
     function getLumpSumNeededForPayout(monthlyPayout, annualRate) {
         let r = annualRate / 12;
-        let n = 20 * 12; // 20 years fixed
+        let n = 20 * 12; 
         let p = monthlyPayout * (Math.pow(1+r, n) - 1) / (r * Math.pow(1+r, n));
         return p;
     }
 
-    // Extracted Calculation Logic
-    function calculateProjection(yearsRemaining, currentAge, currentSalary, startBalance, employeePct, employerPctInput, bonusType, bonusVal, incType, incVal, topUpVal, dividendRate, trackHistory) {
+    // Extracted Calculation Logic with Personal Savings
+    function calculateProjection(yearsRemaining, currentAge, currentSalary, startBalance, startCash, employeePct, employerPctInput, bonusType, bonusVal, incType, incVal, topUpVal, dividendRate, currentSpending, inflationRate, trackHistory) {
         let totalMonths = yearsRemaining * 12;
         let currentMonth = 0;
         let trackingSalary = currentSalary;
         let balance = startBalance;
+        let cashBalance = startCash;
         let history = [];
+        let trackingSpending = currentSpending; // Monthly spending in current month's money
         
         // Accumulators for yearly tracking
         let yearlyContrib = 0;
         let yearlyDividend = 0;
 
         while (currentMonth < totalMonths) {
-            // Employer Statutory Logic (13% rule)
+            // Employer Statutory Logic
             let actualEmployerRate = employerPctInput;
             if (employerPctInput === 0.12 || employerPctInput === 0.13) {
                 if (trackingSalary <= 5000) actualEmployerRate = 0.13;
                 else actualEmployerRate = 0.12;
             }
 
-            // Monthly Contrib
+            // --- EPF Logic ---
             let employeeContrib = trackingSalary * employeePct;
             let employerContrib = trackingSalary * actualEmployerRate;
             let totalMonthlyContrib = employeeContrib + employerContrib + topUpVal;
@@ -864,12 +901,18 @@
             balance += totalMonthlyContrib;
             yearlyContrib += totalMonthlyContrib;
 
-            // Monthly Dividend Compounding
+            // Monthly Dividend
             let monthlyDividend = balance * (dividendRate / 12);
             balance += monthlyDividend;
             yearlyDividend += monthlyDividend;
 
-            // Yearly Events (Bonus + Increment)
+            // --- Personal Cash Logic ---
+            // Income = Salary
+            // Out = EPF Employee Share, Top Up, Spending
+            let monthlySurplus = trackingSalary - employeeContrib - topUpVal - trackingSpending;
+            cashBalance += monthlySurplus;
+
+            // Yearly Events (Bonus + Increment + Inflation)
             if ((currentMonth + 1) % 12 === 0) {
                 // Bonus
                 if (bonusType !== 'none') {
@@ -878,6 +921,10 @@
                     let bonusEmployer = bonusAmount * actualEmployerRate;
                     balance += (bonusEmployee + bonusEmployer);
                     yearlyContrib += (bonusEmployee + bonusEmployer);
+
+                    // Add Bonus Net to Cash
+                    let bonusNet = bonusAmount - bonusEmployee;
+                    cashBalance += bonusNet;
                 }
                 
                 // Track History
@@ -886,9 +933,9 @@
                         age: currentAge + ((currentMonth + 1) / 12),
                         contrib: yearlyContrib,
                         dividend: yearlyDividend,
-                        balance: balance
+                        balance: balance,
+                        cash: cashBalance
                     });
-                    // Reset accumulators
                     yearlyContrib = 0;
                     yearlyDividend = 0;
                 }
@@ -899,29 +946,31 @@
                 } else {
                     trackingSalary = trackingSalary + incVal;
                 }
+
+                // Inflation adjustment for spending
+                trackingSpending = trackingSpending * (1 + (inflationRate/100));
             }
             currentMonth++;
         }
-        return { balance, history };
+        return { balance, cashBalance, history };
     }
 
     function calculateEPF() {
-        // Clear errors
         document.querySelectorAll('.error-shake').forEach(el => el.classList.remove('error-shake'));
 
-        // 1. Get Inputs
         let ageEl = document.getElementById('currentAge');
         let salaryEl = document.getElementById('salary');
         let balanceEl = document.getElementById('currentBalance');
+        let cashEl = document.getElementById('currentCashSavings');
         let spendingEl = document.getElementById('currentSpending');
 
         let age = parseInt(ageEl.value);
         let currentSalary = parseFloat(salaryEl.value);
         let balance = parseFloat(balanceEl.value);
+        let currentCash = parseFloat(cashEl.value) || 0;
         let currentSpending = parseFloat(spendingEl.value) || 0;
         let inflationRate = parseFloat(document.getElementById('inflationRate').value) || 3;
         
-        // Validation
         let hasError = false;
         if (!age || age >= 60) {
             ageEl.classList.add('error-shake');
@@ -943,30 +992,27 @@
 
         let employeePct = parseFloat(document.getElementById('employeeRate').value) / 100;
         let employerPctInput = parseFloat(document.getElementById('employerRate').value) / 100;
-        
         let bonusType = document.getElementById('bonusType').value;
         let bonusVal = parseFloat(document.getElementById('bonusValue').value) || 0;
-        
         let incType = document.getElementById('incrementType').value;
         let incVal = parseFloat(document.getElementById('incrementValue').value) || 0;
-        
         let wantTopUp = document.getElementById('wantTopUp').checked;
         let topUpVal = wantTopUp ? (parseFloat(document.getElementById('topUpAmount').value) || 0) : 0;
-        
         let dividendRate = parseFloat(document.getElementById('dividendRate').value) / 100;
+        
         const yearsRemaining = 60 - age;
 
         // 2. Perform Calculations
-        // A. With Top-up (Current Scenario) - Enable History Tracking
-        let resultA = calculateProjection(yearsRemaining, age, currentSalary, balance, employeePct, employerPctInput, bonusType, bonusVal, incType, incVal, topUpVal, dividendRate, true);
+        // A. With Top-up (Current Scenario)
+        let resultA = calculateProjection(yearsRemaining, age, currentSalary, balance, currentCash, employeePct, employerPctInput, bonusType, bonusVal, incType, incVal, topUpVal, dividendRate, currentSpending, inflationRate, true);
         let finalBalance = resultA.balance;
         
-        // B. Without Top-up (Base Scenario) - No History needed
+        // B. Without Top-up (Base Scenario)
         let resultB = { balance: finalBalance };
         let showComparison = false;
 
         if (wantTopUp && topUpVal > 0) {
-            resultB = calculateProjection(yearsRemaining, age, currentSalary, balance, employeePct, employerPctInput, bonusType, bonusVal, incType, incVal, 0, dividendRate, false);
+            resultB = calculateProjection(yearsRemaining, age, currentSalary, balance, currentCash, employeePct, employerPctInput, bonusType, bonusVal, incType, incVal, 0, dividendRate, currentSpending, inflationRate, false);
             showComparison = true;
         }
 
@@ -976,22 +1022,18 @@
             let totalMonths = yearsRemaining * 12;
             let totalPrincipal = topUpVal * totalMonths; 
             let interestGained = difference - totalPrincipal; 
-            
             if (interestGained < 0) interestGained = 0;
 
             document.getElementById('compNoTopUpVal').innerText = formatCurrency(resultB.balance);
             document.getElementById('compDiffVal').innerText = "+ " + formatCurrency(difference);
-            
             document.getElementById('legendPrincipal').innerText = formatCurrency(totalPrincipal);
             document.getElementById('legendInterest').innerText = formatCurrency(interestGained);
 
             let totalBar = totalPrincipal + interestGained;
             let pWidth = (totalPrincipal / totalBar) * 100;
             let iWidth = (interestGained / totalBar) * 100;
-            
             document.getElementById('barPrincipal').style.width = pWidth + "%";
             document.getElementById('barInterest').style.width = iWidth + "%";
-
             document.getElementById('topUpComparisonCard').classList.remove('hidden');
         } else {
             document.getElementById('topUpComparisonCard').classList.add('hidden');
@@ -1004,70 +1046,59 @@
 
         // 5. Update Standard UI
         document.getElementById('finalAmountDisplay').innerText = formatCurrency(finalBalance);
+        document.getElementById('finalCashDisplay').innerText = formatCurrency(resultA.cashBalance);
         document.getElementById('yearsRemainingDisplay').innerText = yearsRemaining;
         document.getElementById('monthlyDrawdownDisplay').innerText = formatCurrency(monthlyPayout) + "/mo";
 
-        // 6. Inflation Analysis & Recommendations
+        // 6. Inflation Analysis
         let showSuggestions = false;
         let suggestLifestyleEl = document.getElementById('lifestyleFixer');
         let suggestMillionEl = document.getElementById('millionaireFixer');
         let lifestyleFixerLabel = document.getElementById('lifestyleFixerLabel');
 
-        // Reset Suggestions
         suggestLifestyleEl.classList.add('hidden');
         suggestMillionEl.classList.add('hidden');
 
         if (currentSpending > 0) {
-            // A. Inflation Calc
             let futureMonthlySpend = currentSpending * Math.pow(1 + (inflationRate/100), yearsRemaining);
             document.getElementById('resCurrentSpend').innerText = currentSpending.toLocaleString();
             document.getElementById('resFutureSpend').innerText = futureMonthlySpend.toLocaleString('en-MY', {maximumFractionDigits:0});
             document.getElementById('resEpfPayout').innerText = formatCurrency(monthlyPayout);
 
             let surplus = monthlyPayout - futureMonthlySpend;
-            let buffer20 = futureMonthlySpend * 0.20; // 20% safety buffer
-            
+            let buffer20 = futureMonthlySpend * 0.20;
             let verdictEl = document.getElementById('resVerdict');
             let gapText = document.getElementById('resGapText');
             
-            // Remove all verdict classes
             verdictEl.className = "status-badge";
 
             if (monthlyPayout >= (futureMonthlySpend + buffer20)) {
-                // SAFE ✅
                 verdictEl.innerText = "SAFE ✅";
                 verdictEl.classList.add("status-safe");
-                gapText.innerText = `You have a healthy surplus of ${formatCurrency(surplus)}. You can maintain your lifestyle with a >20% buffer!`;
+                gapText.innerText = `You have a healthy surplus of ${formatCurrency(surplus)}.`;
             } else if (monthlyPayout >= futureMonthlySpend) {
-                // RISKY ⚠️
                 verdictEl.innerText = "RISKY ⚠️";
                 verdictEl.classList.add("status-warning");
-                gapText.innerText = `You have a small surplus of ${formatCurrency(surplus)}, but less than 20% buffer for emergencies.`;
+                gapText.innerText = `You have a small surplus of ${formatCurrency(surplus)}, but <20% buffer.`;
                 
-                // Recommendation: Top up to reach buffer
                 let targetSafePayout = futureMonthlySpend + buffer20;
                 let neededLumpSumSafe = getLumpSumNeededForPayout(targetSafePayout, dividendRate);
                 let gapToSafe = neededLumpSumSafe - finalBalance;
-                
                 if (gapToSafe > 0) {
                     let monthlyNeededSafe = getMonthlyContributionForGap(gapToSafe, yearsRemaining*12, dividendRate);
                     lifestyleFixerLabel.innerText = "To reach a 20% Safety Buffer, save extra:";
                     document.getElementById('suggLifestyleVal').innerText = formatCurrency(monthlyNeededSafe) + " / month";
-                    document.getElementById('suggLifestyleVal').style.color = "#d97706"; // amber-600
+                    document.getElementById('suggLifestyleVal').style.color = "#d97706";
                     suggestLifestyleEl.classList.remove('hidden');
                     showSuggestions = true;
                 }
-
             } else {
-                // DEFICIT ⚠️
                 verdictEl.innerText = "DEFICIT ⚠️";
                 verdictEl.classList.add("status-danger");
                 gapText.innerText = `Shortfall of ${formatCurrency(Math.abs(surplus))}.`;
-
-                // Recommendation: Top up to close deficit
+                
                 let neededLumpSum = getLumpSumNeededForPayout(futureMonthlySpend, dividendRate);
                 let lumpSumGap = neededLumpSum - finalBalance;
-                
                 if (lumpSumGap > 0) {
                     let monthlyNeeded = getMonthlyContributionForGap(lumpSumGap, yearsRemaining*12, dividendRate);
                     lifestyleFixerLabel.innerText = "To close your Deficit Gap, save extra:";
@@ -1082,83 +1113,62 @@
             document.getElementById('inflationCard').classList.add('hidden');
         }
 
-        // C. Suggestion 2: Millionaire Goal
         if (finalBalance < 1300000) {
             let gapToMillion = 1300000 - finalBalance;
             let monthlyNeededMillion = getMonthlyContributionForGap(gapToMillion, yearsRemaining*12, dividendRate);
-            
             document.getElementById('suggMillionVal').innerText = formatCurrency(monthlyNeededMillion) + " / month";
             suggestMillionEl.classList.remove('hidden');
             showSuggestions = true;
         }
 
-        // Show/Hide Suggestion Card
-        if (showSuggestions) {
-            document.getElementById('suggestionCard').classList.remove('hidden');
-        } else {
-            document.getElementById('suggestionCard').classList.add('hidden');
-        }
+        if (showSuggestions) document.getElementById('suggestionCard').classList.remove('hidden');
+        else document.getElementById('suggestionCard').classList.add('hidden');
 
-        // 7. Analysis Text
+        // Analysis Text
         let analysisHTML = "";
-        if (finalBalance < 240000) {
-            analysisHTML = `⚠️ <strong>Below Basic Target.</strong><br>Your projection is below the basic savings target of RM240k. Consider increasing your contribution or top-up.`;
-        } else if (finalBalance < 600000) {
-            analysisHTML = `👍 <strong>On Track.</strong><br>You have passed the basic threshold. To reach a "comfortable" lifestyle (RM600k+), try increasing your monthly top-up slightly.`;
-        } else if (finalBalance < 1000000) {
-            analysisHTML = `🚀 <strong>Solid Future.</strong><br>You are projected to have a very comfortable retirement fund.`;
-        } else {
-            analysisHTML = `🌟 <strong>Millionaire Status.</strong><br>Congratulations, you are on track to be an EPF Millionaire!`;
-        }
+        if (finalBalance < 240000) analysisHTML = `⚠️ <strong>Below Basic Target.</strong><br>Your projection is below the basic savings target of RM240k.`;
+        else if (finalBalance < 600000) analysisHTML = `👍 <strong>On Track.</strong><br>You passed the basic threshold. Aim for RM600k+ for comfort.`;
+        else if (finalBalance < 1000000) analysisHTML = `🚀 <strong>Solid Future.</strong><br>You are projected to have a very comfortable retirement fund.`;
+        else analysisHTML = `🌟 <strong>Millionaire Status.</strong><br>Congratulations, you are on track to be an EPF Millionaire!`;
         document.getElementById('analysisText').innerHTML = analysisHTML;
 
-        // 8. Populate Table
+        // Table
         document.getElementById('startAgeDisplay').innerText = age;
         const tbody = document.querySelector('#breakdownTable tbody');
-        tbody.innerHTML = ''; // Clear old rows
+        tbody.innerHTML = '';
         
         resultA.history.forEach(yearData => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${yearData.age}</td>
-                <td>+${formatSmallCurrency(yearData.contrib)}</td>
-                <td style="color:var(--accent)">+${formatSmallCurrency(yearData.dividend)}</td>
+                <td>${formatSmallCurrency(yearData.contrib)}</td>
+                <td style="color:var(--accent)">${formatSmallCurrency(yearData.dividend)}</td>
                 <td>${formatSmallCurrency(yearData.balance)}</td>
+                <td style="color:var(--secondary); font-weight:700;">${formatSmallCurrency(yearData.cash)}</td>
             `;
             tbody.appendChild(tr);
         });
 
-        // Show Bottom Sheet
+        // Show
         const overlay = document.getElementById('results-overlay');
         overlay.style.display = 'block';
-        setTimeout(() => {
-            overlay.classList.add('active');
-        }, 10);
+        setTimeout(() => overlay.classList.add('active'), 10);
         document.body.style.overflow = 'hidden';
     }
 
-    // Drag / Swipe Down Logic
-    // We attach listeners to the sheet content
+    // Drag Logic
     const sheet = document.querySelector('.sheet-content');
     const overlay = document.getElementById('results-overlay');
     let startY = 0;
-    let currentY = 0;
     let isDragging = false;
 
-    // Click outside to close
-    overlay.addEventListener('click', (e) => {
-        if(e.target === overlay) {
-            closeResults();
-        }
-    });
+    overlay.addEventListener('click', (e) => { if(e.target === overlay) closeResults(); });
 
-    // Touch events for drag
     sheet.addEventListener('touchstart', (e) => {
-        // Only allow drag if we are at top of scroll
         if (sheet.scrollTop === 0) {
             startY = e.touches[0].clientY;
             isDragging = true;
-            sheet.style.transition = 'none'; // Remove transition for instant drag feel
+            sheet.style.transition = 'none';
         }
     }, {passive: true});
 
@@ -1166,32 +1176,20 @@
         if (!isDragging) return;
         const y = e.touches[0].clientY;
         const delta = y - startY;
-
-        if (delta > 0) { // Dragging down
-            // If dragging down, prevent scrolling of body/sheet
+        if (delta > 0) {
             if(e.cancelable) e.preventDefault();
             sheet.style.transform = `translateY(${delta}px)`;
         }
-    }, {passive: false}); // passive: false needed to use preventDefault
+    }, {passive: false});
 
     sheet.addEventListener('touchend', (e) => {
         if (!isDragging) return;
         isDragging = false;
-        
-        // Restore transition for smooth snap/close
         sheet.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-        
         const delta = e.changedTouches[0].clientY - startY;
-        
-        if (delta > 150) { 
-            // Dragged far enough -> Close
-            closeResults();
-        } else {
-            // Not far enough -> Snap back
-            sheet.style.transform = '';
-        }
+        if (delta > 150) closeResults();
+        else sheet.style.transform = '';
     });
-
 </script>
 
 </body>
