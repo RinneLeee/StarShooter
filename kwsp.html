@@ -9,6 +9,7 @@
             --primary: #4f46e5;
             --primary-dark: #4338ca;
             --accent: #10b981;
+            --warning: #f59e0b;
             --error: #ef4444;
             --bg-grad-start: #f3f4f6;
             --bg-grad-end: #e5e7eb;
@@ -320,10 +321,29 @@
             animation: fadeIn 0.5s ease;
         }
 
+        .inflation-card {
+            background: #fff7ed;
+            border: 1px solid #ffedd5;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
         .comparison-title {
             font-size: 0.95rem;
             font-weight: 700;
             color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .inflation-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #c2410c; /* Orange-800 */
             margin-bottom: 15px;
             display: flex;
             align-items: center;
@@ -438,6 +458,17 @@
             margin-top: 20px;
         }
 
+        /* Inflation Badge status */
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-safe { background: #d1fae5; color: #059669; }
+        .status-danger { background: #fee2e2; color: #b91c1c; }
+
         .hidden { display: none; }
         .fade-in { animation: fadeIn 0.5s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -535,6 +566,23 @@
         </div>
     </div>
 
+    <!-- Inflation & Spending Card (New) -->
+    <div class="card">
+        <div class="card-header">
+            <div class="icon-box" style="background:#fff7ed; color:#c2410c;">🛒</div>
+            <div class="card-title">Lifestyle & Inflation</div>
+        </div>
+        <div class="form-group">
+            <label>Current Monthly Spending (RM)</label>
+            <input type="number" id="currentSpending" placeholder="e.g. 2000" inputmode="decimal">
+            <span class="sub-label">How much do you spend today to survive?</span>
+        </div>
+        <div class="form-group">
+            <label>Inflation Rate (%)</label>
+            <input type="number" id="inflationRate" value="3" inputmode="decimal">
+        </div>
+    </div>
+
     <!-- Extras Card -->
     <div class="card">
         <div class="toggle-row" onclick="handleToggleRow()">
@@ -574,6 +622,27 @@
             <p style="color: var(--text-sub); font-size: 0.9rem; margin-top: 5px;">Accumulated over <span id="yearsRemainingDisplay">0</span> years</p>
         </div>
 
+        <!-- Inflation Analysis Card (Dynamic) -->
+        <div id="inflationCard" class="inflation-card hidden">
+            <div class="inflation-title">🔥 Inflation Reality Check</div>
+            <div style="font-size: 0.9rem; color: #555; margin-bottom: 10px;">
+                To maintain your current <span style="font-weight:600">RM <span id="resCurrentSpend"></span></span> lifestyle in the future, you will actually need:
+            </div>
+            <div style="font-size: 1.4rem; font-weight:800; color: #c2410c; margin-bottom: 15px;">
+                RM <span id="resFutureSpend"></span> / month
+            </div>
+            
+            <div class="comp-row total" style="border-top:1px dashed #fdba74; padding-top:10px; color:#4b5563;">
+                <span>EPF Payout:</span>
+                <span id="resEpfPayout">RM 0</span>
+            </div>
+            <div class="comp-row">
+                <span style="font-weight:700">Verdict:</span>
+                <span id="resVerdict" class="status-badge">Calculating...</span>
+            </div>
+            <div id="resGapText" style="font-size: 0.8rem; margin-top: 8px; color: #666; font-style: italic;"></div>
+        </div>
+
         <!-- Comparison Card (Hidden by default) -->
         <div id="topUpComparisonCard" class="comparison-card hidden">
             <div class="comparison-title">🚀 The Power of Top-up</div>
@@ -598,7 +667,7 @@
 
         <div class="breakdown-card">
             <div>
-                <div style="font-size: 0.8rem; color: #6b7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px;">Monthly Income (20 Yrs)</div>
+                <div style="font-size: 0.8rem; color: #6b7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px;">Projected Monthly Income</div>
                 <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);" id="monthlyDrawdownDisplay">RM 0</div>
             </div>
             <div style="font-size: 2rem;">🏖️</div>
@@ -761,10 +830,13 @@
         let ageEl = document.getElementById('currentAge');
         let salaryEl = document.getElementById('salary');
         let balanceEl = document.getElementById('currentBalance');
+        let spendingEl = document.getElementById('currentSpending');
 
         let age = parseInt(ageEl.value);
         let currentSalary = parseFloat(salaryEl.value);
         let balance = parseFloat(balanceEl.value);
+        let currentSpending = parseFloat(spendingEl.value) || 0;
+        let inflationRate = parseFloat(document.getElementById('inflationRate').value) || 3;
         
         // Validation
         let hasError = false;
@@ -852,7 +924,35 @@
         document.getElementById('yearsRemainingDisplay').innerText = yearsRemaining;
         document.getElementById('monthlyDrawdownDisplay').innerText = formatCurrency(monthlyPayout) + "/mo";
 
-        // Analysis Text
+        // 6. Inflation Analysis
+        if (currentSpending > 0) {
+            // Future Value Formula: FV = PV * (1 + r)^n
+            let futureMonthlySpend = currentSpending * Math.pow(1 + (inflationRate/100), yearsRemaining);
+            
+            document.getElementById('resCurrentSpend').innerText = currentSpending.toLocaleString();
+            document.getElementById('resFutureSpend').innerText = futureMonthlySpend.toLocaleString('en-MY', {maximumFractionDigits:0});
+            document.getElementById('resEpfPayout').innerText = formatCurrency(monthlyPayout);
+
+            let surplus = monthlyPayout - futureMonthlySpend;
+            let verdictEl = document.getElementById('resVerdict');
+            let gapText = document.getElementById('resGapText');
+
+            if (surplus >= 0) {
+                verdictEl.innerText = "SAFE ✅";
+                verdictEl.className = "status-badge status-safe";
+                gapText.innerText = `You have a surplus of ${formatCurrency(surplus)}. You can maintain your lifestyle!`;
+            } else {
+                verdictEl.innerText = "DEFICIT ⚠️";
+                verdictEl.className = "status-badge status-danger";
+                gapText.innerText = `Shortfall of ${formatCurrency(Math.abs(surplus))}. You might need to reduce expenses or increase savings.`;
+            }
+
+            document.getElementById('inflationCard').classList.remove('hidden');
+        } else {
+            document.getElementById('inflationCard').classList.add('hidden');
+        }
+
+        // 7. Analysis Text
         let analysisHTML = "";
         if (finalBalance < 240000) {
             analysisHTML = `⚠️ <strong>Below Basic Target.</strong><br>Your projection is below the basic savings target of RM240k. Consider increasing your contribution or top-up.`;
@@ -865,7 +965,7 @@
         }
         document.getElementById('analysisText').innerHTML = analysisHTML;
 
-        // 6. Populate Table
+        // 8. Populate Table
         document.getElementById('startAgeDisplay').innerText = age;
         const tbody = document.querySelector('#breakdownTable tbody');
         tbody.innerHTML = ''; // Clear old rows
