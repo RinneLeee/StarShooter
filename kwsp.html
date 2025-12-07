@@ -270,12 +270,14 @@
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+            /* Important for dragging logic */
+            touch-action: pan-y; 
         }
 
         #results-overlay.active .sheet-content { transform: translateY(0); }
 
         .drag-handle {
-            width: 40px; height: 5px;
+            width: 50px; height: 6px;
             background: #e5e7eb;
             border-radius: 10px;
             margin: 0 auto 25px auto;
@@ -328,6 +330,46 @@
             padding: 20px;
             margin-bottom: 20px;
             animation: fadeIn 0.5s ease;
+        }
+        
+        /* New Suggestion Card Styles */
+        .suggestion-card {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .suggestion-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0284c7; /* Sky-600 */
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .suggestion-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #e0f2fe;
+        }
+
+        .suggestion-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .suggestion-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
         }
 
         .comparison-title {
@@ -468,6 +510,7 @@
         }
         .status-safe { background: #d1fae5; color: #059669; }
         .status-danger { background: #fee2e2; color: #b91c1c; }
+        .status-warning { background: #ffedd5; color: #c2410c; }
 
         .hidden { display: none; }
         .fade-in { animation: fadeIn 0.5s ease forwards; }
@@ -643,6 +686,19 @@
             <div id="resGapText" style="font-size: 0.8rem; margin-top: 8px; color: #666; font-style: italic;"></div>
         </div>
 
+        <!-- New: Smart Suggestions Card -->
+        <div id="suggestionCard" class="suggestion-card hidden">
+            <div class="suggestion-title">💡 Smart Recommendations</div>
+            <div id="lifestyleFixer" class="suggestion-item hidden">
+                <div class="suggestion-label" id="lifestyleFixerLabel">To close your Deficit Gap, save extra:</div>
+                <div class="suggestion-value" id="suggLifestyleVal" style="color:#ef4444">RM 0 / month</div>
+            </div>
+            <div id="millionaireFixer" class="suggestion-item hidden">
+                <div class="suggestion-label">To reach RM 1.3 Million (Enhanced Goal), save extra:</div>
+                <div class="suggestion-value" id="suggMillionVal" style="color:#059669">RM 0 / month</div>
+            </div>
+        </div>
+
         <!-- Comparison Card (Hidden by default) -->
         <div id="topUpComparisonCard" class="comparison-card hidden">
             <div class="comparison-title">🚀 The Power of Top-up</div>
@@ -735,7 +791,14 @@
 
     function closeResults() {
         const overlay = document.getElementById('results-overlay');
+        const sheet = document.querySelector('.sheet-content');
+        
         overlay.classList.remove('active');
+        // Reset transform to ensure CSS class transition works next open
+        // Wait for CSS transition to possibly start before clearing inline style?
+        // Actually, just clearing inline style allows the class-based transition (translateY 100%) to take over.
+        sheet.style.transform = '';
+        
         setTimeout(() => {
             overlay.style.display = 'none';
         }, 300);
@@ -751,6 +814,26 @@
         if(num >= 1000000) return (num/1000000).toFixed(2) + "M";
         if(num >= 1000) return (num/1000).toFixed(1) + "k";
         return num.toFixed(0);
+    }
+
+    // Helper: Reverse Calc - Get monthly savings needed to reach a Gap amount
+    // FV = P * ((1+r)^n - 1) / r
+    // P = (FV * r) / ((1+r)^n - 1)
+    function getMonthlyContributionForGap(targetAmount, months, annualRate) {
+        if(targetAmount <= 0) return 0;
+        let r = annualRate / 12;
+        let n = months;
+        let p = (targetAmount * r) / (Math.pow(1 + r, n) - 1);
+        return p;
+    }
+
+    // Helper: Reverse Calc - Get Lump Sum needed for a specific Monthly Payout (20 years)
+    // P = PMT * ((1+r)^n - 1) / (r * (1+r)^n)
+    function getLumpSumNeededForPayout(monthlyPayout, annualRate) {
+        let r = annualRate / 12;
+        let n = 20 * 12; // 20 years fixed
+        let p = monthlyPayout * (Math.pow(1+r, n) - 1) / (r * Math.pow(1+r, n));
+        return p;
     }
 
     // Extracted Calculation Logic
@@ -924,32 +1007,96 @@
         document.getElementById('yearsRemainingDisplay').innerText = yearsRemaining;
         document.getElementById('monthlyDrawdownDisplay').innerText = formatCurrency(monthlyPayout) + "/mo";
 
-        // 6. Inflation Analysis
+        // 6. Inflation Analysis & Recommendations
+        let showSuggestions = false;
+        let suggestLifestyleEl = document.getElementById('lifestyleFixer');
+        let suggestMillionEl = document.getElementById('millionaireFixer');
+        let lifestyleFixerLabel = document.getElementById('lifestyleFixerLabel');
+
+        // Reset Suggestions
+        suggestLifestyleEl.classList.add('hidden');
+        suggestMillionEl.classList.add('hidden');
+
         if (currentSpending > 0) {
-            // Future Value Formula: FV = PV * (1 + r)^n
+            // A. Inflation Calc
             let futureMonthlySpend = currentSpending * Math.pow(1 + (inflationRate/100), yearsRemaining);
-            
             document.getElementById('resCurrentSpend').innerText = currentSpending.toLocaleString();
             document.getElementById('resFutureSpend').innerText = futureMonthlySpend.toLocaleString('en-MY', {maximumFractionDigits:0});
             document.getElementById('resEpfPayout').innerText = formatCurrency(monthlyPayout);
 
             let surplus = monthlyPayout - futureMonthlySpend;
+            let buffer20 = futureMonthlySpend * 0.20; // 20% safety buffer
+            
             let verdictEl = document.getElementById('resVerdict');
             let gapText = document.getElementById('resGapText');
+            
+            // Remove all verdict classes
+            verdictEl.className = "status-badge";
 
-            if (surplus >= 0) {
+            if (monthlyPayout >= (futureMonthlySpend + buffer20)) {
+                // SAFE ✅
                 verdictEl.innerText = "SAFE ✅";
-                verdictEl.className = "status-badge status-safe";
-                gapText.innerText = `You have a surplus of ${formatCurrency(surplus)}. You can maintain your lifestyle!`;
-            } else {
-                verdictEl.innerText = "DEFICIT ⚠️";
-                verdictEl.className = "status-badge status-danger";
-                gapText.innerText = `Shortfall of ${formatCurrency(Math.abs(surplus))}. You might need to reduce expenses or increase savings.`;
-            }
+                verdictEl.classList.add("status-safe");
+                gapText.innerText = `You have a healthy surplus of ${formatCurrency(surplus)}. You can maintain your lifestyle with a >20% buffer!`;
+            } else if (monthlyPayout >= futureMonthlySpend) {
+                // RISKY ⚠️
+                verdictEl.innerText = "RISKY ⚠️";
+                verdictEl.classList.add("status-warning");
+                gapText.innerText = `You have a small surplus of ${formatCurrency(surplus)}, but less than 20% buffer for emergencies.`;
+                
+                // Recommendation: Top up to reach buffer
+                let targetSafePayout = futureMonthlySpend + buffer20;
+                let neededLumpSumSafe = getLumpSumNeededForPayout(targetSafePayout, dividendRate);
+                let gapToSafe = neededLumpSumSafe - finalBalance;
+                
+                if (gapToSafe > 0) {
+                    let monthlyNeededSafe = getMonthlyContributionForGap(gapToSafe, yearsRemaining*12, dividendRate);
+                    lifestyleFixerLabel.innerText = "To reach a 20% Safety Buffer, save extra:";
+                    document.getElementById('suggLifestyleVal').innerText = formatCurrency(monthlyNeededSafe) + " / month";
+                    document.getElementById('suggLifestyleVal').style.color = "#d97706"; // amber-600
+                    suggestLifestyleEl.classList.remove('hidden');
+                    showSuggestions = true;
+                }
 
+            } else {
+                // DEFICIT ⚠️
+                verdictEl.innerText = "DEFICIT ⚠️";
+                verdictEl.classList.add("status-danger");
+                gapText.innerText = `Shortfall of ${formatCurrency(Math.abs(surplus))}.`;
+
+                // Recommendation: Top up to close deficit
+                let neededLumpSum = getLumpSumNeededForPayout(futureMonthlySpend, dividendRate);
+                let lumpSumGap = neededLumpSum - finalBalance;
+                
+                if (lumpSumGap > 0) {
+                    let monthlyNeeded = getMonthlyContributionForGap(lumpSumGap, yearsRemaining*12, dividendRate);
+                    lifestyleFixerLabel.innerText = "To close your Deficit Gap, save extra:";
+                    document.getElementById('suggLifestyleVal').innerText = formatCurrency(monthlyNeeded) + " / month";
+                    document.getElementById('suggLifestyleVal').style.color = "#ef4444";
+                    suggestLifestyleEl.classList.remove('hidden');
+                    showSuggestions = true;
+                }
+            }
             document.getElementById('inflationCard').classList.remove('hidden');
         } else {
             document.getElementById('inflationCard').classList.add('hidden');
+        }
+
+        // C. Suggestion 2: Millionaire Goal
+        if (finalBalance < 1300000) {
+            let gapToMillion = 1300000 - finalBalance;
+            let monthlyNeededMillion = getMonthlyContributionForGap(gapToMillion, yearsRemaining*12, dividendRate);
+            
+            document.getElementById('suggMillionVal').innerText = formatCurrency(monthlyNeededMillion) + " / month";
+            suggestMillionEl.classList.remove('hidden');
+            showSuggestions = true;
+        }
+
+        // Show/Hide Suggestion Card
+        if (showSuggestions) {
+            document.getElementById('suggestionCard').classList.remove('hidden');
+        } else {
+            document.getElementById('suggestionCard').classList.add('hidden');
         }
 
         // 7. Analysis Text
@@ -989,6 +1136,62 @@
         }, 10);
         document.body.style.overflow = 'hidden';
     }
+
+    // Drag / Swipe Down Logic
+    // We attach listeners to the sheet content
+    const sheet = document.querySelector('.sheet-content');
+    const overlay = document.getElementById('results-overlay');
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    // Click outside to close
+    overlay.addEventListener('click', (e) => {
+        if(e.target === overlay) {
+            closeResults();
+        }
+    });
+
+    // Touch events for drag
+    sheet.addEventListener('touchstart', (e) => {
+        // Only allow drag if we are at top of scroll
+        if (sheet.scrollTop === 0) {
+            startY = e.touches[0].clientY;
+            isDragging = true;
+            sheet.style.transition = 'none'; // Remove transition for instant drag feel
+        }
+    }, {passive: true});
+
+    sheet.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const y = e.touches[0].clientY;
+        const delta = y - startY;
+
+        if (delta > 0) { // Dragging down
+            // If dragging down, prevent scrolling of body/sheet
+            if(e.cancelable) e.preventDefault();
+            sheet.style.transform = `translateY(${delta}px)`;
+        }
+    }, {passive: false}); // passive: false needed to use preventDefault
+
+    sheet.addEventListener('touchend', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        // Restore transition for smooth snap/close
+        sheet.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+        
+        const delta = e.changedTouches[0].clientY - startY;
+        
+        if (delta > 150) { 
+            // Dragged far enough -> Close
+            closeResults();
+        } else {
+            // Not far enough -> Snap back
+            sheet.style.transform = '';
+        }
+    });
+
 </script>
 
 </body>
