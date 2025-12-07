@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROTOCOL 12: MELTDOWN</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --text-color: #00ff41;
+            --alert-color: #ff3333;
+            --accent-color: #00bcd4;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            text-align: center;
+            user-select: none;
+        }
+
+        #game-container {
+            width: 90%;
+            max-width: 800px;
+            border: 2px solid var(--text-color);
+            padding: 20px;
+            box-shadow: 0 0 20px var(--text-color);
+            position: relative;
+            background: rgba(0, 20, 0, 0.95);
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h1 { font-size: 2.5rem; margin-bottom: 10px; text-transform: uppercase; }
+        h2 { font-size: 1.8rem; margin-bottom: 20px; }
+        p { font-size: 1.2rem; line-height: 1.5; margin: 10px 0; }
+
+        .btn {
+            background: transparent;
+            border: 2px solid var(--text-color);
+            color: var(--text-color);
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            font-family: var(--font-main);
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.1s;
+            text-transform: uppercase;
+        }
+
+        .btn:hover {
+            background: var(--text-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 10px var(--text-color);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn:disabled {
+            border-color: #555;
+            color: #555;
+            cursor: not-allowed;
+            background: transparent;
+            box-shadow: none;
+        }
+        
+        .small-btn {
+            padding: 5px 10px;
+            font-size: 1rem;
+            margin-top: 5px;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* Classes for different game states */
+        .hidden { display: none !important; }
+        
+        .screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            flex-grow: 1;
+        }
+
+        /* HUD */
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            border-bottom: 1px solid var(--text-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Puzzle Specific Styles */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .big-input {
+            background: transparent;
+            border: 2px solid var(--text-color);
+            color: var(--text-color);
+            font-size: 2rem;
+            padding: 10px;
+            text-align: center;
+            font-family: var(--font-main);
+            width: 80%;
+            text-transform: uppercase; /* Visual only */
+            outline: none;
+        }
+
+        /* Animations */
+        .shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* Interstitial "SWAP" screen style */
+        .swap-mode {
+            background-color: var(--alert-color) !important;
+            color: black !important;
+            border-color: black !important;
+        }
+        .swap-text {
+            font-size: 4rem;
+            font-weight: bold;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* Floating Text Animation */
+        .float-text {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1.5s forwards;
+            z-index: 50;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -150%) scale(1); }
+        }
+
+        /* Penalty Overlay */
+        #penalty-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Stroop Test Styles */
+        .color-red { color: #ff3333; }
+        .color-blue { color: #00bcd4; }
+        .color-green { color: #00ff41; }
+        .color-yellow { color: #ffff00; }
+        .color-purple { color: #d000ff; }
+        .color-orange { color: #ff9900; }
+
+        /* Slider */
+        input[type=range] {
+            width: 200px;
+            margin: 20px;
+        }
+
+        .stat-box {
+            border: 1px solid var(--text-color);
+            padding: 10px;
+            margin: 10px;
+            min-width: 200px;
+        }
+        
+        #hint-span {
+            border-bottom: 2px dashed var(--accent-color);
+            cursor: help;
+            color: var(--accent-color);
+            padding: 0 5px;
+            transition: all 0.2s;
+        }
+        
+        #hint-span:hover {
+            background: var(--accent-color);
+            color: black;
+        }
+
+        /* Scoreboard Styles */
+        #scoreboard {
+            width: 100%;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid var(--text-color);
+            margin: 15px 0;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 10px;
+            border-bottom: 1px solid #333;
+        }
+        .score-row:nth-child(even) { background: rgba(0, 255, 65, 0.1); }
+        .bonus-text { color: var(--text-color); font-weight: bold; }
+        .penalty-text { color: var(--alert-color); font-weight: bold; }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    
+    <!-- PENALTY OVERLAY -->
+    <div id="penalty-overlay" class="hidden">
+        <h1 style="font-size: 4rem;">⚠ ERROR ⚠</h1>
+        <h2>PENALTY LOCKOUT</h2>
+        <h2 id="penalty-timer">2.0s</h2>
+    </div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="screen">
+        <h1>Protocol 12</h1>
+        <p>SYSTEM CRITICAL. MANUAL OVERRIDE REQUIRED.</p>
+        
+        <div style="margin: 30px 0; border: 1px dashed var(--text-color); padding: 20px;">
+            <p>SELECT NUMBER OF PLAYERS:</p>
+            <h2 id="player-count-display" style="font-size: 3rem; margin: 10px 0;">12</h2>
+            <input type="range" id="player-slider" min="2" max="15" value="12" oninput="updatePlayerCount(this.value)">
+        </div>
+
+        <p><i>Instructions: Complete 1 challenge per player.<br>Mistakes incur a 2-second system lockout.<br>
+        <span style="color: var(--text-color)">UNDER 3s: -3s BONUS</span> | <span style="color: var(--alert-color)">OVER 20s: +3s PENALTY</span></i></p>
+        <button class="btn" onclick="initGame()">INITIATE SEQUENCE</button>
+    </div>
+
+    <!-- GAME HUD -->
+    <div id="game-ui" class="hidden">
+        <div id="hud">
+            <span id="timer-display">TIME: 0.0s</span>
+            <span id="round-display">PLAYER: 1/12</span>
+        </div>
+        
+        <!-- SWAP INTERSTITIAL -->
+        <div id="swap-screen" class="screen hidden">
+            <h1 class="swap-text">SWAP SEATS!</h1>
+            <h2>PLAYER <span id="next-player-id">X</span> UP</h2>
+            <p>Go! Go! Go!</p>
+            <button class="btn" style="background: black; color: white;" onclick="startChallenge()">I AM SEATED (SPACE)</button>
+        </div>
+
+        <!-- CHALLENGE CONTAINER -->
+        <div id="challenge-screen" class="screen">
+            <h2 id="instruction-text">INSTRUCTION GOES HERE</h2>
+            <div id="puzzle-area" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
+        </div>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="end-screen" class="screen hidden">
+        <h1>SYSTEM STABILIZED</h1>
+        <div style="display:flex; justify-content:center; gap:20px; width:100%;">
+            <div class="stat-box">
+                <p>TOTAL DURATION</p>
+                <h2 id="final-time">0.0s</h2>
+            </div>
+            <div class="stat-box">
+                <p>TIME PER PLAYER</p>
+                <h2 id="average-time" style="color: var(--accent-color)">0.0s</h2>
+            </div>
+        </div>
+        
+        <!-- SCOREBOARD -->
+        <div id="scoreboard">
+            <!-- Rows injected here -->
+        </div>
+
+        <p>EFFICIENCY RATING: <span id="final-rank" style="font-weight: bold; font-size: 1.5rem;">calculating...</span></p>
+        <button class="btn" onclick="location.reload()">REBOOT SYSTEM</button>
+    </div>
+
+</div>
+
+<script>
+    // Game State
+    let currentRound = 0;
+    let maxRounds = 12;
+    let startTime;
+    let timerInterval;
+    let isGameActive = false;
+    let isPenaltyActive = false;
+    
+    // Timer Pausing Mechanics
+    let totalPausedTime = 0;
+    let pauseStartTime = 0;
+    
+    // Scoring Mechanics
+    let puzzleStartTime = 0;
+    let playerHistory = [];
+
+    // Puzzle Management
+    let puzzleDeck = [];
+
+    // Audio Context
+    let audioCtx = null;
+    let alarmOscillator = null;
+    let alarmInterval = null;
+    
+    // DOM Elements
+    const startScreen = document.getElementById('start-screen');
+    const gameUI = document.getElementById('game-ui');
+    const swapScreen = document.getElementById('swap-screen');
+    const challengeScreen = document.getElementById('challenge-screen');
+    const endScreen = document.getElementById('end-screen');
+    const timerDisplay = document.getElementById('timer-display');
+    const roundDisplay = document.getElementById('round-display');
+    const puzzleArea = document.getElementById('puzzle-area');
+    const instructionText = document.getElementById('instruction-text');
+    const container = document.getElementById('game-container');
+    const penaltyOverlay = document.getElementById('penalty-overlay');
+    const penaltyTimerDisplay = document.getElementById('penalty-timer');
+    const scoreboard = document.getElementById('scoreboard');
+
+    // Global Key Listener for "I AM SEATED" shortcut
+    document.addEventListener('keydown', (e) => {
+        if (e.code === "Space" || e.key === " ") {
+            // Only trigger if Swap Screen is visible
+            if (!swapScreen.classList.contains('hidden')) {
+                e.preventDefault(); // Prevent scrolling
+                startChallenge();
+            }
+        }
+    });
+
+    function updatePlayerCount(val) {
+        maxRounds = parseInt(val);
+        document.getElementById('player-count-display').innerText = maxRounds;
+    }
+
+    // --- AUDIO SYSTEM ---
+    function initAudio() {
+        if (!audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playSound(type) {
+        if(!audioCtx) return;
+        
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.05);
+            gainNode.gain.setValueAtTime(0.1, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.06);
+        } 
+        else if (type === 'type') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(1200, now);
+            gainNode.gain.setValueAtTime(0.05, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.03);
+            osc.start(now);
+            osc.stop(now + 0.03);
+        }
+        else if (type === 'error') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        } 
+        else if (type === 'success') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.setValueAtTime(880, now + 0.1);
+            gainNode.gain.setValueAtTime(0.1, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        }
+        else if (type === 'bonus') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1000, now);
+            osc.frequency.exponentialRampToValueAtTime(2000, now + 0.1);
+            gainNode.gain.setValueAtTime(0.1, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        }
+         else if (type === 'penalty') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        }
+    }
+
+    function startAlarm() {
+        if (!audioCtx) return;
+        if (alarmOscillator) return; 
+
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        osc.type = 'triangle';
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        gainNode.gain.value = 0.1;
+        osc.frequency.value = 600;
+        osc.start();
+
+        let isHigh = false;
+        alarmInterval = setInterval(() => {
+            const now = audioCtx.currentTime;
+            if(isHigh) {
+                osc.frequency.linearRampToValueAtTime(600, now + 0.1);
+            } else {
+                osc.frequency.linearRampToValueAtTime(800, now + 0.1);
+            }
+            isHigh = !isHigh;
+        }, 300);
+
+        alarmOscillator = osc;
+        alarmOscillator.gainNode = gainNode;
+    }
+
+    function stopAlarm() {
+        if (alarmOscillator) {
+            clearInterval(alarmInterval);
+            const now = audioCtx.currentTime;
+            alarmOscillator.gainNode.gain.setTargetAtTime(0, now, 0.1);
+            alarmOscillator.stop(now + 0.1);
+            alarmOscillator = null;
+        }
+    }
+
+    // --- GAME LOGIC ---
+
+    function initGame() {
+        initAudio();
+        playSound('success'); 
+        startGame();
+    }
+
+    function startGame() {
+        startScreen.classList.add('hidden');
+        gameUI.classList.remove('hidden');
+        
+        startTime = Date.now();
+        totalPausedTime = 0;
+        playerHistory = []; // Reset history
+        
+        timerInterval = setInterval(updateTimer, 100);
+        isGameActive = true;
+        
+        initializeDeck();
+        
+        prepareRound();
+    }
+
+    function initializeDeck() {
+        const allPuzzles = [
+            puzzleStroopHover, 
+            puzzleHardMath, 
+            puzzleTypeComplexWord, 
+            puzzleStroop, 
+            puzzleReversed, 
+            puzzleDirectional, 
+            puzzleCountHard, 
+            puzzleTypeCodeHard, 
+            puzzleColorSequence, 
+            puzzleReverseText, 
+            puzzleMovingTarget, 
+            puzzleBinary,
+            puzzleAnagram,
+            puzzleAscending,    
+            puzzleTrueEquation  
+        ];
+        
+        puzzleDeck = [...allPuzzles].sort(() => Math.random() - 0.5);
+        
+        while(puzzleDeck.length < maxRounds) {
+            let extras = [...allPuzzles].sort(() => Math.random() - 0.5);
+            puzzleDeck = puzzleDeck.concat(extras);
+        }
+    }
+
+    function updateTimer() {
+        if(!isGameActive) return;
+        const elapsed = (Date.now() - startTime - totalPausedTime) / 1000;
+        timerDisplay.innerText = `TIME: ${elapsed.toFixed(1)}s`;
+    }
+
+    function prepareRound() {
+        currentRound++;
+        
+        if (currentRound > maxRounds) {
+            finishGame();
+            return;
+        }
+
+        stopAlarm(); // Stop any round alarm during swap
+
+        isGameActive = false; 
+        pauseStartTime = Date.now();
+
+        challengeScreen.classList.add('hidden');
+        swapScreen.classList.remove('hidden');
+        container.classList.add('swap-mode');
+        document.getElementById('next-player-id').innerText = currentRound;
+        roundDisplay.innerText = `PLAYER: ${currentRound}/${maxRounds}`;
+    }
+
+    function startChallenge() {
+        startAlarm(); // Alarm plays DURING round pressure
+        playSound('click');
+
+        const pauseDuration = Date.now() - pauseStartTime;
+        totalPausedTime += pauseDuration;
+        isGameActive = true; 
+
+        puzzleStartTime = Date.now();
+
+        swapScreen.classList.add('hidden');
+        challengeScreen.classList.remove('hidden');
+        container.classList.remove('swap-mode');
+        
+        generatePuzzle(currentRound);
+    }
+    
+    function showFloatingText(text, color) {
+        const div = document.createElement('div');
+        div.innerText = text;
+        div.className = 'float-text';
+        div.style.color = color;
+        container.appendChild(div);
+        setTimeout(() => div.remove(), 1500);
+    }
+
+    function triggerPenalty() {
+        if(isPenaltyActive) return;
+        isPenaltyActive = true;
+        
+        playSound('error');
+        penaltyOverlay.classList.remove('hidden');
+        
+        const inputs = document.querySelectorAll('button, input');
+        inputs.forEach(el => el.disabled = true);
+
+        let timeLeft = 2.0;
+        penaltyTimerDisplay.innerText = "2.0s";
+
+        let pInterval = setInterval(() => {
+            timeLeft -= 0.1;
+            penaltyTimerDisplay.innerText = timeLeft.toFixed(1) + "s";
+            if(timeLeft <= 0) {
+                clearInterval(pInterval);
+                clearPenalty();
+            }
+        }, 100);
+    }
+
+    function clearPenalty() {
+        isPenaltyActive = false;
+        penaltyOverlay.classList.add('hidden');
+        const inputs = document.querySelectorAll('button, input');
+        inputs.forEach(el => el.disabled = false);
+        
+        const txtInput = document.querySelector('input.big-input');
+        if(txtInput) txtInput.focus();
+    }
+
+    function generatePuzzle(round) {
+        puzzleArea.innerHTML = '';
+        if(round === maxRounds) {
+            puzzleSystemPurge();
+            return;
+        }
+        const puzzleFunc = puzzleDeck[round - 1];
+        if(puzzleFunc) {
+            puzzleFunc();
+        } else {
+            puzzleTypeComplexWord();
+        }
+    }
+
+    // --- MINI GAMES (Code Shared) ---
+    // (Keeping definitions concise for file length, logic same as previous)
+    
+    function puzzleStroopHover() {
+        const colorMap = {'RED':'#ff3333','GREEN':'#00ff41','BLUE':'#00bbff','YELLOW':'#ffff00','PURPLE':'#d000ff','ORANGE':'#ff9900'};
+        const colors = Object.keys(colorMap);
+        const target = colors[Math.floor(Math.random() * colors.length)];
+        const modes = ['WORD', 'COLOR'];
+        const mode = modes[Math.floor(Math.random() * modes.length)]; 
+        instructionText.innerHTML = `CLICK THE <span id="hint-span">${target}</span> BUTTON`;
+        const hintSpan = document.getElementById('hint-span');
+        const showHint = () => { playSound('type'); hintSpan.innerText = `(${mode})`; };
+        const hideHint = () => hintSpan.innerText = target;
+        hintSpan.onmouseover = showHint; hintSpan.onmouseout = hideHint; hintSpan.ontouchstart = showHint; hintSpan.ontouchend = hideHint;
+        let buttonsData = [];
+        let correctBtn = { text: '', color: '', correct: true };
+        if (mode === 'WORD') {
+            correctBtn.text = target;
+            let other = colors.filter(c => c !== target);
+            correctBtn.color = other[Math.floor(Math.random() * other.length)];
+        } else { 
+            correctBtn.color = target;
+            let other = colors.filter(c => c !== target);
+            correctBtn.text = other[Math.floor(Math.random() * other.length)];
+        }
+        buttonsData.push(correctBtn);
+        let trapBtn = { text: '', color: '', correct: false };
+        if (mode === 'WORD') {
+            trapBtn.color = target;
+            let other = colors.filter(c => c !== target);
+            trapBtn.text = other[Math.floor(Math.random() * other.length)];
+        } else {
+            trapBtn.text = target;
+            let other = colors.filter(c => c !== target);
+            trapBtn.color = other[Math.floor(Math.random() * other.length)];
+        }
+        buttonsData.push(trapBtn);
+        for (let i = 0; i < 7; i++) {
+            let btnData = { text: '', color: '', correct: false };
+            let safeTexts = (mode === 'WORD') ? colors.filter(c => c !== target) : colors;
+            btnData.text = safeTexts[Math.floor(Math.random() * safeTexts.length)];
+            let safeColors = (mode === 'COLOR') ? colors.filter(c => c !== target) : colors;
+            btnData.color = safeColors[Math.floor(Math.random() * safeColors.length)];
+            buttonsData.push(btnData);
+        }
+        buttonsData.sort(() => Math.random() - 0.5);
+        createGrid(3, 9, (btn, i) => {
+            const data = buttonsData[i];
+            btn.innerText = data.text;
+            btn.style.color = colorMap[data.color];
+            btn.style.borderColor = colorMap[data.color];
+            btn.onclick = () => { if (data.correct) nextRound(); else triggerPenalty(); };
+        });
+    }
+
+    function puzzleHardMath() {
+        const a = Math.floor(Math.random() * 8) + 3;
+        const b = Math.floor(Math.random() * 8) + 3;
+        const c = Math.floor(Math.random() * 10) + 1;
+        let answer;
+        if(Math.random() > 0.5) { instructionText.innerText = `SOLVE: ${a} x ${b} + ${c}`; answer = (a * b) + c; } 
+        else { instructionText.innerText = `SOLVE: ${a} x ${b} - ${c}`; answer = (a * b) - c; }
+        let options = [answer, answer + 2, answer - 3, answer + 10, answer - 5, answer + 1];
+        options.sort(() => Math.random() - 0.5);
+        createGrid(3, 6, (btn, i) => { btn.innerText = options[i]; btn.onclick = () => { if (options[i] === answer) nextRound(); else triggerPenalty(); }; });
+    }
+
+    function puzzleTypeComplexWord() {
+        const words = ["QUANTUM-FLUX", "BIOHAZARD-9", "SYSTEM-32", "KERNEL-PANIC", "HYPER-LOOP", "VECTOR-7"];
+        const target = words[Math.floor(Math.random() * words.length)];
+        instructionText.innerText = `TYPE: ${target}`;
+        createTextInput(target);
+    }
+
+    function puzzleStroop() {
+        instructionText.innerText = "CLICK THE COLOR OF THE TEXT (NOT THE WORD)";
+        const colorNames = ["RED", "BLUE", "GREEN", "YELLOW"];
+        const colorStyles = ["color-red", "color-blue", "color-green", "color-yellow"];
+        const wordIndex = Math.floor(Math.random() * 4);
+        let styleIndex = Math.floor(Math.random() * 4);
+        while(styleIndex === wordIndex) styleIndex = Math.floor(Math.random() * 4); 
+        const p = document.createElement('h2');
+        p.innerText = colorNames[wordIndex]; p.className = colorStyles[styleIndex]; p.style.fontSize = "4rem";
+        puzzleArea.appendChild(p);
+        const buttonLabels = ["RED", "BLUE", "GREEN", "YELLOW"];
+        createGrid(2, 4, (btn, i) => { btn.innerText = buttonLabels[i]; btn.onclick = () => { if (i === styleIndex) nextRound(); else triggerPenalty(); }; });
+    }
+
+    function puzzleReversed() {
+        instructionText.innerText = "CLICK THE SMALLEST NUMBER VALUE";
+        const nums = [{val:205,size:'1rem'},{val:24,size:'1.5rem'},{val:8,size:'4rem'},{val:67,size:'1rem'},{val:99,size:'0.8rem'},{val:12,size:'3rem'}];
+        nums.sort((a,b) => Math.random() - 0.5);
+        const minVal = Math.min(...nums.map(n => n.val));
+        createGrid(3, 6, (btn, i) => { btn.innerText = nums[i].val; btn.style.fontSize = nums[i].size; btn.onclick = () => { if (nums[i].val === minVal) nextRound(); else triggerPenalty(); }; });
+    }
+
+    function puzzleDirectional() {
+        instructionText.innerText = "CLICK THE ARROW POINTING UP";
+        const arrows = [{char:"➤",rot:0,dir:"right"},{char:"➤",rot:-90,dir:"up"},{char:"➤",rot:90,dir:"down"},{char:"➤",rot:180,dir:"left"}];
+        let displayArrows = [...arrows].sort(() => Math.random() - 0.5);
+        createGrid(2, 4, (btn, i) => { btn.innerText = displayArrows[i].char; btn.style.transform = `rotate(${displayArrows[i].rot}deg)`; btn.style.fontSize = "3rem"; btn.onclick = () => { if (displayArrows[i].dir === "up") nextRound(); else triggerPenalty(); }; });
+    }
+
+    function puzzleCountHard() {
+        const shapes = ["★", "●", "▲", "◼", "♦", "✖"];
+        const targetShape = shapes[Math.floor(Math.random() * shapes.length)];
+        let sequence = ""; let count = 0;
+        for(let i=0; i<40; i++) { let s = shapes[Math.floor(Math.random() * shapes.length)]; sequence += s + " "; if(s === targetShape) count++; }
+        instructionText.innerText = `COUNT THE: ${targetShape}`;
+        const display = document.createElement('div'); display.innerText = sequence; display.style.fontSize = "1.5rem"; display.style.letterSpacing = "3px"; display.style.marginBottom = "20px"; display.style.wordBreak = "break-all"; display.style.padding = "0 20px";
+        puzzleArea.appendChild(display);
+        const input = document.createElement('input'); input.type = 'number'; input.className = 'big-input'; puzzleArea.appendChild(input); setTimeout(() => input.focus(), 100);
+        input.onkeydown = (e) => { if(e.key === "Enter") { if (parseInt(input.value) === count) nextRound(); else triggerPenalty(); } else { playSound('type'); } };
+    }
+
+    function puzzleTypeCodeHard() {
+        const p1 = Math.random().toString(36).substring(2, 4).toUpperCase();
+        const p2 = Math.random().toString(36).substring(2, 4).toUpperCase();
+        const p3 = Math.random().toString(36).substring(2, 4).toUpperCase();
+        const code = `${p1}-${p2}-${p3}`;
+        instructionText.innerText = `ENTER CODE: ${code}`;
+        createTextInput(code);
+    }
+
+    function puzzleColorSequence(replayUsed = false) {
+        instructionText.innerText = "MEMORIZE 5 COLORS...";
+        const colors = ["red", "green", "blue", "yellow"];
+        let seq = []; for(let i=0; i<5; i++) seq.push(colors[Math.floor(Math.random() * 4)]);
+        const display = document.createElement('div'); display.style.height = "60px"; display.style.width = "200px"; display.style.background = "#333"; display.style.margin = "0 auto"; display.style.border = "2px solid white";
+        puzzleArea.appendChild(display);
+        const playSequence = () => {
+             let i = 0; let playInterval = setInterval(() => {
+                if (i >= seq.length) { clearInterval(playInterval); display.style.background = "#333"; instructionText.innerText = "REPEAT SEQUENCE"; showButtons(); return; }
+                display.style.background = seq[i];
+                if(audioCtx) {
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination);
+                    let freq = 300; if(seq[i]=='red') freq=300; if(seq[i]=='green') freq=400; if(seq[i]=='blue') freq=500; if(seq[i]=='yellow') freq=600;
+                    osc.frequency.value = freq; gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                }
+                setTimeout(() => { display.style.background = "#333"; }, 250); i++;
+            }, 500);
+        };
+        playSequence();
+        function showButtons() {
+            if(!replayUsed) {
+                const replayBtn = document.createElement('button'); replayBtn.className = 'btn small-btn'; replayBtn.innerText = "↻ REPLAY SIGNAL (1 LEFT)";
+                replayBtn.onclick = () => { playSound('click'); puzzleArea.innerHTML = ''; puzzleColorSequence(true); }; puzzleArea.appendChild(replayBtn);
+            }
+            let userIdx = 0; const btnContainer = document.createElement('div'); btnContainer.className = 'grid-container'; btnContainer.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            colors.forEach(c => {
+                const btn = document.createElement('button'); btn.className = 'btn'; btn.style.borderColor = c; btn.style.color = c; btn.innerText = "█";
+                btn.onclick = () => { if (c === seq[userIdx]) { playSound('click'); userIdx++; if (userIdx === seq.length) nextRound(); } else { triggerPenalty(); userIdx = 0; instructionText.innerText = "RETRY SEQUENCE"; } };
+                btnContainer.appendChild(btn);
+            }); puzzleArea.appendChild(btnContainer);
+        }
+    }
+
+    function puzzleReverseText() {
+        const words = ["REACTOR", "PROTOCOL", "FAILURE", "DANGER", "WARNING"];
+        const word = words[Math.floor(Math.random() * words.length)];
+        instructionText.innerText = `TYPE BACKWARDS: ${word}`;
+        const target = word.split('').reverse().join('');
+        createTextInput(target);
+    }
+
+    function puzzleMovingTarget() {
+        instructionText.innerText = "CATCH THE GLITCH (AREA CLICK)";
+        const area = document.createElement('div'); area.style.height = "300px"; area.style.width = "100%"; area.style.position = "relative"; area.style.border = "1px dashed #333"; area.style.cursor = "crosshair"; area.style.overflow = "hidden";
+        puzzleArea.appendChild(area);
+        const target = document.createElement('div'); target.innerText = "⚠"; target.style.position = "absolute"; target.style.color = "red"; target.style.fontSize = "3rem"; target.style.userSelect = "none"; target.style.pointerEvents = "none";
+        let moveInt = setInterval(() => { const x = Math.random() * 90; const y = Math.random() * 80; target.style.left = x + "%"; target.style.top = y + "%"; }, 400);
+        area.appendChild(target);
+        const HIT_RADIUS = 60;
+        area.onclick = (e) => {
+            playSound('type'); const rect = area.getBoundingClientRect(); const clickX = e.clientX - rect.left; const clickY = e.clientY - rect.top;
+            const ripple = document.createElement('div'); ripple.style.position = 'absolute'; ripple.style.left = (clickX - HIT_RADIUS) + 'px'; ripple.style.top = (clickY - HIT_RADIUS) + 'px'; ripple.style.width = (HIT_RADIUS * 2) + 'px'; ripple.style.height = (HIT_RADIUS * 2) + 'px'; ripple.style.border = '2px solid var(--accent-color)'; ripple.style.borderRadius = '50%'; ripple.style.pointerEvents = 'none'; ripple.style.opacity = '1'; ripple.style.transition = 'opacity 0.5s, transform 0.5s';
+            area.appendChild(ripple);
+            setTimeout(() => { ripple.style.opacity = '0'; ripple.style.transform = 'scale(1.5)'; }, 10); setTimeout(() => ripple.remove(), 500);
+            const tRect = target.getBoundingClientRect(); const tX = tRect.left - rect.left + (tRect.width / 2); const tY = tRect.top - rect.top + (tRect.height / 2);
+            const dist = Math.hypot(clickX - tX, clickY - tY);
+            if (dist < HIT_RADIUS) { clearInterval(moveInt); target.style.color = "var(--text-color)"; target.innerText = "CAPTURED"; target.style.fontSize = "1rem"; setTimeout(nextRound, 500); }
+        };
+    }
+
+    function puzzleBinary() {
+        instructionText.innerText = "SELECT THE ANOMALY";
+        const items = ["010101", "101010", "001100", "010201", "100101", "111000"]; 
+        items.sort(() => Math.random() - 0.5);
+        createGrid(3, 6, (btn, i) => { btn.innerText = items[i]; btn.onclick = () => { if (items[i].includes('2')) nextRound(); else triggerPenalty(); }; });
+    }
+
+    function puzzleAnagram(rerollUsed = false) {
+        const words = [{scramble: "R E T U M P O C", ans: "COMPUTER"},{scramble: "N O T T U B", ans: "BUTTON"},{scramble: "E C I V E D", ans: "DEVICE"},{scramble: "R E W O P", ans: "POWER"},{scramble: "N E E R C S", ans: "SCREEN"},{scramble: "Y R O M E M", ans: "MEMORY"},{scramble: "E S U O M", ans: "MOUSE"}];
+        const p = words[Math.floor(Math.random() * words.length)];
+        instructionText.innerText = `UNSCRAMBLE: ${p.scramble}`;
+        if(!rerollUsed) {
+            const rerollBtn = document.createElement('button'); rerollBtn.className = 'btn small-btn'; rerollBtn.innerText = "↻ REROLL DATA";
+            rerollBtn.onclick = () => { playSound('click'); puzzleArea.innerHTML = ''; puzzleAnagram(true); }; puzzleArea.appendChild(rerollBtn);
+        }
+        createTextInput(p.ans);
+    }
+
+    function puzzleAscending() {
+        instructionText.innerText = "CLICK NUMBERS IN ASCENDING ORDER";
+        let nums = []; while(nums.length < 4) { let n = Math.floor(Math.random() * 99) + 1; if(!nums.includes(n)) nums.push(n); }
+        const sorted = [...nums].sort((a,b) => a - b); let currentIndex = 0;
+        nums.sort(() => Math.random() - 0.5);
+        createGrid(2, 4, (btn, i) => { btn.innerText = nums[i]; btn.onclick = () => { const val = nums[i]; if (val === sorted[currentIndex]) { playSound('click'); btn.disabled = true; btn.style.borderColor = "var(--text-color)"; btn.style.opacity = "0.5"; currentIndex++; if(currentIndex === sorted.length) nextRound(); } else { triggerPenalty(); } }; });
+    }
+
+    function puzzleTrueEquation() {
+        instructionText.innerText = "SELECT THE TRUE EQUATION";
+        const generateEquation = (isTrue) => {
+            const a = Math.floor(Math.random() * 10) + 2; const b = Math.floor(Math.random() * 10) + 2; const res = a + b;
+            if (isTrue) return { text: `${a} + ${b} = ${res}`, correct: true };
+            else { const diff = (Math.random() > 0.5) ? 1 : -1; return { text: `${a} + ${b} = ${res + diff}`, correct: false }; }
+        };
+        let eqs = []; eqs.push(generateEquation(true)); eqs.push(generateEquation(false)); eqs.push(generateEquation(false)); eqs.push(generateEquation(false));
+        eqs.sort(() => Math.random() - 0.5);
+        createGrid(2, 4, (btn, i) => { btn.innerText = eqs[i].text; btn.onclick = () => { if (eqs[i].correct) nextRound(); else triggerPenalty(); }; });
+    }
+
+    function puzzleSystemPurge() {
+        const p1 = Math.random().toString(36).substring(2, 6).toUpperCase(); const p2 = Math.floor(Math.random() * 99); const p3 = Math.random().toString(36).substring(2, 4).toUpperCase(); const code = `OMEGA-${p1}-${p2}-${p3}`;
+        instructionText.innerText = `SYSTEM PURGE KEY: ${code}`;
+        createTextInput(code);
+    }
+
+    // UTILITIES
+    function createTextInput(correctAnswer) {
+        const input = document.createElement('input'); input.type = 'text'; input.className = 'big-input'; puzzleArea.appendChild(input);
+        input.oninput = function() { this.value = this.value.toUpperCase(); playSound('type'); };
+        setTimeout(() => input.focus(), 100);
+        input.onkeyup = (e) => { if(e.key === "Enter") { if (input.value.toUpperCase() === correctAnswer.toUpperCase()) nextRound(); else triggerPenalty(); } };
+    }
+
+    function createGrid(cols, count, callback) {
+        const grid = document.createElement('div'); grid.className = 'grid-container'; grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        for (let i = 0; i < count; i++) { 
+            const btn = document.createElement('button'); btn.className = 'btn'; callback(btn, i);
+            btn.addEventListener('click', () => { if(!btn.disabled) playSound('click'); });
+            grid.appendChild(btn);
+        }
+        puzzleArea.appendChild(grid);
+    }
+
+    function nextRound() {
+        const duration = (Date.now() - puzzleStartTime) / 1000;
+        let status = "NORMAL";
+        let statusClass = "normal-text";
+
+        if (duration < 3.0) {
+            startTime += 3000; 
+            showFloatingText("-3.0s REWARD", "var(--text-color)");
+            playSound('bonus');
+            status = "⚡ -3s BONUS";
+            statusClass = "bonus-text";
+        } else if (duration > 20.0) {
+            startTime -= 3000;
+            showFloatingText("+3.0s PENALTY", "var(--alert-color)");
+            playSound('penalty');
+            status = "⚠ +3s PENALTY";
+            statusClass = "penalty-text";
+        } else {
+            playSound('success');
+        }
+
+        // Save History
+        playerHistory.push({
+            id: currentRound,
+            time: duration.toFixed(1),
+            status: status,
+            statusClass: statusClass
+        });
+
+        prepareRound();
+    }
+
+    function finishGame() {
+        stopAlarm();
+        isGameActive = false;
+        clearInterval(timerInterval);
+        playSound('success');
+        
+        const finalTime = parseFloat(timerDisplay.innerText.replace("TIME: ", "").replace("s", ""));
+        const avgTime = finalTime / maxRounds;
+
+        document.getElementById('final-time').innerText = finalTime.toFixed(1) + "s";
+        document.getElementById('average-time').innerText = avgTime.toFixed(2) + "s / player";
+        
+        let rank = "D";
+        if (avgTime < 4.0) rank = "S (GODLIKE)";
+        else if (avgTime < 6.0) rank = "A (ELITE)";
+        else if (avgTime < 8.0) rank = "B (SOLID)";
+        else if (avgTime < 10.0) rank = "C (ACCEPTABLE)";
+        else rank = "F (CRITICAL FAILURE)";
+        
+        document.getElementById('final-rank').innerText = rank;
+
+        // Render Scoreboard
+        scoreboard.innerHTML = "";
+        playerHistory.forEach(p => {
+            const row = document.createElement('div');
+            row.className = 'score-row';
+            
+            // Format: Player X | 12.5s | +3s PENALTY
+            row.innerHTML = `
+                <span>PLAYER ${p.id}</span>
+                <span>${p.time}s</span>
+                <span class="${p.statusClass}">${p.status === "NORMAL" ? "" : p.status}</span>
+            `;
+            scoreboard.appendChild(row);
+        });
+
+        gameUI.classList.add('hidden');
+        endScreen.classList.remove('hidden');
+    }
+
+</script>
+
+</body>
+</html>
