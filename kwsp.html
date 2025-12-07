@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KWSP Planner</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --accent: #10b981;
+            --error: #ef4444;
+            --bg-grad-start: #f3f4f6;
+            --bg-grad-end: #e5e7eb;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-main: #111827;
+            --text-sub: #6b7280;
+            --input-bg: #f9fafb;
+            --shadow-soft: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #eef2ff 0%, #f3f4f6 100%);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        header .badge {
+            font-size: 0.75rem;
+            background: #e0e7ff;
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* Container */
+        .container {
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+            padding-bottom: 120px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(255,255,255,0.6);
+            transition: transform 0.2s ease;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .icon-box {
+            width: 32px;
+            height: 32px;
+            background: #eef2ff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* Form & Inputs */
+        .form-group {
+            margin-bottom: 18px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-sub);
+        }
+
+        input[type="number"], 
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 17px;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            background: var(--input-bg);
+            color: var(--text-main);
+            box-sizing: border-box;
+            transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+            font-weight: 500;
+            appearance: none;
+        }
+
+        input[type="number"]:focus, 
+        select:focus {
+            outline: none;
+            background: #fff;
+            border-color: #c7d2fe;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+            transform: translateY(-1px);
+        }
+
+        /* Error State */
+        input.error-shake {
+            border-color: var(--error);
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            background: #fef2f2;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .sub-label {
+            font-size: 0.7rem;
+            color: var(--text-sub);
+            margin-top: 6px;
+            display: block;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Toggle */
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 5px 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 30px;
+            pointer-events: none; /* Let parent handle click */
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #e5e7eb;
+            transition: .3s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px; width: 22px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* FAB */
+        .fab-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 480px;
+            z-index: 90;
+        }
+
+        .btn-main {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.4);
+            cursor: pointer;
+            transition: transform 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            -webkit-appearance: none;
+        }
+
+        .btn-main:active { transform: scale(0.96); }
+
+        /* Bottom Sheet */
+        #results-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #results-overlay.active { opacity: 1; display: block; }
+
+        .sheet-content {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%;
+            background: #fff;
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+            padding: 30px 20px 40px 20px;
+            box-sizing: border-box;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+        }
+
+        #results-overlay.active .sheet-content { transform: translateY(0); }
+
+        .drag-handle {
+            width: 40px; height: 5px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            margin: 0 auto 25px auto;
+        }
+
+        .result-header { text-align: center; margin-bottom: 30px; }
+        
+        .total-amount {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-main) 0%, #4b5563 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 10px 0;
+            letter-spacing: -1px;
+        }
+
+        .result-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            background: #f3f4f6;
+            color: #6b7280;
+            border-radius: 20px;
+            font-size: 0.85rem; font-weight: 600;
+        }
+
+        .breakdown-card {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .comparison-card {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+            border: 1px solid #c7d2fe;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .comparison-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .comp-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+        
+        .comp-row.total {
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding-top: 10px;
+            margin-top: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--primary-dark);
+        }
+
+        .bar-chart {
+            display: flex;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+
+        .bar-principal { background: var(--primary); }
+        .bar-interest { background: var(--accent); }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            font-size: 0.7rem;
+            color: #6b7280;
+            justify-content: center;
+        }
+        
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+        /* Table Styling */
+        .table-container {
+            margin-top: 25px;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .table-header {
+            background: #f9fafb;
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .table-wrapper {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            min-width: 300px;
+        }
+
+        th {
+            background: #f3f4f6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            text-align: right;
+            padding: 10px;
+            font-weight: 600;
+            color: var(--text-sub);
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th:first-child { text-align: left; padding-left: 15px; }
+        
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #f3f4f6;
+            text-align: right;
+            color: var(--text-main);
+        }
+
+        td:first-child { text-align: left; padding-left: 15px; font-weight: 600; color: var(--primary); }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #f9fafb; }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 16px;
+            background: #f3f4f6;
+            color: var(--text-main);
+            border: none;
+            border-radius: 18px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.5s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>KWSP Planner</h1>
+    <div class="badge">2024 Rates</div>
+</header>
+
+<form id="calcForm" onsubmit="event.preventDefault(); calculateEPF();" class="container fade-in">
+    
+    <!-- Profile Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="icon-box">👤</div>
+            <div class="card-title">Profile</div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Current Age</label>
+                <input type="number" id="currentAge" placeholder="30" inputmode="numeric" pattern="[0-9]*" required>
+            </div>
+            <div class="form-group">
+                <label>Retire At</label>
+                <input type="number" id="retirementAge" value="60" readonly style="background-color: #f3f4f6; color: #9ca3af;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Financials Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="icon-box">💰</div>
+            <div class="card-title">Current Status</div>
+        </div>
+        
+        <div class="form-group">
+            <label>Monthly Gross Salary (RM)</label>
+            <input type="number" id="salary" placeholder="5000" inputmode="decimal" required>
+        </div>
+        <div class="form-group">
+            <label>Current KWSP Balance (RM)</label>
+            <input type="number" id="currentBalance" placeholder="50000" inputmode="decimal" required>
+        </div>
+
+        <div class="grid-2" style="margin-top: 25px;">
+            <div class="form-group">
+                <label>Employee (%)</label>
+                <input type="number" id="employeeRate" value="11" inputmode="decimal">
+            </div>
+            <div class="form-group">
+                <label>Employer (%)</label>
+                <input type="number" id="employerRate" value="12" inputmode="decimal">
+                <span class="sub-label">Auto 13% if ≤ RM5k</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projections Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="icon-box">📈</div>
+            <div class="card-title">Growth Factors</div>
+        </div>
+        
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Yearly Bonus</label>
+                <select id="bonusType" onchange="toggleBonusInput()">
+                    <option value="none">None</option>
+                    <option value="months">Months</option>
+                    <option value="fixed">Fixed RM</option>
+                </select>
+                <input type="number" id="bonusValue" class="hidden" style="margin-top: 10px;" placeholder="Amount" inputmode="decimal">
+            </div>
+            <div class="form-group">
+                <label>Salary Increment</label>
+                <div style="position: relative;">
+                    <input type="number" id="incrementValue" value="3" inputmode="decimal" style="padding-right: 40px;">
+                    <select id="incrementType" style="position: absolute; right: 2px; top: 2px; bottom: 2px; width: auto; border: none; background: transparent; padding: 0 10px; font-size: 0.8rem; font-weight: bold; color: var(--primary);">
+                        <option value="percent">%</option>
+                        <option value="fixed">RM</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 10px;">
+            <label>Est. Dividend Rate (%)</label>
+            <input type="number" id="dividendRate" value="5.5" inputmode="decimal">
+        </div>
+    </div>
+
+    <!-- Extras Card -->
+    <div class="card">
+        <div class="toggle-row" onclick="handleToggleRow()">
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <div class="icon-box" style="background:#d1fae5; color: #059669;">➕</div>
+                <span class="card-title" style="margin:0;">Monthly Top-up</span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="wantTopUp">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div id="topUpContainer" class="hidden" style="margin-top: 20px; animation: fadeIn 0.3s ease;">
+            <label>Extra Contribution Amount (RM)</label>
+            <input type="number" id="topUpAmount" placeholder="e.g. 100" inputmode="decimal">
+        </div>
+    </div>
+
+</form>
+
+<!-- Floating Action Button -->
+<div class="fab-container">
+    <button class="btn-main" onclick="calculateEPF()">
+        <span>Calculate Future</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+    </button>
+</div>
+
+<!-- Bottom Sheet Result -->
+<div id="results-overlay">
+    <div class="sheet-content">
+        <div class="drag-handle"></div>
+        
+        <div class="result-header">
+            <span class="result-badge">Projected Total at Age 60</span>
+            <div class="total-amount" id="finalAmountDisplay">RM 0</div>
+            <p style="color: var(--text-sub); font-size: 0.9rem; margin-top: 5px;">Accumulated over <span id="yearsRemainingDisplay">0</span> years</p>
+        </div>
+
+        <!-- Comparison Card (Hidden by default) -->
+        <div id="topUpComparisonCard" class="comparison-card hidden">
+            <div class="comparison-title">🚀 The Power of Top-up</div>
+            <div class="comp-row">
+                <span>Without Top-up:</span>
+                <span style="font-weight:600" id="compNoTopUpVal">RM 0</span>
+            </div>
+            <div class="comp-row total">
+                <span>Extra Gained:</span>
+                <span style="color:var(--accent);" id="compDiffVal">+ RM 0</span>
+            </div>
+            
+            <div class="bar-chart">
+                <div class="bar-principal" id="barPrincipal" style="width: 50%"></div>
+                <div class="bar-interest" id="barInterest" style="width: 50%"></div>
+            </div>
+            <div class="legend">
+                <span><span class="dot" style="background:var(--primary)"></span>Your Cash: <span id="legendPrincipal">RM 0</span></span>
+                <span><span class="dot" style="background:var(--accent)"></span>Interest: <span id="legendInterest">RM 0</span></span>
+            </div>
+        </div>
+
+        <div class="breakdown-card">
+            <div>
+                <div style="font-size: 0.8rem; color: #6b7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px;">Monthly Income (20 Yrs)</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);" id="monthlyDrawdownDisplay">RM 0</div>
+            </div>
+            <div style="font-size: 2rem;">🏖️</div>
+        </div>
+
+        <div style="background: #f0fdf4; border-radius: 20px; padding: 20px; margin-bottom: 25px;">
+            <div style="font-weight: 700; color: #166534; margin-bottom: 10px; font-size: 0.95rem;">Analysis</div>
+            <div id="analysisText" style="font-size: 0.9rem; line-height: 1.6; color: #15803d;"></div>
+        </div>
+
+        <!-- Yearly Breakdown Table -->
+        <div class="table-container">
+            <div class="table-header">Yearly Breakdown (Age <span id="startAgeDisplay"></span> - 60)</div>
+            <div class="table-wrapper">
+                <table id="breakdownTable">
+                    <thead>
+                        <tr>
+                            <th>Age</th>
+                            <th>Total Contrib.</th>
+                            <th>Dividend</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <button class="btn-secondary" onclick="closeResults()">Adjust Numbers</button>
+    </div>
+</div>
+
+<script>
+    function handleToggleRow() {
+        const cb = document.getElementById('wantTopUp');
+        cb.checked = !cb.checked;
+        toggleTopUpInput();
+    }
+
+    function toggleBonusInput() {
+        const type = document.getElementById('bonusType').value;
+        const input = document.getElementById('bonusValue');
+        if (type === 'none') {
+            input.classList.add('hidden');
+        } else {
+            input.classList.remove('hidden');
+            input.placeholder = type === 'months' ? 'Months (e.g. 1.5)' : 'Amount (RM)';
+            input.focus();
+        }
+    }
+
+    function toggleTopUpInput() {
+        const checked = document.getElementById('wantTopUp').checked;
+        const container = document.getElementById('topUpContainer');
+        
+        if(checked) {
+            container.classList.remove('hidden');
+            setTimeout(() => document.getElementById('topUpAmount').focus(), 100);
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+
+    function closeResults() {
+        const overlay = document.getElementById('results-overlay');
+        overlay.classList.remove('active');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 300);
+        document.body.style.overflow = 'auto';
+    }
+
+    function formatCurrency(num) {
+        return "RM " + num.toLocaleString('en-MY', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    function formatSmallCurrency(num) {
+        // Shorter format for table
+        if(num >= 1000000) return (num/1000000).toFixed(2) + "M";
+        if(num >= 1000) return (num/1000).toFixed(1) + "k";
+        return num.toFixed(0);
+    }
+
+    // Extracted Calculation Logic
+    function calculateProjection(yearsRemaining, currentAge, currentSalary, startBalance, employeePct, employerPctInput, bonusType, bonusVal, incType, incVal, topUpVal, dividendRate, trackHistory) {
+        let totalMonths = yearsRemaining * 12;
+        let currentMonth = 0;
+        let trackingSalary = currentSalary;
+        let balance = startBalance;
+        let history = [];
+        
+        // Accumulators for yearly tracking
+        let yearlyContrib = 0;
+        let yearlyDividend = 0;
+
+        while (currentMonth < totalMonths) {
+            // Employer Statutory Logic (13% rule)
+            let actualEmployerRate = employerPctInput;
+            if (employerPctInput === 0.12 || employerPctInput === 0.13) {
+                if (trackingSalary <= 5000) actualEmployerRate = 0.13;
+                else actualEmployerRate = 0.12;
+            }
+
+            // Monthly Contrib
+            let employeeContrib = trackingSalary * employeePct;
+            let employerContrib = trackingSalary * actualEmployerRate;
+            let totalMonthlyContrib = employeeContrib + employerContrib + topUpVal;
+
+            balance += totalMonthlyContrib;
+            yearlyContrib += totalMonthlyContrib;
+
+            // Monthly Dividend Compounding
+            let monthlyDividend = balance * (dividendRate / 12);
+            balance += monthlyDividend;
+            yearlyDividend += monthlyDividend;
+
+            // Yearly Events (Bonus + Increment)
+            if ((currentMonth + 1) % 12 === 0) {
+                // Bonus
+                if (bonusType !== 'none') {
+                    let bonusAmount = (bonusType === 'months') ? trackingSalary * bonusVal : bonusVal;
+                    let bonusEmployee = bonusAmount * employeePct;
+                    let bonusEmployer = bonusAmount * actualEmployerRate;
+                    balance += (bonusEmployee + bonusEmployer);
+                    yearlyContrib += (bonusEmployee + bonusEmployer);
+                }
+                
+                // Track History
+                if (trackHistory) {
+                    history.push({
+                        age: currentAge + ((currentMonth + 1) / 12),
+                        contrib: yearlyContrib,
+                        dividend: yearlyDividend,
+                        balance: balance
+                    });
+                    // Reset accumulators
+                    yearlyContrib = 0;
+                    yearlyDividend = 0;
+                }
+
+                // Increment
+                if (incType === 'percent') {
+                    trackingSalary = trackingSalary * (1 + (incVal / 100));
+                } else {
+                    trackingSalary = trackingSalary + incVal;
+                }
+            }
+            currentMonth++;
+        }
+        return { balance, history };
+    }
+
+    function calculateEPF() {
+        // Clear errors
+        document.querySelectorAll('.error-shake').forEach(el => el.classList.remove('error-shake'));
+
+        // 1. Get Inputs
+        let ageEl = document.getElementById('currentAge');
+        let salaryEl = document.getElementById('salary');
+        let balanceEl = document.getElementById('currentBalance');
+
+        let age = parseInt(ageEl.value);
+        let currentSalary = parseFloat(salaryEl.value);
+        let balance = parseFloat(balanceEl.value);
+        
+        // Validation
+        let hasError = false;
+        if (!age || age >= 60) {
+            ageEl.classList.add('error-shake');
+            hasError = true;
+            if(age >= 60) alert("Age must be under 60");
+        }
+        if (isNaN(currentSalary)) {
+            salaryEl.classList.add('error-shake');
+            hasError = true;
+        }
+        if (isNaN(balance)) {
+            balanceEl.classList.add('error-shake');
+            hasError = true;
+        }
+        if (hasError) {
+            document.querySelector('.error-shake').scrollIntoView({behavior: 'smooth', block: 'center'});
+            return;
+        }
+
+        let employeePct = parseFloat(document.getElementById('employeeRate').value) / 100;
+        let employerPctInput = parseFloat(document.getElementById('employerRate').value) / 100;
+        
+        let bonusType = document.getElementById('bonusType').value;
+        let bonusVal = parseFloat(document.getElementById('bonusValue').value) || 0;
+        
+        let incType = document.getElementById('incrementType').value;
+        let incVal = parseFloat(document.getElementById('incrementValue').value) || 0;
+        
+        let wantTopUp = document.getElementById('wantTopUp').checked;
+        let topUpVal = wantTopUp ? (parseFloat(document.getElementById('topUpAmount').value) || 0) : 0;
+        
+        let dividendRate = parseFloat(document.getElementById('dividendRate').value) / 100;
+        const yearsRemaining = 60 - age;
+
+        // 2. Perform Calculations
+        // A. With Top-up (Current Scenario) - Enable History Tracking
+        let resultA = calculateProjection(yearsRemaining, age, currentSalary, balance, employeePct, employerPctInput, bonusType, bonusVal, incType, incVal, topUpVal, dividendRate, true);
+        let finalBalance = resultA.balance;
+        
+        // B. Without Top-up (Base Scenario) - No History needed
+        let resultB = { balance: finalBalance };
+        let showComparison = false;
+
+        if (wantTopUp && topUpVal > 0) {
+            resultB = calculateProjection(yearsRemaining, age, currentSalary, balance, employeePct, employerPctInput, bonusType, bonusVal, incType, incVal, 0, dividendRate, false);
+            showComparison = true;
+        }
+
+        // 3. Comparisons
+        if (showComparison) {
+            let difference = finalBalance - resultB.balance;
+            let totalMonths = yearsRemaining * 12;
+            let totalPrincipal = topUpVal * totalMonths; 
+            let interestGained = difference - totalPrincipal; 
+            
+            if (interestGained < 0) interestGained = 0;
+
+            document.getElementById('compNoTopUpVal').innerText = formatCurrency(resultB.balance);
+            document.getElementById('compDiffVal').innerText = "+ " + formatCurrency(difference);
+            
+            document.getElementById('legendPrincipal').innerText = formatCurrency(totalPrincipal);
+            document.getElementById('legendInterest').innerText = formatCurrency(interestGained);
+
+            let totalBar = totalPrincipal + interestGained;
+            let pWidth = (totalPrincipal / totalBar) * 100;
+            let iWidth = (interestGained / totalBar) * 100;
+            
+            document.getElementById('barPrincipal').style.width = pWidth + "%";
+            document.getElementById('barInterest').style.width = iWidth + "%";
+
+            document.getElementById('topUpComparisonCard').classList.remove('hidden');
+        } else {
+            document.getElementById('topUpComparisonCard').classList.add('hidden');
+        }
+
+        // 4. Drawdown Calc
+        let r = dividendRate / 12; 
+        let n = 20 * 12; 
+        let monthlyPayout = (finalBalance * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+
+        // 5. Update Standard UI
+        document.getElementById('finalAmountDisplay').innerText = formatCurrency(finalBalance);
+        document.getElementById('yearsRemainingDisplay').innerText = yearsRemaining;
+        document.getElementById('monthlyDrawdownDisplay').innerText = formatCurrency(monthlyPayout) + "/mo";
+
+        // Analysis Text
+        let analysisHTML = "";
+        if (finalBalance < 240000) {
+            analysisHTML = `⚠️ <strong>Below Basic Target.</strong><br>Your projection is below the basic savings target of RM240k. Consider increasing your contribution or top-up.`;
+        } else if (finalBalance < 600000) {
+            analysisHTML = `👍 <strong>On Track.</strong><br>You have passed the basic threshold. To reach a "comfortable" lifestyle (RM600k+), try increasing your monthly top-up slightly.`;
+        } else if (finalBalance < 1000000) {
+            analysisHTML = `🚀 <strong>Solid Future.</strong><br>You are projected to have a very comfortable retirement fund.`;
+        } else {
+            analysisHTML = `🌟 <strong>Millionaire Status.</strong><br>Congratulations, you are on track to be an EPF Millionaire!`;
+        }
+        document.getElementById('analysisText').innerHTML = analysisHTML;
+
+        // 6. Populate Table
+        document.getElementById('startAgeDisplay').innerText = age;
+        const tbody = document.querySelector('#breakdownTable tbody');
+        tbody.innerHTML = ''; // Clear old rows
+        
+        resultA.history.forEach(yearData => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${yearData.age}</td>
+                <td>+${formatSmallCurrency(yearData.contrib)}</td>
+                <td style="color:var(--accent)">+${formatSmallCurrency(yearData.dividend)}</td>
+                <td>${formatSmallCurrency(yearData.balance)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Show Bottom Sheet
+        const overlay = document.getElementById('results-overlay');
+        overlay.style.display = 'block';
+        setTimeout(() => {
+            overlay.classList.add('active');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+    }
+</script>
+
+</body>
+</html>
