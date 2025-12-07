@@ -9,7 +9,7 @@
             --primary: #4f46e5;
             --primary-dark: #4338ca;
             --accent: #10b981;
-            --secondary: #8b5cf6; /* New color for Cash Savings */
+            --secondary: #8b5cf6;
             --warning: #f59e0b;
             --error: #ef4444;
             --bg-grad-start: #f3f4f6;
@@ -625,15 +625,15 @@
                 </select>
                 <input type="number" id="bonusValue" class="hidden" style="margin-top: 10px;" placeholder="Amount" inputmode="decimal">
             </div>
+            
             <div class="form-group">
-                <label>Salary Increment</label>
-                <div style="position: relative;">
-                    <input type="number" id="incrementValue" value="3" inputmode="decimal" style="padding-right: 40px;">
-                    <select id="incrementType" style="position: absolute; right: 2px; top: 2px; bottom: 2px; width: auto; border: none; background: transparent; padding: 0 10px; font-size: 0.8rem; font-weight: bold; color: var(--primary);">
-                        <option value="percent">%</option>
-                        <option value="fixed">RM</option>
-                    </select>
-                </div>
+                <label>Annual Salary Increment</label>
+                <select id="incrementType" onchange="toggleIncrementInput()">
+                    <option value="percent">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount (RM)</option>
+                </select>
+                <input type="number" id="incrementValue" value="3" style="margin-top: 10px;" placeholder="e.g. 3 (% yearly raise)" inputmode="decimal">
+                <span class="sub-label">Adjusts monthly base every year</span>
             </div>
         </div>
 
@@ -785,6 +785,7 @@
                     <thead>
                         <tr>
                             <th>Age</th>
+                            <th>M. Salary</th>
                             <th>Contrib.</th>
                             <th>Dividend</th>
                             <th>EPF Bal.</th>
@@ -819,6 +820,17 @@
             input.placeholder = type === 'months' ? 'Months (e.g. 1.5)' : 'Amount (RM)';
             input.focus();
         }
+    }
+
+    function toggleIncrementInput() {
+        const type = document.getElementById('incrementType').value;
+        const input = document.getElementById('incrementValue');
+        if (type === 'percent') {
+            input.placeholder = 'e.g. 3 (% yearly raise)';
+        } else {
+            input.placeholder = 'e.g. 250 (Raise in monthly salary)';
+        }
+        input.focus();
     }
 
     function toggleTopUpInput() {
@@ -879,9 +891,8 @@
         let balance = startBalance;
         let cashBalance = startCash;
         let history = [];
-        let trackingSpending = currentSpending; // Monthly spending in current month's money
+        let trackingSpending = currentSpending; 
         
-        // Accumulators for yearly tracking
         let yearlyContrib = 0;
         let yearlyDividend = 0;
 
@@ -907,12 +918,10 @@
             yearlyDividend += monthlyDividend;
 
             // --- Personal Cash Logic ---
-            // Income = Salary
-            // Out = EPF Employee Share, Top Up, Spending
             let monthlySurplus = trackingSalary - employeeContrib - topUpVal - trackingSpending;
             cashBalance += monthlySurplus;
 
-            // Yearly Events (Bonus + Increment + Inflation)
+            // Yearly Events
             if ((currentMonth + 1) % 12 === 0) {
                 // Bonus
                 if (bonusType !== 'none') {
@@ -922,7 +931,6 @@
                     balance += (bonusEmployee + bonusEmployer);
                     yearlyContrib += (bonusEmployee + bonusEmployer);
 
-                    // Add Bonus Net to Cash
                     let bonusNet = bonusAmount - bonusEmployee;
                     cashBalance += bonusNet;
                 }
@@ -931,6 +939,7 @@
                 if (trackHistory) {
                     history.push({
                         age: currentAge + ((currentMonth + 1) / 12),
+                        salary: trackingSalary,
                         contrib: yearlyContrib,
                         dividend: yearlyDividend,
                         balance: balance,
@@ -947,7 +956,7 @@
                     trackingSalary = trackingSalary + incVal;
                 }
 
-                // Inflation adjustment for spending
+                // Inflation
                 trackingSpending = trackingSpending * (1 + (inflationRate/100));
             }
             currentMonth++;
@@ -994,20 +1003,21 @@
         let employerPctInput = parseFloat(document.getElementById('employerRate').value) / 100;
         let bonusType = document.getElementById('bonusType').value;
         let bonusVal = parseFloat(document.getElementById('bonusValue').value) || 0;
+        
         let incType = document.getElementById('incrementType').value;
         let incVal = parseFloat(document.getElementById('incrementValue').value) || 0;
+        
         let wantTopUp = document.getElementById('wantTopUp').checked;
         let topUpVal = wantTopUp ? (parseFloat(document.getElementById('topUpAmount').value) || 0) : 0;
         let dividendRate = parseFloat(document.getElementById('dividendRate').value) / 100;
         
         const yearsRemaining = 60 - age;
 
-        // 2. Perform Calculations
-        // A. With Top-up (Current Scenario)
+        // Calculations
         let resultA = calculateProjection(yearsRemaining, age, currentSalary, balance, currentCash, employeePct, employerPctInput, bonusType, bonusVal, incType, incVal, topUpVal, dividendRate, currentSpending, inflationRate, true);
         let finalBalance = resultA.balance;
         
-        // B. Without Top-up (Base Scenario)
+        // Base Scenario
         let resultB = { balance: finalBalance };
         let showComparison = false;
 
@@ -1016,7 +1026,7 @@
             showComparison = true;
         }
 
-        // 3. Comparisons
+        // Comparison
         if (showComparison) {
             let difference = finalBalance - resultB.balance;
             let totalMonths = yearsRemaining * 12;
@@ -1039,18 +1049,18 @@
             document.getElementById('topUpComparisonCard').classList.add('hidden');
         }
 
-        // 4. Drawdown Calc
+        // Drawdown
         let r = dividendRate / 12; 
         let n = 20 * 12; 
         let monthlyPayout = (finalBalance * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
 
-        // 5. Update Standard UI
+        // Update UI
         document.getElementById('finalAmountDisplay').innerText = formatCurrency(finalBalance);
         document.getElementById('finalCashDisplay').innerText = formatCurrency(resultA.cashBalance);
         document.getElementById('yearsRemainingDisplay').innerText = yearsRemaining;
         document.getElementById('monthlyDrawdownDisplay').innerText = formatCurrency(monthlyPayout) + "/mo";
 
-        // 6. Inflation Analysis
+        // Inflation
         let showSuggestions = false;
         let suggestLifestyleEl = document.getElementById('lifestyleFixer');
         let suggestMillionEl = document.getElementById('millionaireFixer');
@@ -1124,7 +1134,7 @@
         if (showSuggestions) document.getElementById('suggestionCard').classList.remove('hidden');
         else document.getElementById('suggestionCard').classList.add('hidden');
 
-        // Analysis Text
+        // Analysis
         let analysisHTML = "";
         if (finalBalance < 240000) analysisHTML = `⚠️ <strong>Below Basic Target.</strong><br>Your projection is below the basic savings target of RM240k.`;
         else if (finalBalance < 600000) analysisHTML = `👍 <strong>On Track.</strong><br>You passed the basic threshold. Aim for RM600k+ for comfort.`;
@@ -1132,7 +1142,7 @@
         else analysisHTML = `🌟 <strong>Millionaire Status.</strong><br>Congratulations, you are on track to be an EPF Millionaire!`;
         document.getElementById('analysisText').innerHTML = analysisHTML;
 
-        // Table
+        // Table Populate
         document.getElementById('startAgeDisplay').innerText = age;
         const tbody = document.querySelector('#breakdownTable tbody');
         tbody.innerHTML = '';
@@ -1141,6 +1151,7 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${yearData.age}</td>
+                <td>${formatSmallCurrency(yearData.salary)}</td>
                 <td>${formatSmallCurrency(yearData.contrib)}</td>
                 <td style="color:var(--accent)">${formatSmallCurrency(yearData.dividend)}</td>
                 <td>${formatSmallCurrency(yearData.balance)}</td>
