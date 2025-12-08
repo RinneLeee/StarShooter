@@ -358,6 +358,57 @@
             animation: fadeIn 0.5s ease;
         }
 
+        /* NEW DIVIDEND CARD */
+        .dividend-card {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 2px solid #10b981;
+            border-radius: 16px;
+            padding: 25px 20px 20px 20px;
+            margin: 25px 0;
+            position: relative;
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.15);
+            text-align: center;
+        }
+
+        .dividend-tag {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: white;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+        }
+
+        .dividend-amount {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #065f46;
+            margin: 5px 0;
+            line-height: 1;
+        }
+
+        .dividend-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #059669;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .dividend-sub {
+            font-size: 0.8rem;
+            color: #047857;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
         .suggestion-title {
             font-size: 0.95rem;
             font-weight: 700;
@@ -638,7 +689,7 @@
         </div>
 
         <div class="form-group" style="margin-top: 10px;">
-            <label>Est. Dividend Rate (%)</label>
+            <label>Est. Annual Dividend Rate (%)</label>
             <input type="number" id="dividendRate" value="5.5" inputmode="decimal">
         </div>
     </div>
@@ -718,15 +769,22 @@
                 RM <span id="resFutureSpend"></span> / month
             </div>
             
-            <div class="comp-row total" style="border-top:1px dashed #fdba74; padding-top:10px; color:#4b5563;">
-                <span>EPF Payout (20yr Drawdown):</span>
-                <span id="resEpfPayout">RM 0</span>
+            <!-- NEW RECOMMENDED BOX -->
+            <div class="dividend-card">
+                <div class="dividend-tag">✨ HIGHLY RECOMMENDED</div>
+                <div class="dividend-label">Dividend-Only Income</div>
+                <div class="dividend-amount" id="resDividendPayout">RM 0</div>
+                <div class="dividend-sub">
+                    Keeps your <strong><span id="resFinalBalanceRef">0</span></strong> capital 100% intact forever.
+                </div>
             </div>
-            <div class="comp-row" style="color: #4b5563; font-size: 0.9rem; margin-top: 5px;">
-                <span>Dividend Only (Capital Intact):</span>
-                <span id="resDividendPayout" style="font-weight: 700; color: #059669;">RM 0</span>
+
+            <div class="comp-row total" style="border-top:1px dashed #fdba74; padding-top:10px; color:#4b5563; font-size: 0.85rem;">
+                <span>Alternative (Deplete in 20 yrs):</span>
+                <span id="resEpfPayout" style="font-weight:600;">RM 0</span>
             </div>
-            <div class="comp-row" style="margin-top: 10px;">
+            
+            <div class="comp-row" style="margin-top: 15px;">
                 <span style="font-weight:700">Verdict:</span>
                 <span id="resVerdict" class="status-badge">Calculating...</span>
             </div>
@@ -1063,6 +1121,7 @@
 
         // Update UI
         document.getElementById('finalAmountDisplay').innerText = formatCurrency(finalBalance);
+        document.getElementById('resFinalBalanceRef').innerText = formatCurrency(finalBalance); // Update reference for recommended card
         document.getElementById('finalCashDisplay').innerText = formatCurrency(resultA.cashBalance);
         document.getElementById('yearsRemainingDisplay').innerText = yearsRemaining;
         document.getElementById('monthlyDrawdownDisplay').innerText = formatCurrency(monthlyPayout) + "/mo";
