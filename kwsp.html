@@ -719,10 +719,14 @@
             </div>
             
             <div class="comp-row total" style="border-top:1px dashed #fdba74; padding-top:10px; color:#4b5563;">
-                <span>EPF Payout:</span>
+                <span>EPF Payout (20yr Drawdown):</span>
                 <span id="resEpfPayout">RM 0</span>
             </div>
-            <div class="comp-row">
+            <div class="comp-row" style="color: #4b5563; font-size: 0.9rem; margin-top: 5px;">
+                <span>Dividend Only (Capital Intact):</span>
+                <span id="resDividendPayout" style="font-weight: 700; color: #059669;">RM 0</span>
+            </div>
+            <div class="comp-row" style="margin-top: 10px;">
                 <span style="font-weight:700">Verdict:</span>
                 <span id="resVerdict" class="status-badge">Calculating...</span>
             </div>
@@ -1053,6 +1057,9 @@
         let r = dividendRate / 12; 
         let n = 20 * 12; 
         let monthlyPayout = (finalBalance * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        
+        // Monthly Dividend Only
+        let monthlyDividendOnly = finalBalance * (dividendRate / 12);
 
         // Update UI
         document.getElementById('finalAmountDisplay').innerText = formatCurrency(finalBalance);
@@ -1074,6 +1081,7 @@
             document.getElementById('resCurrentSpend').innerText = currentSpending.toLocaleString();
             document.getElementById('resFutureSpend').innerText = futureMonthlySpend.toLocaleString('en-MY', {maximumFractionDigits:0});
             document.getElementById('resEpfPayout').innerText = formatCurrency(monthlyPayout);
+            document.getElementById('resDividendPayout').innerText = formatCurrency(monthlyDividendOnly);
 
             let surplus = monthlyPayout - futureMonthlySpend;
             let buffer20 = futureMonthlySpend * 0.20;
