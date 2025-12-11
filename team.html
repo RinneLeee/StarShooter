@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shadows & Whispers: Party Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+
+        :root {
+            --primary: #e94560;
+            --secondary: #16213e;
+            --bg: #0f0f1a;
+            --text: #ffffff;
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+            touch-action: manipulation;
+        }
+
+        /* CANVAS BACKGROUND */
+        #gameCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+        }
+
+        /* UI LAYER */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .screen {
+            width: 90%;
+            max-width: 500px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            pointer-events: auto;
+            animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding-bottom: 20px;
+        }
+
+        .active {
+            display: flex;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); scale: 0.95; }
+            to { opacity: 1; transform: translateY(0); scale: 1; }
+        }
+
+        @keyframes pulse-soft {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* TYPOGRAPHY */
+        h1, h2, h3 {
+            color: var(--text);
+            text-align: center;
+            margin: 0;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        h1 { font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; color: var(--primary); }
+        h2 { font-size: 1.6rem; font-weight: 700; }
+        h3 { font-size: 1.1rem; font-weight: 400; color: #a8a8b3; }
+        p { color: #ccc; text-align: center; line-height: 1.5; font-size: 1rem; }
+
+        .highlight { color: var(--primary); font-weight: bold; }
+        .pulse-text { animation: pulse-soft 2s infinite ease-in-out; }
+        
+        /* INPUTS */
+        .input-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 55vh;
+            overflow-y: auto;
+            padding: 5px;
+            /* Scrollbar styling */
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) transparent;
+        }
+
+        .player-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            animation: slideUp 0.3s ease;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid var(--glass-border);
+            background: rgba(20, 20, 40, 0.6);
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+            box-sizing: border-box;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(20, 20, 40, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(233, 69, 96, 0.2);
+        }
+
+        textarea { height: 120px; resize: none; }
+
+        /* BUTTONS */
+        .btn {
+            background: linear-gradient(135deg, #e94560, #db2b4a);
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(233, 69, 96, 0.3);
+            transition: all 0.2s;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:active { transform: scale(0.96); }
+        .btn:disabled, .btn.disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+            transform: none !important;
+            filter: grayscale(1);
+        }
+
+        .btn-shake { animation: shake 0.4s ease-in-out; }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: none;
+        }
+        
+        .btn-icon {
+            width: 54px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-top: 0;
+            flex-shrink: 0;
+        }
+
+        .btn-remove {
+            background: rgba(255, 50, 50, 0.2);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 50, 50, 0.3);
+            width: 54px; 
+            height: 54px; 
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin: 0;
+            padding: 0;
+            flex-shrink: 0;
+        }
+        .btn-remove:hover { background: rgba(255, 50, 50, 0.4); }
+
+        /* CARDS */
+        .card-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .answer-card {
+            background: var(--glass);
+            padding: 18px;
+            border-radius: 15px;
+            color: #fff;
+            font-size: 1.05rem;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+        }
+
+        .answer-card:active { transform: scale(0.98); background: rgba(255,255,255,0.2); }
+        
+        .answer-card.selected {
+            border-color: var(--primary);
+            background: rgba(233, 69, 96, 0.15);
+            transform: scale(1.02);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.25);
+        }
+
+        /* UTILS */
+        .hidden { display: none !important; }
+        .big-emoji { font-size: 3.5rem; margin: 5px 0; display: block; text-align: center; animation: pulse-soft 3s infinite; }
+        .score-pill {
+            background: rgba(255,255,255,0.1);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-left: auto;
+            font-weight: bold;
+        }
+        
+        .prompt-text {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        
+        .blank-space {
+            color: var(--primary);
+            text-decoration: underline;
+            font-weight: 900;
+        }
+
+        /* Target Secret Box */
+        .secret-box {
+            background: rgba(0,0,0,0.4);
+            border: 1px dashed var(--glass-border);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-layer">
+        
+        <!-- 1. SETUP SCREEN -->
+        <div id="screen-setup" class="screen active">
+            <h1>PARTY SETUP</h1>
+            <p>4 to 7 Players Recommended</p>
+            <div id="setup-inputs" class="input-group">
+                <!-- Initial Players -->
+                <div class="player-row"><input type="text" placeholder="Player 1" value="Player 1"></div>
+                <div class="player-row"><input type="text" placeholder="Player 2" value="Player 2"></div>
+                <div class="player-row"><input type="text" placeholder="Player 3" value="Player 3"></div>
+                <div class="player-row"><input type="text" placeholder="Player 4" value="Player 4"></div>
+            </div>
+            <div style="display:flex; gap:10px; width:100%; align-items: center;">
+                <button id="btn-add-player" class="btn btn-secondary btn-icon" onclick="addPlayerInput()">+</button>
+                <button class="btn" onclick="startGame()">START GAME</button>
+            </div>
+        </div>
+
+        <!-- 2. ROUND INTRO (TARGET SELECTION) -->
+        <div id="screen-round-intro" class="screen">
+            <h3>ROUND <span id="round-number">1</span> / <span id="total-rounds-display">10</span></h3>
+            <div class="big-emoji">🎯</div>
+            <h2>TARGET ACQUIRED</h2>
+            <h1 id="target-name-display" class="pulse-text" style="font-size: 3rem;">JORDAN</h1>
+            
+            <div class="secret-box">
+                <p style="color: #aaa; margin:0;">
+                    <span style="display:block; font-size: 1.2rem; color: #fff; margin-bottom:5px;">You are the Target.</span>
+                    You don't get to see the question yet! Pass the device to start the roasting.
+                </p>
+            </div>
+
+            <button class="btn" onclick="startInputPhase()">PASS DEVICE</button>
+        </div>
+
+        <!-- 3. PASS DEVICE -->
+        <div id="screen-pass" class="screen">
+            <div class="big-emoji">🤫</div>
+            <h2>PASS TO <br><span id="writer-name-display" class="highlight" style="font-size: 2.5rem;">NAME</span></h2>
+            <p style="margin-top:20px;">Keep the screen hidden from <span id="target-name-warning" class="highlight">TARGET</span>!</p>
+            <button class="btn" onclick="showInput()">I'M READY</button>
+        </div>
+
+        <!-- 4. INPUT ANSWER -->
+        <div id="screen-input" class="screen">
+            <div style="width:100%; text-align: left; padding-left: 5px;">
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: #aaa;">Fill in the blank</span>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; width: 100%; box-sizing: border-box;">
+                <h3 id="input-prompt-display" style="color: white; font-size: 1.3rem; margin:0; line-height: 1.4;">Prompt...</h3>
+            </div>
+            
+            <textarea id="answer-input" placeholder="Type your answer here..."></textarea>
+            <button class="btn" onclick="submitAnswer()">SUBMIT & LOCK</button>
+        </div>
+
+        <!-- 5. VOTING PHASE -->
+        <div id="screen-voting" class="screen">
+            <h2>VOTE PHASE</h2>
+            <p>Tap the best/funniest answer.</p>
+            <div id="answers-list" class="card-list"></div>
+            <button id="btn-confirm-vote" class="btn hidden" onclick="finalizeVote()">CONFIRM VOTE</button>
+        </div>
+
+        <!-- 6. RESULT PHASE -->
+        <div id="screen-result" class="screen">
+            <div class="big-emoji">🏆</div>
+            <h2>WINNER</h2>
+            <div id="winning-answer-display" class="answer-card selected" style="text-align:center; font-style:italic; width: 100%; box-sizing: border-box;"></div>
+            <p style="margin-top: 10px;">Written by <span id="winner-name" class="highlight" style="font-size:1.5rem;">NAME</span></p>
+            <button class="btn" onclick="showScoreboard()">LEADERBOARD</button>
+        </div>
+
+        <!-- 7. SCOREBOARD -->
+        <div id="screen-scores" class="screen">
+            <h1>SCORES</h1>
+            <div id="scoreboard-list" class="card-list"></div>
+            <button class="btn" onclick="nextRound()">NEXT ROUND</button>
+        </div>
+
+        <!-- 8. GAME OVER -->
+        <div id="screen-gameover" class="screen">
+             <div class="big-emoji">👑</div>
+             <h1>GAME OVER</h1>
+             <h2 style="color: var(--primary); margin-top: 20px;">THE CHAMPION</h2>
+             <h1 id="grand-champion" class="pulse-text" style="font-size: 3rem; margin-top: 10px;">NAME</h1>
+             <button class="btn" onclick="location.reload()">PLAY AGAIN</button>
+        </div>
+
+    </div>
+
+    <script>
+        /** --- CANVAS VISUALS --- **/
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.alpha = Math.random() * 0.5;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.alpha += Math.sin(Date.now() * 0.002) * 0.01;
+                
+                if(this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+            }
+            draw() {
+                ctx.fillStyle = `rgba(233, 69, 96, ${Math.abs(this.alpha)})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for(let i=0; i<50; i++) particles.push(new Particle());
+            animate();
+        }
+
+        function animate() {
+            ctx.fillStyle = '#0f0f1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+        initParticles();
+
+
+        /** --- GAME LOGIC --- **/
+
+        // State
+        let players = []; 
+        let currentRound = 1;
+        let maxRounds = 10;
+        let targetIndex = -1; 
+        let writerQueue = []; 
+        let currentWriterIndex = null;
+        let currentPrompt = "";
+        let answers = []; 
+        let selectedAnswer = null;
+
+        // Templates
+        const PROMPTS = [
+            "{T} likes to eat ________ in secret.",
+            "If {T} were a criminal, their crime would be ________.",
+            "{T}'s browser history is full of ________.",
+            "{T} smells like ________.",
+            "The title of {T}'s autobiography would be 'The Art of ________'.",
+            "On a first date, {T} always talks about ________.",
+            "{T} thinks they are good at ________, but they are not.",
+            "If {T} ruled the world, the first law would be ________.",
+            "{T} is secretly afraid of ________.",
+            "{T}'s hidden talent is ________.",
+            "The reason {T} is single is because of ________.",
+            "If {T} was an animal, they would be a ________.",
+            "{T} definitely has a collection of ________.",
+            "If {T} was a ghost, they would haunt ________."
+        ];
+
+        // --- DOM MANIPULATION ---
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // 1. SETUP LOGIC
+        function checkPlayerLimits() {
+            const container = document.getElementById('setup-inputs');
+            const count = container.children.length;
+            const btnAdd = document.getElementById('btn-add-player');
+            
+            // Manage Add Button State
+            if (count >= 7) {
+                btnAdd.classList.add('disabled');
+            } else {
+                btnAdd.classList.remove('disabled');
+            }
+            
+            // Manage Remove Buttons visibility
+            const rows = container.querySelectorAll('.player-row');
+            rows.forEach(row => {
+                const existingBtn = row.querySelector('.btn-remove');
+                // Only show remove button if we have > 4 players
+                if (count > 4) {
+                    if (!existingBtn) {
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'btn-remove';
+                        removeBtn.innerHTML = '×';
+                        removeBtn.onclick = function() { removePlayerInput(row); };
+                        row.appendChild(removeBtn);
+                    }
+                } else {
+                    if (existingBtn) existingBtn.remove();
+                }
+            });
+        }
+
+        function addPlayerInput() {
+            const container = document.getElementById('setup-inputs');
+            const count = container.children.length;
+            
+            if(count >= 7) {
+                // Trigger Shake Animation
+                const btn = document.getElementById('btn-add-player');
+                btn.classList.remove('btn-shake');
+                void btn.offsetWidth; // trigger reflow
+                btn.classList.add('btn-shake');
+                return;
+            }
+
+            const div = document.createElement('div');
+            div.className = 'player-row';
+            
+            const input = document.createElement('input');
+            input.type = "text";
+            input.placeholder = `Player ${count + 1}`;
+            
+            div.appendChild(input);
+            container.appendChild(div);
+            
+            checkPlayerLimits();
+        }
+
+        function removePlayerInput(rowElement) {
+            rowElement.remove();
+            // Re-index placeholders
+            const inputs = document.querySelectorAll('#setup-inputs input');
+            inputs.forEach((inp, idx) => {
+                inp.placeholder = `Player ${idx + 1}`;
+            });
+            checkPlayerLimits();
+        }
+
+        // Initialize limits
+        checkPlayerLimits();
+
+        function startGame() {
+            const inputs = document.querySelectorAll('#setup-inputs input');
+            players = [];
+            inputs.forEach(input => {
+                const name = input.value.trim() || input.placeholder;
+                players.push({ name: name, score: 0 });
+            });
+
+            if(players.length < 4) {
+                alert("You need at least 4 players!");
+                return;
+            }
+
+            maxRounds = players.length * 2;
+            document.getElementById('total-rounds-display').innerText = maxRounds;
+
+            targetIndex = -1; 
+            currentRound = 1;
+            startRoundLogic();
+        }
+
+        // 2. ROUND START
+        function nextRound() {
+            currentRound++;
+            if (currentRound > maxRounds) {
+                endGame();
+            } else {
+                startRoundLogic();
+            }
+        }
+
+        function startRoundLogic() {
+            // Pick next target (Round Robin)
+            targetIndex = (targetIndex + 1) % players.length;
+            const target = players[targetIndex];
+            
+            // Pick random prompt
+            const rawPrompt = PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
+            currentPrompt = rawPrompt.replace(/{T}/g, target.name);
+
+            // Setup writers (Everyone except target)
+            writerQueue = [];
+            for(let i=0; i<players.length; i++) {
+                if(i !== targetIndex) writerQueue.push(i);
+            }
+            answers = [];
+
+            // UI
+            document.getElementById('round-number').innerText = currentRound;
+            document.getElementById('target-name-display').innerText = target.name.toUpperCase();
+            
+            // HIDDEN PROMPT LOGIC
+            // We do NOT show the prompt to the target here.
+            
+            showScreen('screen-round-intro');
+        }
+
+        function startInputPhase() {
+            processNextWriter();
+        }
+
+        // 3. PASS & INPUT LOOP
+        function processNextWriter() {
+            if(writerQueue.length === 0) {
+                // All done
+                startVoting();
+                return;
+            }
+
+            currentWriterIndex = writerQueue.shift(); 
+            const writerName = players[currentWriterIndex].name;
+            const targetName = players[targetIndex].name;
+
+            document.getElementById('writer-name-display').innerText = writerName;
+            document.getElementById('target-name-warning').innerText = targetName;
+            showScreen('screen-pass');
+        }
+
+        function showInput() {
+            // Fill blank with underlining for visibility
+            const displayPrompt = currentPrompt.replace('________', '<span class="blank-space">________</span>');
+            document.getElementById('input-prompt-display').innerHTML = displayPrompt;
+            document.getElementById('answer-input').value = "";
+            showScreen('screen-input');
+        }
+
+        function submitAnswer() {
+            const text = document.getElementById('answer-input').value.trim();
+            if(!text) return alert("Write something!");
+
+            answers.push({
+                text: text,
+                authorIndex: currentWriterIndex
+            });
+
+            processNextWriter();
+        }
+
+        // 4. VOTING
+        function startVoting() {
+            const list = document.getElementById('answers-list');
+            list.innerHTML = "";
+            selectedAnswer = null;
+            document.getElementById('btn-confirm-vote').classList.add('hidden');
+
+            // Shuffle answers
+            const shuffled = [...answers].sort(() => Math.random() - 0.5);
+
+            shuffled.forEach(ans => {
+                const div = document.createElement('div');
+                div.className = 'answer-card';
+                // Construct the full sentence for the card
+                const fullSentence = currentPrompt.replace('________', `<span style="color:var(--primary); font-weight:bold;">${ans.text}</span>`);
+                div.innerHTML = fullSentence;
+                
+                div.onclick = () => selectVote(div, ans);
+                list.appendChild(div);
+            });
+
+            showScreen('screen-voting');
+        }
+
+        function selectVote(element, ans) {
+            document.querySelectorAll('.answer-card').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedAnswer = ans;
+            document.getElementById('btn-confirm-vote').classList.remove('hidden');
+        }
+
+        function finalizeVote() {
+            if(!selectedAnswer) return;
+            revealWinner(selectedAnswer);
+        }
+
+        // 5. REVEAL
+        function revealWinner(ans) {
+            const author = players[ans.authorIndex];
+            author.score += 1; 
+
+            const fullSentence = currentPrompt.replace('________', `<span style="color:var(--primary); font-weight:bold;">${ans.text}</span>`);
+            document.getElementById('winning-answer-display').innerHTML = fullSentence;
+            document.getElementById('winner-name').innerText = author.name;
+            showScreen('screen-result');
+        }
+
+        // 6. SCORES
+        function showScoreboard() {
+            const list = document.getElementById('scoreboard-list');
+            list.innerHTML = "";
+            
+            const sorted = [...players].sort((a,b) => b.score - a.score);
+
+            sorted.forEach((p, index) => {
+                const div = document.createElement('div');
+                div.className = 'answer-card'; 
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                // Gold/Silver/Bronze Logic
+                let rankColor = "#fff";
+                if(index === 0) rankColor = "#ffd700";
+                if(index === 1) rankColor = "#c0c0c0";
+                if(index === 2) rankColor = "#cd7f32";
+
+                div.innerHTML = `
+                    <span style="font-weight:900; color:${rankColor}; margin-right:15px; font-size: 1.2rem;">#${index+1}</span>
+                    <span style="font-weight:bold;">${p.name}</span>
+                    <span class="score-pill">${p.score} pts</span>
+                `;
+                list.appendChild(div);
+            });
+
+            showScreen('screen-scores');
+        }
+        
+        function endGame() {
+            const sorted = [...players].sort((a,b) => b.score - a.score);
+            const winner = sorted[0];
+            document.getElementById('grand-champion').innerText = winner.name;
+            showScreen('screen-gameover');
+        }
+
+    </script>
+</body>
+</html>
