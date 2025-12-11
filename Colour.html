@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chromatic Generator</title>
+    <style>
+        /* --- STUDIO AESTHETIC --- */
+        :root {
+            --bg: #09090b;       /* Zinc-950 */
+            --surface: #18181b;  /* Zinc-900 */
+            --border: #27272a;   /* Zinc-800 */
+            --text-main: #e4e4e7;
+            --text-muted: #a1a1aa;
+            --accent: #fff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'SF Mono', 'Roboto Mono', 'Courier New', monospace; /* Monospaced for technical feel */
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2rem 1rem;
+        }
+
+        /* --- HEADER & CONTROLS --- */
+        header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 500px;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        button.icon-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 4px; /* Sharp corners */
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        button.icon-btn:active {
+            background: var(--surface);
+            transform: scale(0.95);
+        }
+
+        /* --- CANVAS --- */
+        .canvas-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            position: relative;
+        }
+
+        canvas {
+            /* No shadow for flat/technical look */
+            max-width: 100%;
+        }
+
+        /* Pointer Overlay */
+        .pointer-marker {
+            position: absolute;
+            top: 50%;
+            right: 10px; /* Right side indicator */
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 12px solid var(--accent);
+            z-index: 5;
+        }
+
+        /* --- RESULT CARD (Technical Spec) --- */
+        .result-panel {
+            width: 100%;
+            max-width: 500px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 1.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none; /* Click through when hidden */
+        }
+
+        .result-panel.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .color-swatch {
+            width: 80px;
+            height: 80px;
+            border: 1px solid var(--border);
+            background-color: transparent;
+        }
+
+        .color-data {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .data-row {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .value {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* --- ACTION BUTTON --- */
+        .main-action {
+            width: 100%;
+            max-width: 500px;
+            background: var(--text-main);
+            color: var(--bg);
+            border: none;
+            padding: 1rem;
+            font-family: inherit;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: opacity 0.2s;
+        }
+        
+        .main-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Mobile adjustment for small screens */
+        @media (max-height: 700px) {
+            .result-panel {
+                padding: 1rem;
+            }
+            .color-swatch {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Palette_Gen_v1</h1>
+        <!-- Refresh Icon SVG -->
+        <button class="icon-btn" id="regenBtn" title="Regenerate Colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+        </button>
+    </header>
+
+    <div class="canvas-container">
+        <!-- Pointer is now physically CSS to ensure crispness over canvas -->
+        <div class="pointer-marker"></div> 
+        <canvas id="wheelCanvas"></canvas>
+    </div>
+
+    <!-- Technical Spec Card -->
+    <div class="result-panel" id="resultPanel">
+        <div class="color-swatch" id="swatch"></div>
+        <div class="color-data">
+            <div class="data-row">
+                <span class="label">HEX Code</span>
+                <span class="value" id="hexValue">#------</span>
+            </div>
+            <div class="data-row">
+                <span class="label">RGB Value</span>
+                <span class="value" id="rgbValue">rgb(0,0,0)</span>
+            </div>
+        </div>
+    </div>
+
+    <button class="main-action" id="spinBtn">Initiate Sequence</button>
+
+    <script>
+        // --- SETUP ---
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spinBtn');
+        const regenBtn = document.getElementById('regenBtn');
+        
+        // UI Elements
+        const resultPanel = document.getElementById('resultPanel');
+        const swatch = document.getElementById('swatch');
+        const hexDisplay = document.getElementById('hexValue');
+        const rgbDisplay = document.getElementById('rgbValue');
+
+        const SLOTS = 10;
+        const ARC = (2 * Math.PI) / SLOTS;
+        
+        let startAngle = 0;
+        let spinVelocity = 0;
+        let isSpinning = false;
+        let spinTime = 0;
+        let spinTimeTotal = 0;
+        
+        let colors = [];
+        let size = 0;
+
+        // --- UTILS ---
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        }
+
+        // --- CORE FUNCTIONS ---
+        function resize() {
+            // Square layout, but leave room for header/footer
+            const minDim = Math.min(window.innerWidth, window.innerHeight * 0.55);
+            size = minDim * 0.9;
+            
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = size * dpr;
+            canvas.height = size * dpr;
+            canvas.style.width = `${size}px`;
+            canvas.style.height = `${size}px`;
+            
+            ctx.scale(dpr, dpr);
+            draw();
+        }
+
+        function generateColors() {
+            colors = [];
+            for(let i=0; i<SLOTS; i++) {
+                const r = Math.floor(Math.random() * 256);
+                const g = Math.floor(Math.random() * 256);
+                const b = Math.floor(Math.random() * 256);
+                colors.push({
+                    css: `rgb(${r},${g},${b})`,
+                    r: r, g: g, b: b
+                });
+            }
+            draw();
+            // Hide result if we regen
+            resultPanel.classList.remove('active');
+        }
+
+        function draw() {
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = (size / 2) - 10; // Slight padding
+
+            ctx.clearRect(0, 0, size, size);
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            
+            // Draw Wheel
+            for (let i = 0; i < SLOTS; i++) {
+                const angle = startAngle + (i * ARC);
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, radius, angle, angle + ARC);
+                ctx.fillStyle = colors[i].css;
+                ctx.fill();
+                
+                // Fine separator lines (technical look)
+                ctx.strokeStyle = '#09090b'; 
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.closePath();
+            }
+
+            // Center Hub (Mechanical look)
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.15, 0, 2 * Math.PI);
+            ctx.fillStyle = '#09090b';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.05, 0, 2 * Math.PI);
+            ctx.fillStyle = '#27272a'; // Screw head
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function animate() {
+            if (!isSpinning) return;
+
+            const p = spinTime / spinTimeTotal; 
+            spinVelocity = spinVelocity * 0.99; // Smooth friction
+
+            startAngle += spinVelocity;
+            spinTime += 16; 
+
+            if (spinVelocity < 0.002) {
+                isSpinning = false;
+                spinBtn.disabled = false;
+                regenBtn.disabled = false;
+                determineWinner();
+            } else {
+                requestAnimationFrame(animate);
+            }
+            draw();
+        }
+
+        function spin() {
+            if (isSpinning) return;
+            
+            // UI State
+            isSpinning = true;
+            spinBtn.disabled = true;
+            regenBtn.disabled = true;
+            resultPanel.classList.remove('active');
+            
+            // Physics Init
+            spinVelocity = Math.random() * 0.2 + 0.3; // More controlled speed
+            spinTime = 0;
+            spinTimeTotal = 5000;
+            
+            animate();
+        }
+
+        function determineWinner() {
+            // Pointer is at 0 degrees (3 o'clock) physically in this version due to draw order
+            // Actually, let's align logic with the CSS marker.
+            // CSS Marker is at right side (0 radians in Canvas default).
+            
+            const netRotation = startAngle % (2 * Math.PI);
+            
+            // The canvas draws 0 at 3 o'clock. The pointer is at 3 o'clock.
+            // We need to find which segment occupies the 0 to ARC space, offset by rotation.
+            // Since we add rotation to the start angle, the wheel spins clockwise.
+            // The segment passing the pointer is effectively (360 - rotation).
+            
+            const rotationDegrees = (netRotation * 180 / Math.PI) % 360;
+            const arcDegrees = 360 / SLOTS;
+            
+            // Calculate index
+            // We need (360 - rotation) to find what is currently at angle 0
+            const virtualAngle = (360 - rotationDegrees) % 360;
+            const index = Math.floor(virtualAngle / arcDegrees);
+            
+            const win = colors[index];
+            showResult(win);
+        }
+
+        function showResult(colorObj) {
+            const hex = rgbToHex(colorObj.r, colorObj.g, colorObj.b);
+            
+            swatch.style.backgroundColor = colorObj.css;
+            swatch.style.borderColor = colorObj.css; // Border matches color
+            
+            hexDisplay.textContent = hex;
+            rgbDisplay.textContent = `${colorObj.r}, ${colorObj.g}, ${colorObj.b}`;
+            
+            resultPanel.classList.add('active');
+        }
+
+        // --- LISTENERS ---
+        window.addEventListener('resize', resize);
+        spinBtn.addEventListener('click', spin);
+        regenBtn.addEventListener('click', generateColors);
+
+        // --- INIT ---
+        generateColors(); // This calls draw() inside
+        resize();
+
+    </script>
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chromatic Generator</title>
+    <style>
+        /* --- STUDIO AESTHETIC --- */
+        :root {
+            --bg: #09090b;       /* Zinc-950 */
+            --surface: #18181b;  /* Zinc-900 */
+            --border: #27272a;   /* Zinc-800 */
+            --text-main: #e4e4e7;
+            --text-muted: #a1a1aa;
+            --accent: #fff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'SF Mono', 'Roboto Mono', 'Courier New', monospace; /* Monospaced for technical feel */
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2rem 1rem;
+        }
+
+        /* --- HEADER & CONTROLS --- */
+        header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 500px;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        button.icon-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 4px; /* Sharp corners */
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        button.icon-btn:active {
+            background: var(--surface);
+            transform: scale(0.95);
+        }
+
+        /* --- CANVAS --- */
+        .canvas-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            position: relative;
+        }
+
+        canvas {
+            /* No shadow for flat/technical look */
+            max-width: 100%;
+        }
+
+        /* Pointer Overlay */
+        .pointer-marker {
+            position: absolute;
+            top: 50%;
+            right: 10px; /* Right side indicator */
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 12px solid var(--accent);
+            z-index: 5;
+        }
+
+        /* --- RESULT CARD (Technical Spec) --- */
+        .result-panel {
+            width: 100%;
+            max-width: 500px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 1.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none; /* Click through when hidden */
+        }
+
+        .result-panel.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .color-swatch {
+            width: 80px;
+            height: 80px;
+            border: 1px solid var(--border);
+            background-color: transparent;
+        }
+
+        .color-data {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .data-row {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .value {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* --- ACTION BUTTON --- */
+        .main-action {
+            width: 100%;
+            max-width: 500px;
+            background: var(--text-main);
+            color: var(--bg);
+            border: none;
+            padding: 1rem;
+            font-family: inherit;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: opacity 0.2s;
+        }
+        
+        .main-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Mobile adjustment for small screens */
+        @media (max-height: 700px) {
+            .result-panel {
+                padding: 1rem;
+            }
+            .color-swatch {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Palette_Gen_v1</h1>
+        <!-- Refresh Icon SVG -->
+        <button class="icon-btn" id="regenBtn" title="Regenerate Colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+        </button>
+    </header>
+
+    <div class="canvas-container">
+        <!-- Pointer is now physically CSS to ensure crispness over canvas -->
+        <div class="pointer-marker"></div> 
+        <canvas id="wheelCanvas"></canvas>
+    </div>
+
+    <!-- Technical Spec Card -->
+    <div class="result-panel" id="resultPanel">
+        <div class="color-swatch" id="swatch"></div>
+        <div class="color-data">
+            <div class="data-row">
+                <span class="label">HEX Code</span>
+                <span class="value" id="hexValue">#------</span>
+            </div>
+            <div class="data-row">
+                <span class="label">RGB Value</span>
+                <span class="value" id="rgbValue">rgb(0,0,0)</span>
+            </div>
+        </div>
+    </div>
+
+    <button class="main-action" id="spinBtn">Initiate Sequence</button>
+
+    <script>
+        // --- SETUP ---
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spinBtn');
+        const regenBtn = document.getElementById('regenBtn');
+        
+        // UI Elements
+        const resultPanel = document.getElementById('resultPanel');
+        const swatch = document.getElementById('swatch');
+        const hexDisplay = document.getElementById('hexValue');
+        const rgbDisplay = document.getElementById('rgbValue');
+
+        const SLOTS = 10;
+        const ARC = (2 * Math.PI) / SLOTS;
+        
+        let startAngle = 0;
+        let spinVelocity = 0;
+        let isSpinning = false;
+        let spinTime = 0;
+        let spinTimeTotal = 0;
+        
+        let colors = [];
+        let size = 0;
+
+        // --- UTILS ---
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        }
+
+        // --- CORE FUNCTIONS ---
+        function resize() {
+            // Square layout, but leave room for header/footer
+            const minDim = Math.min(window.innerWidth, window.innerHeight * 0.55);
+            size = minDim * 0.9;
+            
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = size * dpr;
+            canvas.height = size * dpr;
+            canvas.style.width = `${size}px`;
+            canvas.style.height = `${size}px`;
+            
+            ctx.scale(dpr, dpr);
+            draw();
+        }
+
+        function generateColors() {
+            colors = [];
+            for(let i=0; i<SLOTS; i++) {
+                const r = Math.floor(Math.random() * 256);
+                const g = Math.floor(Math.random() * 256);
+                const b = Math.floor(Math.random() * 256);
+                colors.push({
+                    css: `rgb(${r},${g},${b})`,
+                    r: r, g: g, b: b
+                });
+            }
+            draw();
+            // Hide result if we regen
+            resultPanel.classList.remove('active');
+        }
+
+        function draw() {
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = (size / 2) - 10; // Slight padding
+
+            ctx.clearRect(0, 0, size, size);
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            
+            // Draw Wheel
+            for (let i = 0; i < SLOTS; i++) {
+                const angle = startAngle + (i * ARC);
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, radius, angle, angle + ARC);
+                ctx.fillStyle = colors[i].css;
+                ctx.fill();
+                
+                // Fine separator lines (technical look)
+                ctx.strokeStyle = '#09090b'; 
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.closePath();
+            }
+
+            // Center Hub (Mechanical look)
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.15, 0, 2 * Math.PI);
+            ctx.fillStyle = '#09090b';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.05, 0, 2 * Math.PI);
+            ctx.fillStyle = '#27272a'; // Screw head
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function animate() {
+            if (!isSpinning) return;
+
+            const p = spinTime / spinTimeTotal; 
+            spinVelocity = spinVelocity * 0.99; // Smooth friction
+
+            startAngle += spinVelocity;
+            spinTime += 16; 
+
+            if (spinVelocity < 0.002) {
+                isSpinning = false;
+                spinBtn.disabled = false;
+                regenBtn.disabled = false;
+                determineWinner();
+            } else {
+                requestAnimationFrame(animate);
+            }
+            draw();
+        }
+
+        function spin() {
+            if (isSpinning) return;
+            
+            // UI State
+            isSpinning = true;
+            spinBtn.disabled = true;
+            regenBtn.disabled = true;
+            resultPanel.classList.remove('active');
+            
+            // Physics Init
+            spinVelocity = Math.random() * 0.2 + 0.3; // More controlled speed
+            spinTime = 0;
+            spinTimeTotal = 5000;
+            
+            animate();
+        }
+
+        function determineWinner() {
+            // Pointer is at 0 degrees (3 o'clock) physically in this version due to draw order
+            // Actually, let's align logic with the CSS marker.
+            // CSS Marker is at right side (0 radians in Canvas default).
+            
+            const netRotation = startAngle % (2 * Math.PI);
+            
+            // The canvas draws 0 at 3 o'clock. The pointer is at 3 o'clock.
+            // We need to find which segment occupies the 0 to ARC space, offset by rotation.
+            // Since we add rotation to the start angle, the wheel spins clockwise.
+            // The segment passing the pointer is effectively (360 - rotation).
+            
+            const rotationDegrees = (netRotation * 180 / Math.PI) % 360;
+            const arcDegrees = 360 / SLOTS;
+            
+            // Calculate index
+            // We need (360 - rotation) to find what is currently at angle 0
+            const virtualAngle = (360 - rotationDegrees) % 360;
+            const index = Math.floor(virtualAngle / arcDegrees);
+            
+            const win = colors[index];
+            showResult(win);
+        }
+
+        function showResult(colorObj) {
+            const hex = rgbToHex(colorObj.r, colorObj.g, colorObj.b);
+            
+            swatch.style.backgroundColor = colorObj.css;
+            swatch.style.borderColor = colorObj.css; // Border matches color
+            
+            hexDisplay.textContent = hex;
+            rgbDisplay.textContent = `${colorObj.r}, ${colorObj.g}, ${colorObj.b}`;
+            
+            resultPanel.classList.add('active');
+        }
+
+        // --- LISTENERS ---
+        window.addEventListener('resize', resize);
+        spinBtn.addEventListener('click', spin);
+        regenBtn.addEventListener('click', generate/ --- INIT ---
+        generateColors(); // This calls draw() inside
+        resize();
+
+    </script>
+</body>
+</html>
+
+
