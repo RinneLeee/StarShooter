@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minimalist Secret Santa</title>
+    <!-- Tailwind CSS for utility classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --festive-red: #D42426;
+            --festive-green: #165B33;
+            --snow-cream: #F8F5F2;
+            --text-dark: #2C3E50;
+        }
+
+        body {
+            background-color: var(--snow-cream);
+            color: var(--text-dark);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Custom animation for the result reveal */
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .animate-pop {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Smooth transitions for inputs */
+        input {
+            transition: all 0.2s ease;
+        }
+        
+        input:focus {
+            border-color: var(--festive-green);
+            box-shadow: 0 0 0 3px rgba(22, 91, 51, 0.1);
+        }
+
+        /* Button interactions */
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Snowflake decoration */
+        .snowflake {
+            color: #A0C4FF;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-start p-4 md:p-8">
+
+    <!-- Header Section -->
+    <header class="text-center mb-8 mt-4">
+        <div class="inline-flex items-center justify-center p-3 bg-white rounded-full shadow-sm mb-4">
+            <i data-lucide="gift" class="text-red-600 w-8 h-8"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-800 tracking-tight mb-1">Secret Santa</h1>
+        <p id="page-subtitle" class="text-gray-500 text-sm">Simple. Private. Festive.</p>
+    </header>
+
+    <!-- Main Card Container -->
+    <main class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-red-600">
+        
+        <!-- VIEW 1: SETUP (Organizer Mode) -->
+        <div id="setup-view" class="p-6 hidden">
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Add Participants</label>
+                <div class="flex gap-2">
+                    <input type="text" id="participant-input" 
+                           class="flex-1 border border-gray-300 rounded-lg px-4 py-3 outline-none text-gray-800 placeholder-gray-400" 
+                           placeholder="Enter name (e.g. Alex)"
+                           onkeypress="handleEnter(event)">
+                    <button onclick="addName()" 
+                            class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-4 rounded-lg font-medium transition-colors">
+                        Add
+                    </button>
+                </div>
+                <p id="setup-error" class="text-red-500 text-xs mt-2 h-4"></p>
+            </div>
+
+            <!-- List of added names -->
+            <div class="bg-gray-50 rounded-xl p-4 mb-6 min-h-[100px]">
+                <div class="flex justify-between items-center mb-2 border-b border-gray-200 pb-2">
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Group List</span>
+                    <span class="text-xs text-gray-500"><span id="count">0</span>/20</span>
+                </div>
+                <ul id="name-list" class="space-y-2">
+                    <li class="text-gray-400 text-sm text-center py-4 italic" id="empty-state">No names yet...</li>
+                </ul>
+            </div>
+
+            <!-- Action Area -->
+            <div id="action-area" class="hidden">
+                <button onclick="generateLink()" 
+                        class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-red-200 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="shuffle" class="w-5 h-5"></i>
+                    Randomize & Create Link
+                </button>
+                <p class="text-center text-xs text-gray-400 mt-3">This will generate a unique link to share.</p>
+            </div>
+        </div>
+
+        <!-- VIEW 2: SHARE (Organizer Mode - After Randomizing) -->
+        <div id="share-view" class="p-6 hidden text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="check" class="text-green-600 w-8 h-8"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Link Generated!</h2>
+            <p class="text-gray-600 text-sm mb-6">Everyone has been assigned a Secret Santa. Copy the link below and send it to your group.</p>
+
+            <div class="bg-gray-100 p-3 rounded-lg flex items-center gap-2 mb-4 border border-gray-200">
+                <input type="text" id="share-link-input" readonly 
+                       class="bg-transparent flex-1 text-sm text-gray-600 outline-none w-full" 
+                       value="https://...">
+            </div>
+
+            <button onclick="copyLink()" 
+                    class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl mb-3 flex items-center justify-center gap-2">
+                <i data-lucide="copy" class="w-4 h-4"></i>
+                Copy Link
+            </button>
+            
+            <button onclick="resetApp()" class="text-gray-400 text-sm hover:text-gray-600 underline decoration-dotted">
+                Start Over
+            </button>
+        </div>
+
+        <!-- VIEW 3: REVEAL (Participant Mode) -->
+        <div id="reveal-view" class="p-6 hidden">
+            <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
+                <p class="text-xs font-bold text-blue-800 uppercase tracking-wide mb-2 text-center">Participants</p>
+                <!-- Added note about jumbled order -->
+                <p class="text-xs text-gray-400 text-center mb-3 italic">(List is in random order)</p>
+                <div id="badges-container" class="flex flex-wrap justify-center gap-2">
+                    <!-- Badges injected here -->
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-1">Who are you?</h3>
+                <p class="text-sm text-gray-500 mb-3">Type your name exactly as shown above.</p>
+                
+                <div class="relative">
+                    <input type="text" id="reveal-input" 
+                           class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg outline-none focus:border-red-500" 
+                           placeholder="Type your name..."
+                           autocomplete="off">
+                    <button onclick="revealMatch()" 
+                            class="absolute right-2 top-2 bottom-2 bg-red-600 text-white px-4 rounded-lg font-medium text-sm hover:bg-red-700 transition-colors">
+                        Reveal
+                    </button>
+                </div>
+                <p id="reveal-error" class="text-red-500 text-xs mt-2 h-4 pl-1"></p>
+            </div>
+
+            <!-- The Result Card -->
+            <div id="result-card" class="hidden bg-gray-900 rounded-xl p-6 text-center text-white relative overflow-hidden animate-pop">
+                <!-- Decorative background elements -->
+                <div class="absolute top-0 left-0 w-full h-full opacity-10">
+                    <i data-lucide="snowflake" class="absolute top-2 left-2 w-8 h-8"></i>
+                    <i data-lucide="snowflake" class="absolute bottom-4 right-10 w-6 h-6"></i>
+                    <i data-lucide="tree-pine" class="absolute bottom-[-10px] left-10 w-12 h-12"></i>
+                </div>
+
+                <div class="relative z-10">
+                    <p class="text-gray-400 text-sm mb-4 uppercase tracking-widest font-semibold">You are gifting</p>
+                    <div class="text-3xl font-extrabold text-white mb-4 tracking-tight" id="match-name">
+                        ???
+                    </div>
+                    <div class="inline-block bg-white/10 px-3 py-1 rounded-full text-xs text-gray-300">
+                        🤫 Shh! It's a secret.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 text-center">
+                <a href="javascript:void(0)" onclick="resetApp()" class="text-xs text-gray-400 hover:text-red-500 transition-colors">Create new group</a>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="mt-8 text-gray-400 text-xs text-center">
+        <p>&copy; Secret Santa Generator</p>
+    </footer>
+
+    <script>
+        // --- UTILS: UTF-8 Safe Base64 ---
+        function utf8_to_b64(str) {
+            return window.btoa(unescape(encodeURIComponent(str)));
+        }
+
+        function b64_to_utf8(str) {
+            return decodeURIComponent(escape(window.atob(str)));
+        }
+
+        // --- UTILS: Fisher-Yates Shuffle ---
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        // --- STATE ---
+        let participants = [];
+        let assignments = {};
+
+        // --- INIT ---
+        window.onload = function() {
+            lucide.createIcons();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const data = urlParams.get('santa_data');
+
+            if (data) {
+                try {
+                    const jsonStr = b64_to_utf8(data);
+                    assignments = JSON.parse(jsonStr);
+                    participants = Object.keys(assignments);
+                    
+                    if (participants.length > 0) {
+                        showView('reveal-view');
+                        renderBadges();
+                        document.getElementById('page-subtitle').innerText = "Find your match below";
+                    } else {
+                        throw new Error("Empty list");
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showView('setup-view');
+                }
+            } else {
+                showView('setup-view');
+            }
+        };
+
+        // --- VIEW CONTROLLER ---
+        function showView(viewId) {
+            ['setup-view', 'share-view', 'reveal-view'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // --- SETUP LOGIC ---
+        function handleEnter(e) {
+            if (e.key === 'Enter') addName();
+        }
+
+        function addName() {
+            const input = document.getElementById('participant-input');
+            const error = document.getElementById('setup-error');
+            const name = input.value.trim();
+
+            if (!name) return;
+            
+            if (participants.length >= 20) {
+                error.innerText = "Maximum limit of 20 people reached.";
+                return;
+            }
+            if (participants.some(p => p.toLowerCase() === name.toLowerCase())) {
+                error.innerText = "That name is already on the list.";
+                return;
+            }
+
+            participants.push(name);
+            input.value = '';
+            error.innerText = '';
+            
+            renderList();
+        }
+
+        function removeName(index) {
+            participants.splice(index, 1);
+            renderList();
+        }
+
+        function renderList() {
+            const list = document.getElementById('name-list');
+            const emptyState = document.getElementById('empty-state');
+            const actionArea = document.getElementById('action-area');
+            const countSpan = document.getElementById('count');
+
+            countSpan.innerText = participants.length;
+
+            if (participants.length === 0) {
+                list.innerHTML = '';
+                list.appendChild(emptyState);
+                actionArea.classList.add('hidden');
+                return;
+            }
+
+            list.innerHTML = '';
+            participants.forEach((p, index) => {
+                const li = document.createElement('li');
+                li.className = "flex justify-between items-center bg-white border border-gray-100 p-3 rounded-lg shadow-sm";
+                li.innerHTML = `
+                    <span class="font-medium text-gray-700 flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4 text-gray-300"></i> ${p}
+                    </span>
+                    <button onclick="removeName(${index})" class="text-gray-300 hover:text-red-500 p-1">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                `;
+                list.appendChild(li);
+            });
+            lucide.createIcons();
+
+            if (participants.length >= 3) {
+                actionArea.classList.remove('hidden');
+            } else {
+                actionArea.classList.add('hidden');
+            }
+        }
+
+        function generateLink() {
+            if (participants.length < 3) return;
+
+            // We need to create a Derangement (no one gets themselves)
+            let givers = [...participants];
+            let receivers = [...participants];
+            let result = {};
+            let valid = false;
+
+            // Attempt to shuffle until we get a valid derangement
+            // For small N (3-20), this is extremely fast
+            while (!valid) {
+                shuffle(receivers);
+                
+                valid = true;
+                for (let i = 0; i < givers.length; i++) {
+                    // Check if anyone is assigned to themselves
+                    if (givers[i] === receivers[i]) {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+
+            // Lock in the assignments
+            givers.forEach((giver, i) => {
+                result[giver] = receivers[i];
+            });
+
+            // Encode assignments to URL
+            const jsonStr = JSON.stringify(result);
+            const encoded = utf8_to_b64(jsonStr);
+            const shareUrl = `${window.location.origin}${window.location.pathname}?santa_data=${encoded}`;
+
+            document.getElementById('share-link-input').value = shareUrl;
+            showView('share-view');
+        }
+
+        function copyLink() {
+            const input = document.getElementById('share-link-input');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            
+            try {
+               const successful = document.execCommand('copy');
+               if(successful) {
+                   alert("Link copied to clipboard!");
+               } else {
+                   alert("Could not copy link automatically. Please select and copy manually.");
+               }
+            } catch (err) {
+               console.error('Copy failed', err);
+               alert("Could not copy link automatically. Please select and copy manually.");
+            }
+        }
+
+        function resetApp() {
+            window.location.href = window.location.pathname;
+        }
+
+        // --- REVEAL LOGIC ---
+        function renderBadges() {
+            const container = document.getElementById('badges-container');
+            container.innerHTML = '';
+            
+            // JUMBLE the participants list so there is no visual pattern
+            // We use a copy ([...participants]) to avoid messing up original array if needed elsewhere
+            const displayParticipants = shuffle([...participants]);
+            
+            displayParticipants.forEach(p => {
+                const badge = document.createElement('span');
+                badge.className = "px-3 py-1 bg-white border border-blue-100 text-blue-600 text-xs rounded-full font-medium select-none";
+                badge.innerText = p;
+                container.appendChild(badge);
+            });
+        }
+
+        function revealMatch() {
+            const input = document.getElementById('reveal-input');
+            const error = document.getElementById('reveal-error');
+            const resultCard = document.getElementById('result-card');
+            const matchNameDisplay = document.getElementById('match-name');
+            
+            const rawInput = input.value.trim();
+            
+            if (!rawInput) {
+                error.innerText = "Please enter your name first.";
+                return;
+            }
+
+            // Case insensitive lookup
+            const foundKey = Object.keys(assignments).find(key => key.toLowerCase() === rawInput.toLowerCase());
+
+            if (!foundKey) {
+                error.innerText = "Name not found in the list. Check spelling above.";
+                resultCard.classList.add('hidden');
+                return;
+            }
+
+            error.innerText = "";
+            const match = assignments[foundKey];
+            
+            matchNameDisplay.innerText = match;
+            resultCard.classList.remove('hidden');
+            
+            // Trigger reflow to restart animation
+            resultCard.classList.remove('animate-pop');
+            void resultCard.offsetWidth; 
+            resultCard.classList.add('animate-pop');
+        }
+    </script>
+</body>
+</html>
