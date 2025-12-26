@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pictionary / Charades Generator</title>
+    <title>Extreme Charades Generator</title>
     <style>
         :root {
-            --primary-color: #4a90e2;
-            --bg-color: #f0f4f8;
+            --primary-color: #6c5ce7; /* Purple for a more "mysterious" vibe */
+            --bg-color: #dfe6e9;
             --card-bg: #ffffff;
-            --text-color: #333;
+            --text-color: #2d3436;
         }
 
         body {
@@ -33,49 +33,60 @@
 
         h1 {
             color: var(--primary-color);
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             font-size: 1.5rem;
             text-transform: uppercase;
             letter-spacing: 2px;
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+            color: #636e72;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
         }
 
         .card {
             background-color: var(--card-bg);
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            padding: 40px 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            padding: 50px 20px;
             margin: 20px 0;
-            transition: transform 0.2s;
             border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
         }
 
-        .card:hover {
-            transform: translateY(-5px);
-            border-color: #e1e1e1;
-        }
-
-        .word-section {
-            margin: 20px 0;
+        /* Decorative strip on top of card */
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, #6c5ce7, #a29bfe);
         }
 
         .english {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 800;
             color: var(--text-color);
             margin: 0;
             line-height: 1.2;
+            padding-bottom: 10px;
         }
 
         .chinese {
             font-size: 2rem;
             font-weight: 500;
-            color: #555;
-            margin: 10px 0 5px 0;
+            color: #d63031; /* Red for Chinese characters */
+            margin: 5px 0;
         }
 
         .pinyin {
-            font-size: 1rem;
-            color: #888;
+            font-size: 1.1rem;
+            color: #636e72;
             font-style: italic;
             margin: 0;
         }
@@ -95,12 +106,13 @@
             border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3);
+            transition: all 0.2s;
         }
 
         button:hover {
-            background-color: #357abd;
+            background-color: #5649c0;
+            transform: translateY(-2px);
         }
 
         button:active {
@@ -108,22 +120,31 @@
         }
 
         button.skip-btn {
-            background-color: #e25555;
+            background-color: #fab1a0;
+            color: #2d3436;
         }
         
         button.skip-btn:hover {
-            background-color: #c0392b;
+            background-color: #ff7675;
+            color: white;
         }
 
         .hidden {
             display: none;
+        }
+        
+        .counter {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #b2bec3;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>🎨 Draw It! 🎨</h1>
+        <h1>Extreme Pictionary</h1>
+        <div class="subtitle">Complex & Unusual Words</div>
         
         <div class="card" id="gameCard">
             <div class="word-section">
@@ -134,47 +155,113 @@
         </div>
 
         <div class="controls">
-            <button id="nextBtn" onclick="nextWord()">Get Word</button>
+            <button id="nextBtn" onclick="nextWord()">Generate Word</button>
             <button id="skipBtn" class="skip-btn hidden" onclick="nextWord()">Skip / New</button>
         </div>
+        
+        <div class="counter" id="totalCount"></div>
     </div>
 
     <script>
-        // The Database of words (English, Chinese, Pinyin)
         const words = [
-            { en: "Apple", cn: "苹果", py: "Píng guǒ" },
-            { en: "Airplane", cn: "飞机", py: "Fēi jī" },
-            { en: "Cat", cn: "猫", py: "Māo" },
-            { en: "Tree", cn: "树", py: "Shù" },
-            { en: "Umbrella", cn: "雨伞", py: "Yǔ sǎn" },
-            { en: "Sun", cn: "太阳", py: "Tài yáng" },
-            { en: "Bicycle", cn: "自行车", py: "Zì xíng chē" },
-            { en: "Clock", cn: "时钟", py: "Shí zhōng" },
-            { en: "Elephant", cn: "大象", py: "Dà xiàng" },
-            { en: "House", cn: "房子", py: "Fáng zi" },
-            { en: "Ice Cream", cn: "冰淇淋", py: "Bīng qí lín" },
-            { en: "Snake", cn: "蛇", py: "Shé" },
-            { en: "Moon", cn: "月亮", py: "Yuè liàng" },
-            { en: "Television", cn: "电视", py: "Diàn shì" },
-            { en: "Flower", cn: "花", py: "Huā" },
-            { en: "Car", cn: "汽车", py: "Qì chē" },
-            { en: "Guitar", cn: "吉他", py: "Jí tā" },
-            { en: "Robot", cn: "机器人", py: "Jī qì rén" },
-            { en: "Camera", cn: "照相机", py: "Zhào xiàng jī" },
-            { en: "Glasses", cn: "眼镜", py: "Yǎn jìng" },
-            { en: "Mountain", cn: "山", py: "Shān" },
-            { en: "Fish", cn: "鱼", py: "Yú" },
-            { en: "Butterfly", cn: "蝴蝶", py: "Hú dié" },
-            { en: "Computer", cn: "电脑", py: "Diàn nǎo" },
-            { en: "Pizza", cn: "披萨", py: "Pī sà" },
-            { en: "Spider", cn: "蜘蛛", py: "Zhī zhū" },
-            { en: "Rainbow", cn: "彩虹", py: "Cǎi hóng" },
-            { en: "Book", cn: "书", py: "Shū" },
-            { en: "Boat", cn: "船", py: "Chuán" },
-            { en: "Dragon", cn: "龙", py: "Lóng" }
+            // --- Original Unusual Set ---
+            { en: "Platypus", cn: "鸭嘴兽", py: "Yā zuǐ shòu" },
+            { en: "Tsunami", cn: "海啸", py: "Hǎi xiào" },
+            { en: "Time Machine", cn: "时光机", py: "Shí guāng jī" },
+            { en: "Vampire", cn: "吸血鬼", py: "Xī xuè guǐ" },
+            { en: "Black Hole", cn: "黑洞", py: "Hēi dòng" },
+            { en: "Chameleon", cn: "变色龙", py: "Biàn sè lóng" },
+            { en: "Statue of Liberty", cn: "自由女神像", py: "Zì yóu nǚ shén xiàng" },
+            { en: "Mummy", cn: "木乃伊", py: "Mù nǎi yī" },
+            { en: "U.F.O.", cn: "飞碟", py: "Fēi dié" },
+            { en: "Venus Flytrap", cn: "捕蝇草", py: "Bǔ yíng cǎo" },
+            { en: "Tornado", cn: "龙卷风", py: "Lóng juǎn fēng" },
+            { en: "Skeleton", cn: "骷髅", py: "Kū lóu" },
+            { en: "Scarecrow", cn: "稻草人", py: "Dào cǎo rén" },
+            { en: "Detective", cn: "侦探", py: "Zhēn tàn" },
+            { en: "Chainsaw", cn: "电锯", py: "Diàn jù" },
+            { en: "Astronaut", cn: "宇航员", py: "Yǔ háng yuán" },
+            { en: "Mermaid", cn: "美人鱼", py: "Měi rén yú" },
+            { en: "Unicorn", cn: "独角兽", py: "Dú jiǎo shòu" },
+            { en: "Peacock", cn: "孔雀", py: "Kǒng què" },
+            { en: "Submarine", cn: "潜水艇", py: "Qián shuǐ tǐng" },
+            { en: "Pyramid", cn: "金字塔", py: "Jīn zì tǎ" },
+            { en: "Fireworks", cn: "烟花", py: "Yān huā" },
+            { en: "Werewolf", cn: "狼人", py: "Láng rén" },
+            { en: "Medusa", cn: "美杜莎", py: "Měi dù shā" },
+            { en: "Eiffel Tower", cn: "埃菲尔铁塔", py: "Āi fēi ěr tiě tǎ" },
+            { en: "Traffic Jam", cn: "交通堵塞", py: "Jiāo tōng dǔ sè" },
+            { en: "Earthquake", cn: "地震", py: "Dì zhèn" },
+            { en: "Ninja", cn: "忍者", py: "Rěn zhě" },
+            { en: "Cactus", cn: "仙人掌", py: "Xiān rén zhǎng" },
+            { en: "Roller Coaster", cn: "过山车", py: "Guò shān chē" },
+
+            // --- 50 New Complex Words ---
+            
+            // Animals (Specific/Weird)
+            { en: "Porcupine", cn: "豪猪", py: "Háo zhū" },
+            { en: "Narwhal", cn: "独角鲸", py: "Dú jiǎo jīng" },
+            { en: "Skunk", cn: "臭鼬", py: "Chòu yòu" },
+            { en: "Anglerfish", cn: "灯笼鱼", py: "Dēng lóng yú" },
+            { en: "Sloth", cn: "树懒", py: "Shù lǎn" },
+            { en: "Hippopotamus", cn: "河马", py: "Hé mǎ" },
+            { en: "Centaur", cn: "半人马", py: "Bàn rén mǎ" },
+            { en: "Phoenix", cn: "凤凰", py: "Fèng huáng" },
+
+            // Objects & Tech (Complex)
+            { en: "Lighthouse", cn: "灯塔", py: "Dēng tǎ" },
+            { en: "Windmill", cn: "风车", py: "Fēng chē" },
+            { en: "Hot Air Balloon", cn: "热气球", py: "Rè qì qiú" },
+            { en: "Drone", cn: "无人机", py: "Wú rén jī" },
+            { en: "Satellite", cn: "人造卫星", py: "Rén zào wèi xīng" },
+            { en: "VR Headset", cn: "虚拟现实头盔", py: "Xū nǐ xiàn shí tóu kuī" },
+            { en: "Bagpipes", cn: "风笛", py: "Fēng dí" },
+            { en: "Accordion", cn: "手风琴", py: "Shǒu fēng qín" },
+            { en: "Hourglass", cn: "沙漏", py: "Shā lòu" },
+            { en: "Boomerang", cn: "回旋镖", py: "Huí xuán biāo" },
+            { en: "Guillotine", cn: "断头台", py: "Duàn tóu tái" },
+            { en: "Stethoscope", cn: "听诊器", py: "Tīng zhěn qì" },
+            { en: "Wheelchair", cn: "轮椅", py: "Lún yǐ" },
+            { en: "Chandelier", cn: "吊灯", py: "Diào dēng" },
+            { en: "Jack-o'-lantern", cn: "南瓜灯", py: "Nán guā dēng" },
+            { en: "Snow Globe", cn: "雪球", py: "Xuě qiú" },
+            { en: "Swiss Army Knife", cn: "瑞士军刀", py: "Ruì shì jūn dāo" },
+
+            // Landmarks & Places
+            { en: "Sphinx", cn: "狮身人面像", py: "Shī shēn rén miàn xiàng" },
+            { en: "Stonehenge", cn: "巨石阵", py: "Jù shí zhèn" },
+            { en: "Leaning Tower of Pisa", cn: "比萨斜塔", py: "Bǐ sà xié tǎ" },
+            { en: "Great Wall of China", cn: "长城", py: "Cháng chéng" },
+            { en: "Taj Mahal", cn: "泰姬陵", py: "Tài jī líng" },
+            { en: "Igloo", cn: "冰屋", py: "Bīng wū" },
+            { en: "Drawbridge", cn: "吊桥", py: "Diào qiáo" },
+            { en: "Graveyard", cn: "墓地", py: "Mù dì" },
+
+            // Professions & People
+            { en: "Sumo Wrestler", cn: "相扑选手", py: "Xiāng pū xuǎn shǒu" },
+            { en: "Mime", cn: "哑剧演员", py: "Yǎ jù yǎn yuán" },
+            { en: "Puppeteer", cn: "木偶师", py: "Mù ǒu shī" },
+            { en: "Ventriloquist", cn: "腹语师", py: "Fù yǔ shī" },
+            { en: "Scuba Diver", cn: "潜水员", py: "Qián shuǐ yuán" },
+            { en: "Blacksmith", cn: "铁匠", py: "Tiě jiàng" },
+            { en: "Wizard", cn: "巫师", py: "Wū shī" },
+            { en: "Zombie", cn: "僵尸", py: "Jiāng shī" },
+
+            // Phenomena & Nature
+            { en: "Avalanche", cn: "雪崩", py: "Xuě bēng" },
+            { en: "Meteor Shower", cn: "流星雨", py: "Liú xīng yǔ" },
+            { en: "Eclipse", cn: "日食 / 月食", py: "Rì shí / Yuè shí" },
+            { en: "Whirlpool", cn: "漩涡", py: "Xuán wō" },
+            { en: "Mirage", cn: "海市蜃楼", py: "Hǎi shì shèn lóu" },
+            { en: "Northern Lights", cn: "北极光", py: "Běi jí guāng" },
+            { en: "Quicksand", cn: "流沙", py: "Liú shā" },
+            { en: "Waterfall", cn: "瀑布", py: "Pù bù" }
         ];
 
         let lastIndex = -1;
+
+        // Display total word count
+        document.getElementById('totalCount').innerText = `Loaded ${words.length} complex words`;
 
         function nextWord() {
             // Get Elements
