@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pictionary / Charades Generator</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 40px 20px;
+            margin: 20px 0;
+            transition: transform 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: #e1e1e1;
+        }
+
+        .word-section {
+            margin: 20px 0;
+        }
+
+        .english {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-color);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .chinese {
+            font-size: 2rem;
+            font-weight: 500;
+            color: #555;
+            margin: 10px 0 5px 0;
+        }
+
+        .pinyin {
+            font-size: 1rem;
+            color: #888;
+            font-style: italic;
+            margin: 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: #357abd;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        button.skip-btn {
+            background-color: #e25555;
+        }
+        
+        button.skip-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎨 Draw It! 🎨</h1>
+        
+        <div class="card" id="gameCard">
+            <div class="word-section">
+                <p class="english" id="enWord">Ready?</p>
+                <p class="chinese" id="cnWord">准备好了吗？</p>
+                <p class="pinyin" id="pinyinWord">Zhǔn bèi hǎo le ma?</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="nextBtn" onclick="nextWord()">Get Word</button>
+            <button id="skipBtn" class="skip-btn hidden" onclick="nextWord()">Skip / New</button>
+        </div>
+    </div>
+
+    <script>
+        // The Database of words (English, Chinese, Pinyin)
+        const words = [
+            { en: "Apple", cn: "苹果", py: "Píng guǒ" },
+            { en: "Airplane", cn: "飞机", py: "Fēi jī" },
+            { en: "Cat", cn: "猫", py: "Māo" },
+            { en: "Tree", cn: "树", py: "Shù" },
+            { en: "Umbrella", cn: "雨伞", py: "Yǔ sǎn" },
+            { en: "Sun", cn: "太阳", py: "Tài yáng" },
+            { en: "Bicycle", cn: "自行车", py: "Zì xíng chē" },
+            { en: "Clock", cn: "时钟", py: "Shí zhōng" },
+            { en: "Elephant", cn: "大象", py: "Dà xiàng" },
+            { en: "House", cn: "房子", py: "Fáng zi" },
+            { en: "Ice Cream", cn: "冰淇淋", py: "Bīng qí lín" },
+            { en: "Snake", cn: "蛇", py: "Shé" },
+            { en: "Moon", cn: "月亮", py: "Yuè liàng" },
+            { en: "Television", cn: "电视", py: "Diàn shì" },
+            { en: "Flower", cn: "花", py: "Huā" },
+            { en: "Car", cn: "汽车", py: "Qì chē" },
+            { en: "Guitar", cn: "吉他", py: "Jí tā" },
+            { en: "Robot", cn: "机器人", py: "Jī qì rén" },
+            { en: "Camera", cn: "照相机", py: "Zhào xiàng jī" },
+            { en: "Glasses", cn: "眼镜", py: "Yǎn jìng" },
+            { en: "Mountain", cn: "山", py: "Shān" },
+            { en: "Fish", cn: "鱼", py: "Yú" },
+            { en: "Butterfly", cn: "蝴蝶", py: "Hú dié" },
+            { en: "Computer", cn: "电脑", py: "Diàn nǎo" },
+            { en: "Pizza", cn: "披萨", py: "Pī sà" },
+            { en: "Spider", cn: "蜘蛛", py: "Zhī zhū" },
+            { en: "Rainbow", cn: "彩虹", py: "Cǎi hóng" },
+            { en: "Book", cn: "书", py: "Shū" },
+            { en: "Boat", cn: "船", py: "Chuán" },
+            { en: "Dragon", cn: "龙", py: "Lóng" }
+        ];
+
+        let lastIndex = -1;
+
+        function nextWord() {
+            // Get Elements
+            const enEl = document.getElementById('enWord');
+            const cnEl = document.getElementById('cnWord');
+            const pyEl = document.getElementById('pinyinWord');
+            const nextBtn = document.getElementById('nextBtn');
+            const skipBtn = document.getElementById('skipBtn');
+
+            // Logic to prevent the exact same word appearing twice in a row
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * words.length);
+            } while (newIndex === lastIndex && words.length > 1);
+            
+            lastIndex = newIndex;
+            const selection = words[newIndex];
+
+            // Update Text
+            enEl.innerText = selection.en;
+            cnEl.innerText = selection.cn;
+            pyEl.innerText = selection.py;
+
+            // Change button state to game mode
+            nextBtn.innerText = "Next Round";
+            skipBtn.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
