@@ -6,41 +6,49 @@
     <title>KWSP Wealth Projector Pro</title>
     <style>
         :root {
-            /* Professional Fintech Palette */
-            --bg-body: #f8fafc;
-            --bg-card: #ffffff;
-            --bg-panel: #f1f5f9;
+            /* Apple System Colors */
+            --bg-body: #F5F5F7;
+            --bg-sidebar: rgba(255, 255, 255, 0.8);
+            --bg-card: #FFFFFF;
+            --bg-input: #F2F2F7;
             
-            --primary: #0f172a;       /* Slate 900 */
-            --primary-light: #334155; /* Slate 700 */
-            --accent: #0ea5e9;        /* Sky 500 */
-            --epf-color: #3b82f6;      /* Blue 500 */
-            --cash-color: #10b981;     /* Emerald 500 */
-            --prop-color: #8b5cf6;     /* Purple 500 */
-            --boost-color: #f59e0b;    /* Amber 500 */
-            --danger: #ef4444;        /* Red 500 */
-            --warning: #f59e0b;       /* Amber 500 */
+            --primary: #1D1D1F;       /* SF Black */
+            --text-secondary: #86868B; /* SF Gray */
             
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border-subtle: #e2e8f0;
-            --border-focus: #94a3b8;
+            --accent: #007AFF;        /* System Blue */
+            --success: #34C759;       /* System Green */
+            --warning: #FF9500;       /* System Orange */
+            --danger: #FF3B30;        /* System Red */
+            --purple: #AF52DE;        /* System Purple */
+            
+            /* Chart Colors mapped to System Colors */
+            --epf-color: #007AFF;
+            --cash-color: #34C759;
+            --prop-color: #AF52DE;
+            --boost-color: #FF9500;
 
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --border-light: #E5E5EA;
+            --border-focus: #007AFF;
+
+            --font-main: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-card: 0 4px 24px rgba(0,0,0,0.04);
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
         }
 
-        * { box-sizing: border-box; outline: none; }
+        * { box-sizing: border-box; outline: none; -webkit-font-smoothing: antialiased; }
         
         body {
             font-family: var(--font-main);
             background-color: var(--bg-body);
-            color: var(--text-main);
+            color: var(--primary);
             margin: 0;
             padding: 0;
             line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
+            font-size: 14px;
         }
 
         /* Layout Grid */
@@ -52,47 +60,50 @@
 
         @media (min-width: 1024px) {
             .app-container {
-                grid-template-columns: 400px 1fr;
+                grid-template-columns: 380px 1fr; /* Slightly narrower sidebar for elegance */
                 height: 100vh;
                 overflow: hidden;
             }
         }
 
-        /* Sidebar / Input Section */
+        /* Sidebar Styling (Glassmorphism) */
         .sidebar {
-            background: var(--bg-card);
-            border-right: 1px solid var(--border-subtle);
-            padding: 24px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid rgba(0,0,0,0.08);
+            padding: 30px 24px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 32px;
             z-index: 20;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
 
         .header-brand {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             margin-bottom: 10px;
         }
 
         .logo-mark {
-            width: 45px; height: 32px;
-            background: var(--primary);
-            border-radius: 8px;
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #007AFF, #00C7BE);
+            border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 700; font-size: 14px;
+            color: white; font-weight: 700; font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0,122,255,0.3);
         }
 
         .brand-text {
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: -0.025em;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
             color: var(--primary);
         }
 
-        /* Input Groups */
+        /* Sections */
         .input-section {
             display: flex;
             flex-direction: column;
@@ -100,18 +111,19 @@
         }
 
         .section-title {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 0px;
+            padding-left: 2px;
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
         }
 
         .input-group {
@@ -120,330 +132,296 @@
 
         .input-label {
             display: block;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
-            color: var(--text-main);
+            color: var(--primary);
             margin-bottom: 6px;
+            padding-left: 2px;
         }
 
+        /* Apple-style Inputs */
         .input-field {
             width: 100%;
             padding: 10px 12px;
             font-size: 0.95rem;
-            border: 1px solid var(--border-subtle);
-            border-radius: 8px;
-            background: var(--bg-body);
-            color: var(--text-main);
-            transition: all 0.2s;
+            border: 1px solid transparent; /* Cleaner look */
+            border-radius: var(--radius-md);
+            background: var(--bg-input);
+            color: var(--primary);
+            transition: all 0.2s ease;
             font-family: inherit;
+            font-weight: 500;
         }
 
         .input-field:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
             background: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
         }
+        
+        .input-field::placeholder { color: #C7C7CC; }
 
         .input-addon {
             position: absolute;
             right: 12px;
-            top: 34px;
+            top: 32px;
             font-size: 0.85rem;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             pointer-events: none;
         }
 
         select.input-field {
             appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2386868B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 10px center;
-            background-size: 16px;
+            background-size: 14px;
+            padding-right: 30px;
         }
 
-        /* Toggles */
+        /* iOS Style Toggles */
         .toggle-row {
             display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0;
         }
-        /* HIDE DEFAULT CHECKBOX */
-        .toggle-row input[type="checkbox"] {
-            display: none;
-        }
+        .toggle-row input[type="checkbox"] { display: none; }
         
         .toggle-switch {
-            position: relative; width: 40px; height: 22px; background: #cbd5e1; border-radius: 20px; transition: 0.3s;
+            position: relative; width: 44px; height: 26px; background: #E9E9EA; border-radius: 20px; transition: 0.3s;
         }
         .toggle-switch::after {
-            content: ''; position: absolute; left: 2px; top: 2px; width: 18px; height: 18px; background: white; border-radius: 50%; transition: 0.3s;
+            content: ''; position: absolute; left: 2px; top: 2px; width: 22px; height: 22px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        input:checked + .toggle-switch { background: var(--primary); }
+        input:checked + .toggle-switch { background: var(--success); }
         input:checked + .toggle-switch::after { transform: translateX(18px); }
 
-        /* Event List Styles */
-        .event-list {
-            display: flex; flex-direction: column; gap: 8px;
-        }
-        .event-item {
-            display: flex; align-items: flex-start; justify-content: space-between;
-            background: var(--bg-panel); padding: 10px 12px; border-radius: 6px;
-            font-size: 0.85rem; border: 1px solid var(--border-subtle);
-        }
-        .event-info { display: flex; flex-direction: column; gap: 2px; }
-        .event-name { font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 6px; }
-        .event-tag { font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 700; }
-        .tag-exp { background: #fee2e2; color: #b91c1c; }
-        .tag-prop { background: #ede9fe; color: #6d28d9; }
-        
-        .event-details { font-size: 0.75rem; color: var(--text-muted); line-height: 1.3; }
-        .btn-remove {
-            background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; margin-top: 2px;
-        }
-        .btn-remove:hover { color: var(--danger); }
-        .btn-add {
-            width: 100%; padding: 8px; background: white; border: 1px dashed var(--border-focus);
-            color: var(--primary); border-radius: 6px; cursor: pointer; font-size: 0.85rem; margin-top: 8px;
-        }
-        .btn-add:hover { background: var(--bg-panel); border-color: var(--primary); }
-        
-        .btn-reset {
-            background: none; border: none; color: var(--text-muted); font-size: 0.8rem; 
-            text-decoration: underline; cursor: pointer; margin-top: 10px; width: 100%;
-        }
-
-        /* Super Boost Box */
+        /* Boost Box (Apple Card Style) */
         .boost-box {
-            background: linear-gradient(135deg, #fffbeb, #fef3c7);
-            border: 1px solid #fbbf24;
-            padding: 12px; border-radius: 8px;
+            background: #FFF;
+            border: 1px solid rgba(255, 149, 0, 0.2);
+            padding: 16px; 
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
         }
-        .boost-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: #b45309; font-weight: 600; font-size: 0.9rem; }
-        .boost-badge { background: #f59e0b; color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
-        .boost-feedback { margin-top:10px; font-size:0.75rem; padding:8px; border-radius:4px; line-height:1.4; border-left: 3px solid transparent; }
-        .feedback-ok { background:rgba(255,255,255,0.6); color:#0f172a; border-color:#10b981; }
-        .feedback-warn { background:rgba(254, 226, 226, 0.5); color:#991b1b; border-color:#ef4444; }
+        .boost-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .boost-badge { 
+            background: rgba(255, 149, 0, 0.15); color: var(--boost-color); 
+            font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; 
+            text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;
+        }
+        
+        .explanation-box {
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        .explanation-box strong { color: var(--primary); font-weight: 600; }
 
-        /* Main Dashboard Area */
-        .dashboard-main {
-            background: var(--bg-body);
-            padding: 24px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
+        .boost-feedback { 
+            margin-top:10px; font-size:0.75rem; padding:10px; border-radius:var(--radius-md); 
+            line-height:1.4; background: var(--bg-input); border-left: 3px solid transparent; 
         }
+        .feedback-ok { border-left-color: var(--success); color: #14532d; background: rgba(52, 199, 89, 0.1); }
+        .feedback-warn { border-left-color: var(--warning); color: #7c2d12; background: rgba(255, 149, 0, 0.1); }
 
-        /* Dashboard Header */
-        .dash-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .header-title h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin: 0;
-            color: var(--primary);
-        }
-        .header-title p {
-            margin: 4px 0 0 0;
-            color: var(--text-muted);
-            font-size: 0.9rem;
+        .info-pill {
+            background: rgba(0, 122, 255, 0.1); color: var(--accent); 
+            font-size: 0.7rem; padding: 4px 10px; border-radius: 12px; 
+            display: inline-flex; align-items: center; gap: 4px; font-weight: 600; margin-top: 8px;
         }
 
+        /* Buttons */
         .btn {
-            padding: 10px 16px;
-            border-radius: 8px;
+            padding: 12px 20px;
+            border-radius: 12px;
             font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
             border: none;
-            transition: transform 0.1s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .btn:active { transform: translateY(1px); }
+        .btn:active { transform: scale(0.98); }
 
-        .btn-primary { background: var(--primary); color: white; box-shadow: var(--shadow-md); }
-        .btn-primary:hover { background: var(--primary-light); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         
-        /* KPI Cards Grid */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
+        .btn-add {
+            width: 100%; padding: 10px; background: transparent; 
+            border: 1px dashed #C7C7CC; color: var(--accent);
+            border-radius: var(--radius-md); cursor: pointer; font-size: 0.85rem; margin-top: 8px;
+            font-weight: 500; transition: 0.2s;
         }
-
-        .kpi-card {
-            background: var(--bg-card);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border-subtle);
-            box-shadow: var(--shadow-sm);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .kpi-card::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
-            background: var(--border-subtle);
-        }
-        .kpi-card.accent-blue::before { background: var(--epf-color); }
-        .kpi-card.accent-green::before { background: var(--cash-color); }
-        .kpi-card.accent-purple::before { background: var(--prop-color); }
-        .kpi-card.accent-dark::before { background: var(--primary); }
-
-        .kpi-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-        .kpi-value { font-size: 1.5rem; font-weight: 700; margin: 8px 0; color: var(--primary); letter-spacing: -0.5px; }
-        .kpi-sub { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+        .btn-add:hover { background: rgba(0,122,255,0.05); border-color: var(--accent); }
         
-        /* Tabbed Interface for Chart */
-        .chart-container {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 24px;
-            border: 1px solid var(--border-subtle);
-            box-shadow: var(--shadow-sm);
-            min-height: 480px;
+        .btn-reset {
+            background: none; border: none; color: var(--text-secondary); font-size: 0.8rem; 
+            cursor: pointer; margin-top: 15px; width: 100%; transition: color 0.2s;
+        }
+        .btn-reset:hover { color: var(--danger); text-decoration: none; }
+
+        /* Event List */
+        .event-list { display: flex; flex-direction: column; gap: 8px; }
+        .event-item {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            background: white; padding: 12px; border-radius: var(--radius-md);
+            font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .event-name { font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 8px; margin-bottom: 2px;}
+        .event-tag { 
+            font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; 
+            text-transform: uppercase; font-weight: 700; letter-spacing: 0.02em;
+        }
+        .tag-exp { background: rgba(255, 59, 48, 0.1); color: var(--danger); }
+        .tag-prop { background: rgba(175, 82, 222, 0.1); color: var(--purple); }
+        .event-details { font-size: 0.75rem; color: var(--text-secondary); }
+        .btn-remove { background: none; border: none; color: #C7C7CC; cursor: pointer; padding: 4px; transition: color 0.2s;}
+        .btn-remove:hover { color: var(--danger); }
+
+        /* MAIN DASHBOARD */
+        .dashboard-main {
+            background: var(--bg-body);
+            padding: 40px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
+            gap: 32px;
         }
 
+        .dash-header {
+            display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; flex-wrap: wrap; gap: 20px;
+        }
+        .header-title h2 {
+            font-size: 1.75rem; font-weight: 700; margin: 0; color: var(--primary); letter-spacing: -0.02em;
+        }
+        .header-title p {
+            margin: 4px 0 0 0; color: var(--text-secondary); font-size: 0.95rem;
+        }
+
+        /* Alert Box */
+        .alert-box {
+            background: #FEF2F2; border: 1px solid #FECACA; padding: 16px; border-radius: 12px;
+            display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
+            margin-bottom: 10px;
+        }
+        .alert-icon { font-size: 1.5rem; }
+        .alert-content h4 { margin: 0 0 4px 0; color: #991B1B; font-size: 0.95rem; }
+        .alert-content p { margin: 0; color: #B91C1C; font-size: 0.85rem; line-height: 1.4; }
+
+        /* Scenarios Tabs (Segmented Control style) */
+        .tabs {
+            display: flex; background: #E5E5EA; padding: 4px; border-radius: 10px; width: fit-content;
+        }
+        .tab {
+            padding: 6px 16px; font-size: 0.85rem; font-weight: 500; border-radius: 7px; cursor: pointer; color: var(--text-secondary); transition: all 0.2s;
+        }
+        .tab:hover { color: var(--primary); }
+        .tab.active { background: white; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-weight: 600; }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px;
+        }
+        .kpi-card {
+            background: var(--bg-card); padding: 24px; border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card); position: relative; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 140px;
+        }
+        .kpi-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: transparent;
+        }
+        .kpi-card.accent-dark::before { background: var(--primary); }
+        .kpi-card.accent-blue::before { background: var(--epf-color); }
+        .kpi-card.accent-purple::before { background: var(--prop-color); }
+        .kpi-card.accent-green::before { background: var(--cash-color); }
+
+        .kpi-label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: 8px;}
+        .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--primary); letter-spacing: -0.03em; margin-bottom: 4px; }
+        .kpi-sub { font-size: 0.85rem; color: var(--text-secondary); }
+
+        /* Chart Area */
+        .chart-container {
+            background: var(--bg-card); border-radius: 24px; padding: 32px;
+            box-shadow: var(--shadow-card); min-height: 520px; display: flex; flex-direction: column;
+        }
         .view-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid var(--border-subtle);
-            padding-bottom: 10px;
+            display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--border-light); padding-bottom: 16px;
         }
         .view-tab {
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            color: var(--text-muted);
-            transition: 0.2s;
+            padding: 8px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; color: var(--text-secondary);
         }
-        .view-tab:hover { background: var(--bg-panel); color: var(--primary); }
-        .view-tab.active { background: var(--bg-panel); color: var(--primary); box-shadow: var(--shadow-sm); }
+        .view-tab:hover { background: var(--bg-input); color: var(--primary); }
+        .view-tab.active { background: var(--bg-input); color: var(--primary); font-weight: 600; }
 
-        .chart-header {
-            display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;
-        }
-        .chart-title { font-weight: 600; color: var(--primary); }
-        .chart-legend { display: flex; gap: 15px; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 20px;}
+        .chart-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+        .chart-legend { display: flex; gap: 16px; font-size: 0.85rem; color: var(--text-secondary); }
         .legend-item { display: flex; align-items: center; gap: 6px; }
         .dot { width: 10px; height: 10px; border-radius: 50%; }
 
-        #projectionCanvas {
-            width: 100%;
-            height: 320px;
-            cursor: crosshair;
-        }
+        #projectionCanvas { width: 100%; height: 360px; cursor: crosshair; }
 
         /* Data Table */
         .data-table-wrapper {
-            max-height: 320px;
-            overflow-y: auto;
-            width: 100%;
-            border: 1px solid var(--border-subtle);
-            border-radius: 8px;
+            max-height: 360px; overflow-y: auto; width: 100%; border: 1px solid var(--border-light); border-radius: 12px;
         }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-            text-align: right;
-        }
-        .data-table th, .data-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border-subtle);
-        }
-        .data-table th {
-            background: var(--bg-panel);
-            position: sticky;
-            top: 0;
-            font-weight: 600;
-            color: var(--text-muted);
-            z-index: 10;
-        }
-        .data-table tr:hover { background: #f8fafc; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: right; }
+        .data-table th, .data-table td { padding: 14px 16px; border-bottom: 1px solid var(--border-light); }
+        .data-table th { background: #F9F9F9; position: sticky; top: 0; font-weight: 600; color: var(--text-secondary); text-align: right;}
         .data-table td.col-age { text-align: center; font-weight: 600; color: var(--primary); }
-        .data-table td.col-epf { color: var(--epf-color); }
-        .data-table td.col-cash { color: var(--cash-color); }
-        .data-table td.col-boost { color: var(--boost-color); font-weight:600; }
+        .data-table td.col-epf { color: var(--epf-color); font-feature-settings: "tnum"; }
+        .data-table td.col-cash { color: var(--cash-color); font-feature-settings: "tnum"; }
+        .data-table td.col-boost { color: var(--boost-color); font-weight:600; font-feature-settings: "tnum"; }
 
-        /* Account Breakdown */
-        .breakdown-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
-        }
-
+        /* Breakdown Panels */
+        .breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
         .panel {
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border-subtle);
-            padding: 20px;
+            background: var(--bg-card); border-radius: 20px; border: 1px solid rgba(0,0,0,0.04); padding: 24px; box-shadow: var(--shadow-sm);
         }
+        .panel-header { font-weight: 700; font-size: 1rem; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: baseline;}
         
-        .panel-header { font-weight: 600; margin-bottom: 15px; display: flex; justify-content: space-between; }
-
         .account-bar {
-            display: flex; height: 40px; width: 100%; border-radius: 8px; overflow: hidden; margin: 15px 0;
+            display: flex; height: 10px; width: 100%; border-radius: 6px; overflow: hidden; margin: 16px 0; background: #F2F2F7;
         }
-        .acc-segment { height: 100%; transition: width 1s ease; position: relative; }
-        .acc-1 { background: var(--primary); }
-        .acc-2 { background: var(--accent); }
-        .acc-3 { background: #94a3b8; }
+        .acc-1 { background: var(--epf-color); }
         
-        .acc-legend { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); }
-        .acc-item strong { display: block; color: var(--text-main); font-size: 1rem; }
-
-        /* Analysis List */
-        .analysis-item {
-            display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-start;
-        }
+        .analysis-item { display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-start; }
         .icon-box {
-            width: 36px; height: 36px; border-radius: 8px; background: var(--bg-panel);
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+            width: 40px; height: 40px; border-radius: 12px; background: var(--bg-input);
+            display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;
         }
-        .analysis-text strong { display: block; color: var(--primary); font-size: 0.9rem; margin-bottom: 2px;}
-        .analysis-text p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+        .analysis-text strong { display: block; color: var(--primary); font-size: 0.95rem; margin-bottom: 4px; }
+        .analysis-text p { margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
 
-        /* Scenario Tabs */
-        .tabs {
-            display: flex; background: var(--bg-panel); padding: 4px; border-radius: 8px; width: fit-content; margin-bottom: 20px;
+        /* Print Override */
+        @media print {
+            .sidebar, .tabs, .view-tabs, .btn, .btn-reset, .logo-mark, .action-bar, .btn-add, .btn-remove { display: none !important; }
+            .app-container { display: block; height: auto; overflow: visible; }
+            .dashboard-main { padding: 0; background: white; }
+            .chart-container, .kpi-card, .panel { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; margin-bottom: 20px; }
+            .chart-header { flex-direction: column; align-items: flex-start; }
+            body { font-size: 12px; background: white; color: black; }
         }
-        .tab {
-            padding: 8px 16px; font-size: 0.85rem; font-weight: 600; border-radius: 6px; cursor: pointer; color: var(--text-muted); transition: all 0.2s;
-        }
-        .tab.active { background: white; color: var(--primary); box-shadow: var(--shadow-sm); }
 
-        /* Mobile Adjustments */
+        /* Mobile */
         @media (max-width: 1023px) {
-            .sidebar { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--border-subtle); }
+            .sidebar { height: auto; border-right: none; border-bottom: 1px solid rgba(0,0,0,0.1); position: relative; }
             .form-grid { grid-template-columns: 1fr; }
             .kpi-grid { grid-template-columns: 1fr; }
+            .dashboard-main { padding: 20px; }
         }
-
-        /* Utility */
-        .text-emerald { color: var(--cash-color); }
-        .text-red { color: var(--danger); }
-        .font-mono { font-family: 'SF Mono', 'Monaco', 'Courier New', monospace; letter-spacing: -0.5px;}
-
     </style>
 </head>
 <body>
 
 <div class="app-container">
     
-    <!-- LEFT SIDEBAR: CONTROLS -->
+    <!-- LEFT SIDEBAR -->
     <aside class="sidebar">
         <div class="header-brand">
             <div class="logo-mark">KWSP</div>
@@ -486,9 +464,9 @@
                 </div>
             </div>
             
-            <div style="background:var(--bg-panel); padding:12px; border-radius:8px; border:1px solid var(--border-subtle);">
-                <label class="toggle-row" style="margin-bottom:8px;">
-                    <span style="font-size:0.85rem; font-weight:500;">Auto LHDN (2024 Rates)</span>
+            <div style="background:var(--bg-card); padding:16px; border-radius:12px; border:1px solid rgba(0,0,0,0.05);">
+                <label class="toggle-row" style="margin-bottom:12px;">
+                    <span style="font-size:0.9rem; font-weight:500;">Auto LHDN Tax (2024)</span>
                     <input type="checkbox" id="useLHDN" checked class="save-me" onchange="toggleTaxInput()">
                     <div class="toggle-switch"></div>
                 </label>
@@ -497,28 +475,35 @@
                     <label class="input-label">Est. Tax Rate (%)</label>
                     <input type="number" id="taxRate" value="5" class="input-field save-me" oninput="calculate()">
                 </div>
-                <div id="lhdnInfo" style="font-size:0.75rem; color:var(--text-muted);">
-                    Uses progressive Malaysia tax brackets (0-30%).
+                <div id="lhdnInfo" style="font-size:0.75rem; color:var(--text-secondary); line-height:1.4;">
+                    Calculates progressive tax brackets (0-30%) automatically.
                 </div>
             </div>
         </div>
 
-        <!-- NEW: Super Boost Strategy -->
+        <!-- Super Boost Strategy -->
         <div class="input-section">
-            <div class="section-title">Strategy: Super Boost</div>
+            <div class="section-title">Strategy</div>
             <div class="boost-box">
                 <div class="boost-header">
-                    <span class="boost-badge">EPF MAX</span>
-                    <span>Safety First Injection</span>
+                    <div>
+                        <span class="boost-badge">EPF MAX</span>
+                        <span style="margin-left:8px; font-weight:600; font-size:0.9rem;">Safety Injection</span>
+                    </div>
                 </div>
-                <label class="toggle-row" style="margin-bottom:10px;">
-                    <span style="font-size:0.85rem; font-weight:500;">Enable Strategy</span>
+                
+                <div class="explanation-box">
+                    <strong>Smart Move:</strong> Automatically sweep "idle cash" above your safety buffer into EPF to earn ~5.5% instead of ~3%, maximizing compound interest safely.
+                </div>
+
+                <label class="toggle-row" style="margin:16px 0;">
+                    <span style="font-size:0.9rem; font-weight:500;">Enable Strategy</span>
                     <input type="checkbox" id="boostEnabled" class="save-me" onchange="toggleBoostUI()">
                     <div class="toggle-switch"></div>
                 </label>
                 
                 <div id="boostUI" style="display:none;">
-                    <div class="form-grid" style="gap:10px; margin-bottom:10px;">
+                    <div class="form-grid" style="gap:12px; margin-bottom:12px;">
                         <div>
                             <label class="input-label">Start Age</label>
                             <input type="number" id="boostStartAge" value="45" class="input-field save-me" oninput="calculate()">
@@ -529,35 +514,39 @@
                         </div>
                     </div>
                     
-                    <div class="input-group" style="margin-bottom:10px;">
+                    <div class="input-group" style="margin-bottom:12px;">
                         <label class="input-label">Max Annual Boost (RM)</label>
                         <input type="text" inputmode="numeric" id="boostAmount" value="60,000" class="input-field money-input save-me">
-                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Only uses surplus cash. Cap: 100k/yr total</div>
+                        <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">Uses surplus only</div>
                     </div>
 
                     <div class="input-group">
                         <label class="input-label">Safety Buffer (Months)</label>
                         <input type="number" id="boostBuffer" value="6" class="input-field save-me" oninput="calculate()">
-                        <div style="font-size:0.7rem; color:#b45309; margin-top:2px;" id="bufferInfo">Min Cash kept: RM 18,000</div>
+                        <div style="font-size:0.7rem; color:var(--warning); margin-top:4px; font-weight:500;" id="bufferInfo">Min Cash kept: RM 18,000</div>
                     </div>
                     
                     <div id="boostSuggestion" class="boost-feedback">
                         Checking stability...
                     </div>
+                    
+                    <div id="taxSavingsBadge" class="info-pill" style="display:none;">
+                        🎉 Tax Saved: RM 0
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- NEW: Life Events -->
+        <!-- Life Events -->
         <div class="input-section">
             <div class="section-title">Life Events & Assets</div>
             <div id="eventList" class="event-list">
-                <!-- JS will pop this -->
+                <!-- JS Populated -->
             </div>
             
             <button class="btn-add" onclick="toggleAddEventUI()">+ Add Event / Asset</button>
             
-            <div id="addEventUI" style="display:none; background:var(--bg-panel); padding:12px; border-radius:8px; margin-top:10px; border:1px solid var(--border-subtle);">
+            <div id="addEventUI" style="display:none; background:var(--bg-card); padding:16px; border-radius:12px; margin-top:10px; border:1px solid rgba(0,0,0,0.05); box-shadow:var(--shadow-sm);">
                 
                 <div class="input-label">Event Type</div>
                 <select id="eventType" class="input-field" style="margin-bottom:12px;" onchange="toggleEventTypeUI()">
@@ -601,13 +590,10 @@
                             <input type="number" id="propGrow" value="3.5" class="input-field">
                         </div>
                     </div>
-                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px;">
-                        *KL Avg Growth: ~3-4%
-                    </div>
                 </div>
 
-                <div style="display:flex; gap:8px; margin-top:15px;">
-                    <button class="btn" style="flex:1; background:#fff; border:1px solid #ddd;" onclick="toggleAddEventUI()">Cancel</button>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button class="btn" style="flex:1; background:#F2F2F7; color:var(--primary);" onclick="toggleAddEventUI()">Cancel</button>
                     <button class="btn btn-primary" style="flex:1;" onclick="addEvent()">Add</button>
                 </div>
             </div>
@@ -640,34 +626,49 @@
                     <input type="number" id="dividendRate" value="5.5" class="input-field save-me" oninput="calculate()">
                 </div>
             </div>
+            
+            <!-- BONUS SECTION -->
+            <div style="background:var(--bg-card); padding:16px; border-radius:12px; border:1px solid rgba(0,0,0,0.05); margin-top:16px;">
+                <div class="input-label" style="margin-bottom:8px;">Annual Bonus</div>
+                <div style="display:flex; gap:8px; margin-bottom:12px;">
+                    <select id="bonusType" class="input-field save-me" onchange="toggleBonusUI()">
+                        <option value="months" selected>Months of Salary</option>
+                        <option value="fixed">Fixed Amount</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <input type="text" inputmode="numeric" id="bonusVal" value="2.0" class="input-field money-input save-me" placeholder="2.0" oninput="calculate()">
+                    <span class="input-addon" id="bonusAddon">Months</span>
+                </div>
+            </div>
         </div>
 
         <div class="input-section">
             <div class="section-title">Spending & Drawdown</div>
             <div class="input-group">
-                <label class="input-label">Monthly Expense (Today)</label>
+                <label class="input-label">Monthly Living Cost</label>
                 <input type="text" inputmode="numeric" id="monthlySpend" value="3,000" class="input-field money-input save-me">
                 <span class="input-addon">RM</span>
             </div>
             <div class="input-group">
-                <label class="input-label">Expense Growth / Inflation (%)</label>
+                <label class="input-label">Inflation Rate (%)</label>
                 <input type="number" id="inflationRate" value="3.0" class="input-field save-me" oninput="calculate()">
             </div>
-            <!-- RESTORED: Burn Cash First Toggle -->
-            <div style="background:var(--bg-panel); padding:12px; border-radius:8px; margin-top:5px; border:1px solid var(--border-subtle);">
+            
+            <div style="background:var(--bg-card); padding:16px; border-radius:12px; margin-top:8px; border:1px solid rgba(0,0,0,0.05);">
                 <label class="toggle-row">
-                    <span style="font-size:0.85rem; font-weight:500;">Burn Cash First</span>
+                    <span style="font-size:0.9rem; font-weight:500;">Burn Cash First</span>
                     <input type="checkbox" id="burnCashFirst" checked class="save-me" onchange="calculate()">
                     <div class="toggle-switch"></div>
                 </label>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:5px; line-height:1.3;">
-                    If ON, retirement expenses are paid from Cash Savings until depleted, allowing EPF to compound longer.
+                <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:6px; line-height:1.4;">
+                    If ON, spending draws from Cash Savings first, letting EPF compound longer.
                 </div>
             </div>
         </div>
 
         <div style="margin-top:auto;">
-            <button class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;" onclick="window.print()">
+            <button class="btn btn-primary" style="width:100%; justify-content:center; padding:14px; font-size:1rem;" onclick="window.print()">
                 Print Report
             </button>
             <button class="btn-reset" onclick="resetData()">Reset Data to Default</button>
@@ -680,7 +681,7 @@
         <header class="dash-header">
             <div class="header-title">
                 <h2>Financial Lifecycle</h2>
-                <p>Accumulation, Assets & Drawdown</p>
+                <p>Accumulation, Assets & Drawdown Analysis</p>
             </div>
             <div class="tabs">
                 <div class="tab active" onclick="setScenario('base', this)">Base Case (5.5%)</div>
@@ -688,6 +689,15 @@
                 <div class="tab" onclick="setScenario('bear', this)">Bear (4.5%)</div>
             </div>
         </header>
+        
+        <!-- NEW ALERT BOX FOR CASH INSOLVENCY -->
+        <div id="insolvencyAlert" class="alert-box" style="display:none;">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-content">
+                <h4>Cash Liquidity Crisis</h4>
+                <p>Your liquid cash is fully depleted at <strong id="insolvencyAge">Age X</strong>. Even if you have EPF or Property wealth, having zero cash is dangerous for emergencies. Try reducing Boost/Top-up or checking your expenses.</p>
+            </div>
+        </div>
 
         <!-- KPI CARDS -->
         <div class="kpi-grid">
@@ -731,7 +741,7 @@
                     </div>
                 </div>
                 <canvas id="projectionCanvas"></canvas>
-                <div style="font-size:0.75rem; color:#94a3b8; text-align:center; margin-top:5px;">
+                <div style="font-size:0.75rem; color:var(--text-secondary); text-align:center; margin-top:12px;">
                     Golden Line = Cumulative Self Contribution (TopUp + Boost)
                 </div>
             </div>
@@ -764,7 +774,7 @@
             <div class="panel">
                 <div class="panel-header">
                     <span>Retirement Snapshot</span>
-                    <span style="font-weight:400; font-size:0.85rem; color:var(--text-muted)">At Age <span id="snapAge">55</span></span>
+                    <span style="font-weight:400; font-size:0.9rem; color:var(--text-secondary)">At Age <span id="snapAge">55</span></span>
                 </div>
                 
                 <div style="margin-bottom:15px;">
@@ -782,7 +792,7 @@
                         <span style="color:var(--epf-color)">EPF Corpus</span>
                         <span id="snapEpf">RM 0</span>
                     </div>
-                    <div class="account-bar" style="margin:0; height:8px; background:#eff6ff;">
+                    <div class="account-bar" style="margin:0; height:8px; background:rgba(0,122,255,0.1);">
                         <div style="width:100%; background:var(--epf-color); border-radius:10px;"></div>
                     </div>
                 </div>
@@ -792,19 +802,19 @@
                         <span style="color:var(--prop-color)">Prop. Equity</span>
                         <span id="snapProp">RM 0</span>
                     </div>
-                    <div class="account-bar" style="margin:0; height:8px; background:#f5f3ff;">
+                    <div class="account-bar" style="margin:0; height:8px; background:rgba(175, 82, 222, 0.1);">
                         <div style="width:100%; background:var(--prop-color); border-radius:10px;"></div>
                     </div>
                 </div>
                 
-                <div style="margin-top:20px; padding:15px; background:var(--bg-panel); border-radius:8px; font-size:0.85rem;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                        <span>Monthly Expense Need:</span>
-                        <span class="font-mono" style="color:#ef4444" id="snapExp">RM 0</span>
+                <div style="margin-top:24px; padding:16px; background:var(--bg-body); border-radius:12px; font-size:0.9rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span>Monthly Living Cost:</span>
+                        <span class="font-mono" style="color:var(--danger); font-weight:600;" id="snapExp">RM 0</span>
                     </div>
                     <div style="display:flex; justify-content:space-between;">
                         <span>Projected Tax Paid:</span>
-                        <span class="font-mono" id="valTax">RM 0</span>
+                        <span class="font-mono" style="color:var(--text-secondary);" id="valTax">RM 0</span>
                     </div>
                 </div>
             </div>
@@ -833,6 +843,7 @@
 
     // --- CONSTANTS ---
     const EPF_SELF_CONTRIB_LIMIT = 100000; // Annual Limit
+    const TAX_RELIEF_LIMIT = 7000; // Standard Relief Limit for EPF
 
     // --- UTILS & CALCULATORS ---
     const formatMoney = (num) => "RM " + num.toLocaleString('en-MY', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -852,8 +863,9 @@
         return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
     }
 
-    function calculateLHDNTax(annualIncome) {
-        const taxable = Math.max(0, annualIncome - 11000); 
+    function calculateLHDNTax(annualIncome, epfDeduction) {
+        let reliefs = 11000 + Math.min(epfDeduction, TAX_RELIEF_LIMIT); 
+        const taxable = Math.max(0, annualIncome - reliefs); 
         let tax = 0;
         if (taxable <= 5000) return 0;
         if (taxable > 5000) tax += Math.min(15000, taxable - 5000) * 0.01;
@@ -956,6 +968,7 @@
             
             // Check boost UI state
             toggleBoostUI();
+            toggleBonusUI();
 
         } catch (e) {
             console.error("Failed to load save data", e);
@@ -998,6 +1011,23 @@
         const enabled = document.getElementById('boostEnabled').checked;
         document.getElementById('boostUI').style.display = enabled ? 'block' : 'none';
         saveData();
+        calculate();
+    }
+
+    function toggleBonusUI() {
+        const type = document.getElementById('bonusType').value;
+        const addon = document.getElementById('bonusAddon');
+        const input = document.getElementById('bonusVal');
+        
+        if (type === 'months') {
+            addon.innerText = "Months";
+            input.placeholder = "2.0";
+            if(input.value == "1,000") input.value = "2.0"; 
+        } else {
+            addon.innerText = "RM";
+            input.placeholder = "1,000";
+            if(input.value == "2.0") input.value = "1,000";
+        }
         calculate();
     }
 
@@ -1102,6 +1132,10 @@
         const topUp = parseMoney('topUp');
         const monthlySpend = parseMoney('monthlySpend');
 
+        // Bonus Inputs
+        const bonusType = document.getElementById('bonusType').value;
+        const bonusVal = parseMoney('bonusVal'); 
+
         const empRate = parseFloat(document.getElementById('employeeRate').value) / 100;
         const emprRate = parseFloat(document.getElementById('employerRate').value) / 100;
         const increment = parseFloat(document.getElementById('salaryIncrement').value) / 100;
@@ -1132,12 +1166,16 @@
         let currentSalary = salary;
         let currentCOL = monthlySpend; 
         let totalTaxPaid = 0;
+        let totalTaxSavings = 0; 
         
         // Boost tracking
         let totalBoosted = 0;
         let cumulativeSelfContrib = 0;
         let boostActualStart = null;
         let boostActualEnd = null;
+
+        // Insolvency Tracking (New Feature)
+        let firstZeroCashAge = null;
 
         // Assets
         let properties = []; 
@@ -1155,7 +1193,7 @@
         let brokeAge = null;
         
         let annualOneTime = 0; 
-        let annualSelfContrib = 0; // Tracks yearly TopUp + Boost additions
+        let annualSelfContrib = 0; 
 
         // Table HTML Builder
         let tableRows = '';
@@ -1169,8 +1207,10 @@
                 annualOneTime = 0;
                 annualSelfContrib = 0;
                 
-                if (!isRetired) currentSalary *= (1 + increment);
-                currentCOL *= (1 + inflation);
+                if (!isRetired && i > 0) {
+                    currentSalary *= (1 + increment);
+                    currentCOL *= (1 + inflation);
+                }
             }
 
             // --- 1. EVENT TRIGGER ---
@@ -1227,21 +1267,32 @@
             // --- 3. CASH FLOW & BOOST ---
             if (!isRetired) {
                 let epfIn = currentSalary * (empRate + emprRate);
-                
-                // --- NEW INTEGRATED BOOST LOGIC ---
-                // Total Allowable Self Contrib = RM 100,000 / year
-                // We process monthly: 8333.33 / month limit
+                let cashBonusIn = 0;
+                let epfBonusIn = 0;
+
+                if ((i + 1) % 12 === 0) {
+                    let bonusAmt = 0;
+                    if (bonusType === 'months') {
+                        bonusAmt = currentSalary * bonusVal;
+                    } else {
+                        bonusAmt = bonusVal; 
+                    }
+
+                    if (bonusAmt > 0) {
+                        let bonusEpf = bonusAmt * (empRate + emprRate);
+                        epfBonusIn = bonusEpf;
+                        let employeeBonusDed = bonusAmt * empRate;
+                        cashBonusIn = bonusAmt - employeeBonusDed; 
+                    }
+                }
+
+                // --- BOOST LOGIC ---
                 let monthlySelfLimit = EPF_SELF_CONTRIB_LIMIT / 12;
-                
-                // 1. Regular Top Up
                 let regularTopUp = Math.min(topUp, monthlySelfLimit);
                 let remainingSpace = monthlySelfLimit - regularTopUp;
                 
-                // 2. Super Boost (Fills remaining space)
                 let boostIn = 0;
                 if (boostEnabled && remainingSpace > 0) {
-                    // Check age window
-                    // Use integer comparison for stability
                     let startMonthIdx = (boostStart - age) * 12;
                     let endMonthIdx = (boostStart + boostDuration - age) * 12;
                     
@@ -1250,13 +1301,12 @@
                         let surplus = currentCash - requiredBuffer;
                         
                         if (surplus > 0) {
-                            // Boost Target (Monthly slice of annual goal)
-                            let targetBoost = boostMaxAmount / 12;
-                            // Actual Boost = Min(Target, RemainingSpace, AvailableCash)
-                            boostIn = Math.min(targetBoost, remainingSpace, surplus);
+                            let monthlyCap = boostMaxAmount / 12; 
+                            let inject = Math.min(monthlyCap, remainingSpace, surplus);
                             
-                            currentCash -= boostIn;
-                            totalBoosted += boostIn;
+                            currentCash -= inject;
+                            totalBoosted += inject;
+                            boostIn = inject;
                             
                             if(boostActualStart === null) boostActualStart = currentRealAge;
                             boostActualEnd = currentRealAge;
@@ -1268,24 +1318,36 @@
                 annualSelfContrib += totalMonthlySelf;
                 cumulativeSelfContrib += totalMonthlySelf;
 
-                // Add to EPF (Contributions + Boost + TopUp) -> Then Interest
-                currentEpf += epfIn + totalMonthlySelf;
+                currentEpf += epfIn + totalMonthlySelf + epfBonusIn;
                 currentEpf *= (1 + (divRate / 12));
 
-                // Tax & Net Income
                 let monthlyTax = 0;
                 if (useLHDN) {
-                    monthlyTax = calculateLHDNTax(currentSalary * 12) / 12;
+                    let projectedAnnualIncome = (currentSalary * 12) + (bonusType==='months'?currentSalary*bonusVal : bonusVal);
+                    let mandatoryEPF = projectedAnnualIncome * empRate; 
+                    let annualSelf = totalMonthlySelf * 12; 
+                    let taxWithVoluntary = calculateLHDNTax(projectedAnnualIncome, mandatoryEPF + annualSelf);
+                    let taxWithoutVoluntary = calculateLHDNTax(projectedAnnualIncome, mandatoryEPF);
+                    
+                    monthlyTax = taxWithVoluntary / 12;
+                    totalTaxSavings += Math.max(0, (taxWithoutVoluntary - taxWithVoluntary) / 12);
                 } else {
-                    monthlyTax = currentSalary * manualTaxRate;
+                    let monthlyIncomeForTax = currentSalary + (cashBonusIn > 0 ? (bonusType==='months'?currentSalary*bonusVal : bonusVal) : 0);
+                    monthlyTax = monthlyIncomeForTax * manualTaxRate; 
                 }
                 totalTaxPaid += monthlyTax;
 
                 let netIncome = currentSalary - (currentSalary * empRate) - monthlyTax;
-                let cashIn = netIncome - currentCOL - topUp - totalLoanPayment; 
+                let cashIn = netIncome - currentCOL - topUp - totalLoanPayment + cashBonusIn; 
                 
                 currentCash += cashIn;
                 if (currentCash > 0) currentCash += currentCash * (0.03 / 12);
+                
+                // INSOLVENCY CHECK (While Working)
+                // We check after cash flows for the month are done
+                if (currentCash <= 0 && firstZeroCashAge === null && i > 0) {
+                    firstZeroCashAge = currentRealAge;
+                }
                 
                 retireWealth = currentEpf + currentCash + totalNetEquity;
                 retireCash = currentCash;
@@ -1294,7 +1356,6 @@
                 expenseAtRetire = currentCOL;
 
             } else {
-                // Retirement Phase
                 currentEpf += currentEpf * (divRate / 12);
                 if (currentCash > 0) currentCash += currentCash * (0.03 / 12);
 
@@ -1332,8 +1393,6 @@
 
             let totalNW = liquidAssets + totalNetEquity;
 
-            // --- RECORD DATA AT END OF YEAR ---
-            // i+1 is divisible by 12 means we just finished a full year block
             if ((i + 1) % 12 === 0) {
                 historyWealth.push(totalNW);
                 historyExpenses.push(currentCOL * 12);
@@ -1350,7 +1409,6 @@
                     yearOneTime: annualOneTime
                 });
 
-                // Add Row to Table
                 tableRows += `
                     <tr>
                         <td class="col-age">${Math.floor(currentRealAge)}</td>
@@ -1366,7 +1424,18 @@
         const tBody = document.getElementById('tableBody');
         if (tBody) tBody.innerHTML = tableRows;
 
-        updateBoostFeedback(boostEnabled, boostActualStart, boostActualEnd, totalBoosted, boostDuration, boostMaxAmount);
+        // INSOLVENCY ALERT LOGIC
+        const alertBox = document.getElementById('insolvencyAlert');
+        const alertText = document.getElementById('insolvencyAge');
+        
+        if (firstZeroCashAge !== null) {
+            alertBox.style.display = 'flex';
+            alertText.innerText = "Age " + Math.floor(firstZeroCashAge);
+        } else {
+            alertBox.style.display = 'none';
+        }
+
+        updateBoostFeedback(boostEnabled, boostActualStart, boostActualEnd, totalBoosted, boostDuration, boostMaxAmount, totalTaxSavings);
 
         state.chartData = {
             wealth: historyWealth,
@@ -1375,10 +1444,10 @@
             boost: historyBoost,
             startAge: age,
             retireAge: retireAge,
-            maxAge: maxAge
+            maxAge: maxAge,
+            insolvencyAge: firstZeroCashAge // Pass to chart for rendering line
         };
 
-        // UI Updates with Safe Set Text
         safeSetText('kpiAgeRef', retireAge);
         safeSetText('kpiTotal', formatCompact(retireWealth));
         safeSetText('kpiEpfRetire', formatCompact(retireEpf));
@@ -1406,19 +1475,31 @@
         safeSetText('snapExp', formatCompact(expenseAtRetire) + "/mo");
         safeSetText('valTax', formatCompact(totalTaxPaid));
 
-        generateAnalysis(brokeAge, maxAge, retireEquity, totalBoosted);
+        generateAnalysis(brokeAge, maxAge, retireEquity, totalBoosted, firstZeroCashAge);
         renderChart(null);
     }
 
-    function updateBoostFeedback(enabled, start, end, total, duration, maxYearly) {
+    function updateBoostFeedback(enabled, start, end, total, duration, maxYearly, taxSavings) {
         const box = document.getElementById('boostSuggestion');
+        const badge = document.getElementById('taxSavingsBadge');
+        
         if (!box) return;
         
         if (!enabled) {
             box.style.display = 'none';
+            if(badge) badge.style.display = 'none';
             return;
         }
         box.style.display = 'block';
+        
+        if (badge) {
+            if (taxSavings > 0) {
+                badge.style.display = 'inline-flex';
+                badge.innerText = `🎉 Tax Saved: ${formatCompact(taxSavings)}`;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
         
         if (total === 0) {
             box.className = 'boost-feedback feedback-warn';
@@ -1428,7 +1509,6 @@
 
         const yearsActive = (end - start).toFixed(1);
         
-        // Slightly looser tolerance for feedback
         if (yearsActive < (duration - 0.8)) {
             box.className = 'boost-feedback feedback-warn';
             box.innerHTML = `⚠️ <strong>High Risk / Low Funds:</strong> Injected <strong>${formatCompact(total)}</strong> total.<br>You were only capable of injecting between <strong>Age ${Math.floor(start)} to ${Math.floor(end)}</strong> due to low surplus funds.`;
@@ -1438,11 +1518,20 @@
         }
     }
 
-    function generateAnalysis(brokeAge, maxAge, equity, totalBoosted) {
+    function generateAnalysis(brokeAge, maxAge, equity, totalBoosted, insolvencyAge) {
         const container = document.getElementById('analysisContainer');
         if (!container) return;
         
         let items = [];
+
+        // NEW: INSOLVENCY CHECK
+        if (insolvencyAge) {
+             items.push({
+                icon: '🚨',
+                title: 'CRITICAL: Working Cash Depleted',
+                desc: `You run out of liquid cash at <strong>Age ${Math.floor(insolvencyAge)}</strong> while still working. This is dangerous! Please reduce your Boost/Top-up or increase savings.`
+            });
+        }
 
         if (totalBoosted > 0) {
              items.push({
@@ -1463,7 +1552,7 @@
         if (brokeAge) {
              items.push({
                 icon: '📉',
-                title: 'Liquidity Crunch',
+                title: 'Retirement Crunch',
                 desc: `Your <strong>liquid funds</strong> (Cash/EPF) run out at Age ${brokeAge.toFixed(1)}.`
             });
         } else {
@@ -1499,7 +1588,7 @@
         if (!state.chartData) return;
         if (!canvas) return;
         
-        const { wealth, expenses, split, boost, startAge, retireAge, maxAge } = state.chartData;
+        const { wealth, expenses, split, boost, startAge, retireAge, maxAge, insolvencyAge } = state.chartData;
         const ctx = canvas.getContext('2d');
         
         const dpr = window.devicePixelRatio || 1;
@@ -1553,6 +1642,19 @@
                 ctx.font = 'bold 10px Inter';
                 ctx.fillText("RETIRE", x, padding.top - 10);
             }
+            
+            // INSOLVENCY MARKER (Red Line)
+            if(insolvencyAge && Math.floor(age) === Math.floor(insolvencyAge)) {
+                ctx.beginPath();
+                ctx.strokeStyle = '#FF3B30';
+                ctx.lineWidth = 2;
+                ctx.moveTo(x, padding.top);
+                ctx.lineTo(x, height - padding.bottom);
+                ctx.stroke();
+                ctx.fillStyle = '#B91C1C';
+                ctx.font = 'bold 10px Inter';
+                ctx.fillText("CASH TRAP", x, padding.top - 20);
+            }
 
             if(age % 10 === 0 || age === startAge || age === maxAge) {
                 ctx.fillStyle = '#64748b';
@@ -1562,7 +1664,6 @@
         }
 
         // --- STACKED AREAS ---
-        // Layer 1: EPF
         ctx.beginPath();
         split.forEach((pt, i) => {
             const x = padding.left + (i * xStep);
@@ -1571,10 +1672,9 @@
             ctx.lineTo(x, y);
         });
         ctx.lineTo(padding.left + ((split.length-1)*xStep), height - padding.bottom);
-        ctx.fillStyle = '#3b82f6';
+        ctx.fillStyle = '#007AFF'; /* System Blue */
         ctx.fill();
 
-        // Layer 2: Cash (on EPF)
         ctx.beginPath();
         split.forEach((pt, i) => {
             const x = padding.left + (i * xStep);
@@ -1586,10 +1686,9 @@
         for(let i=split.length-1; i>=0; i--) {
             ctx.lineTo(padding.left + (i*xStep), getY(split[i].epf));
         }
-        ctx.fillStyle = '#10b981';
+        ctx.fillStyle = '#34C759'; /* System Green */
         ctx.fill();
 
-        // Layer 3: Equity (on Cash)
         ctx.beginPath();
         split.forEach((pt, i) => {
             const x = padding.left + (i * xStep);
@@ -1601,12 +1700,12 @@
         for(let i=split.length-1; i>=0; i--) {
             ctx.lineTo(padding.left + (i*xStep), getY(split[i].epf + split[i].cash));
         }
-        ctx.fillStyle = '#8b5cf6';
+        ctx.fillStyle = '#AF52DE'; /* System Purple */
         ctx.fill();
 
         // Expenses
         ctx.beginPath();
-        ctx.strokeStyle = '#ef4444';
+        ctx.strokeStyle = '#FF3B30';
         ctx.lineWidth = 2;
         expenses.forEach((val, i) => {
             const x = padding.left + (i * xStep);
@@ -1618,7 +1717,7 @@
         // --- GOLDEN BOOST LINE ---
         if (boost && boost.length > 0 && Math.max(...boost) > 0) {
             ctx.beginPath();
-            ctx.strokeStyle = '#f59e0b'; // Amber-500
+            ctx.strokeStyle = '#FF9500'; /* System Orange */
             ctx.lineWidth = 3;
             ctx.lineJoin = 'round';
             boost.forEach((val, i) => {
@@ -1628,7 +1727,6 @@
             });
             ctx.stroke();
             
-            // Add label at end of line
             const lastIdx = boost.length - 1;
             const lastVal = boost[lastIdx];
             if (lastVal > 0) {
@@ -1649,66 +1747,62 @@
             const dataSplit = split[idx];
             
             ctx.beginPath();
-            ctx.strokeStyle = '#94a3b8';
+            ctx.strokeStyle = '#86868B';
             ctx.lineWidth = 1;
             ctx.moveTo(pointX, padding.top);
             ctx.lineTo(pointX, height - padding.bottom);
             ctx.stroke();
 
-            const tipW = 180;
-            const tipH = 160;
+            const tipW = 200;
+            const tipH = 170;
             let tipX = pointX + 15;
             let tipY = padding.top + 10;
             if (tipX + tipW > width) tipX = pointX - tipW - 15;
             
             ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-            ctx.shadowBlur = 8;
-            ctx.shadowColor = 'rgba(0,0,0,0.15)';
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'rgba(0,0,0,0.1)';
             ctx.fillRect(tipX, tipY, tipW, tipH);
             ctx.shadowBlur = 0;
-            ctx.strokeStyle = '#cbd5e1';
+            ctx.strokeStyle = 'rgba(0,0,0,0.05)';
             ctx.strokeRect(tipX, tipY, tipW, tipH);
 
             ctx.textAlign = 'left';
-            ctx.fillStyle = '#0f172a';
+            ctx.fillStyle = '#1D1D1F';
+            ctx.font = 'bold 13px Inter';
+            ctx.fillText(`Age: ${dataSplit.age}`, tipX + 12, tipY + 24);
+            
+            ctx.font = '12px Inter';
+            ctx.fillStyle = '#FF9500';
+            ctx.fillText(`Self Contrib: ${formatCompact(dataSplit.boostTotal)}`, tipX + 12, tipY + 46);
+
+            ctx.fillStyle = '#AF52DE';
+            ctx.fillText(`Equity: ${formatCompact(dataSplit.equity)}`, tipX + 12, tipY + 64);
+            
+            ctx.fillStyle = '#34C759';
+            ctx.fillText(`Cash: ${formatCompact(dataSplit.cash)}`, tipX + 12, tipY + 82);
+            
+            ctx.fillStyle = '#007AFF';
+            ctx.fillText(`EPF: ${formatCompact(dataSplit.epf)}`, tipX + 12, tipY + 100);
+
+            ctx.fillStyle = '#1D1D1F';
             ctx.font = 'bold 12px Inter';
-            ctx.fillText(`Age: ${dataSplit.age}`, tipX + 10, tipY + 20);
-            
-            // WEALTH SECTION
-            ctx.font = '11px Inter';
-            ctx.fillStyle = '#f59e0b';
-            ctx.fillText(`Self Contrib: ${formatCompact(dataSplit.boostTotal)}`, tipX + 10, tipY + 40);
+            ctx.fillText(`Net Worth: ${formatCompact(valWealth)}`, tipX + 12, tipY + 124);
 
-            ctx.fillStyle = '#8b5cf6';
-            ctx.fillText(`Equity: ${formatCompact(dataSplit.equity)}`, tipX + 10, tipY + 56);
-            
-            ctx.fillStyle = '#10b981';
-            ctx.fillText(`Cash: ${formatCompact(dataSplit.cash)}`, tipX + 10, tipY + 72);
-            
-            ctx.fillStyle = '#3b82f6';
-            ctx.fillText(`EPF: ${formatCompact(dataSplit.epf)}`, tipX + 10, tipY + 88);
-
-            ctx.fillStyle = '#0f172a';
-            ctx.font = 'bold 11px Inter';
-            ctx.fillText(`Net Worth: ${formatCompact(valWealth)}`, tipX + 10, tipY + 108);
-
-            // EXPENSE BREAKDOWN SECTION
-            let yCursor = tipY + 128;
-            ctx.fillStyle = '#64748b';
+            let yCursor = tipY + 146;
+            ctx.fillStyle = '#86868B';
             ctx.font = '10px Inter';
-            ctx.fillText("MONTHLY OUTFLOW:", tipX + 10, yCursor);
-            yCursor += 14;
+            ctx.fillText("OUTFLOW:", tipX + 12, yCursor);
 
-            ctx.fillStyle = '#ef4444';
+            ctx.fillStyle = '#FF3B30';
             ctx.font = '11px Inter';
-            ctx.fillText(`Living: ${formatCompact(dataSplit.monthlyLiving)}`, tipX + 10, yCursor);
-            ctx.fillText(`Loans: ${formatCompact(dataSplit.monthlyLoan)}`, tipX + 90, yCursor);
-            yCursor += 14;
+            ctx.fillText(`Living: ${formatCompact(dataSplit.monthlyLiving)}`, tipX + 65, yCursor);
             
             if(dataSplit.yearOneTime > 0) {
-                ctx.fillStyle = '#dc2626';
-                ctx.font = 'bold 10px Inter';
-                ctx.fillText(`⚠️ One-Off: ${formatCompact(dataSplit.yearOneTime)}`, tipX + 10, yCursor);
+                yCursor += 16;
+                ctx.fillStyle = '#FF3B30';
+                ctx.font = 'bold 11px Inter';
+                ctx.fillText(`⚠️ One-Off: ${formatCompact(dataSplit.yearOneTime)}`, tipX + 12, yCursor);
             }
         }
     }
