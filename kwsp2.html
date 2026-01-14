@@ -88,7 +88,7 @@
         }
 
         .logo-mark {
-            width: 36px; height: 36px;
+            width: 55px; height: 36px;
             background: linear-gradient(135deg, #007AFF, #00C7BE);
             border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
@@ -278,9 +278,15 @@
         }
         .tag-exp { background: rgba(255, 59, 48, 0.1); color: var(--danger); }
         .tag-prop { background: rgba(175, 82, 222, 0.1); color: var(--purple); }
+        .tag-income { background: rgba(52, 199, 89, 0.1); color: var(--success); }
+        
         .event-details { font-size: 0.75rem; color: var(--text-secondary); }
         .btn-remove { background: none; border: none; color: #C7C7CC; cursor: pointer; padding: 4px; transition: color 0.2s;}
         .btn-remove:hover { color: var(--danger); }
+        
+        .income-note {
+            font-size: 0.7rem; color: var(--text-secondary); margin-top: 8px; background: #FEF3C7; color: #92400E; padding: 6px 10px; border-radius: 8px; line-height: 1.3;
+        }
 
         /* MAIN DASHBOARD */
         .dashboard-main {
@@ -552,7 +558,12 @@
                 <select id="eventType" class="input-field" style="margin-bottom:12px;" onchange="toggleEventTypeUI()">
                     <option value="expense">One-time Expense</option>
                     <option value="property">Buy Property (Loan)</option>
+                    <option value="income">Cash Windfall / Income</option>
                 </select>
+
+                <div id="incomeNote" class="income-note" style="display:none; margin-bottom:12px;">
+                    ⚠️ Note: Adding future windfalls (inheritance, lottery) is a prediction. Ensure this income is guaranteed before relying on it for retirement planning.
+                </div>
 
                 <div class="input-label">Description</div>
                 <input type="text" id="newEventName" placeholder="e.g. Dream House" class="input-field" style="margin-bottom:12px;">
@@ -589,6 +600,9 @@
                             <div class="input-label">Apprec. (%)</div>
                             <input type="number" id="propGrow" value="3.5" class="input-field">
                         </div>
+                    </div>
+                    <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:6px;">
+                        *KL Avg Growth: ~3-4%
                     </div>
                 </div>
 
@@ -1040,13 +1054,20 @@
         const type = document.getElementById('eventType').value;
         const propFields = document.getElementById('propertyFields');
         const costLabel = document.getElementById('costLabel');
+        const note = document.getElementById('incomeNote');
         
         if (type === 'property') {
             if(propFields) propFields.style.display = 'block';
             safeSetText('costLabel', "Property Price (RM)");
+            if(note) note.style.display = 'none';
+        } else if (type === 'income') {
+            if(propFields) propFields.style.display = 'none';
+            safeSetText('costLabel', "Amount (RM)");
+            if(note) note.style.display = 'block';
         } else {
             if(propFields) propFields.style.display = 'none';
             safeSetText('costLabel', "Total Cost (RM)");
+            if(note) note.style.display = 'none';
         }
     }
 
@@ -1095,13 +1116,18 @@
         if(!container) return;
         
         container.innerHTML = state.lifeEvents.map((evt, i) => {
-            let badge = evt.type === 'property' ? '<span class="event-tag tag-prop">Property</span>' : '<span class="event-tag tag-exp">Expense</span>';
+            let badge = '';
             let details = `Age ${evt.age}`;
-            
-            if (evt.type === 'property') {
+
+            if(evt.type === 'property') {
+                badge = '<span class="event-tag tag-prop">Property</span>';
                 details += ` • ${formatCompact(evt.cost)}`;
                 details += `<br>Loan: ${formatCompact(evt.monthlyPayment)}/mo (${evt.years}yrs)`;
+            } else if (evt.type === 'income') {
+                badge = '<span class="event-tag tag-income">Income</span>';
+                details += ` • +${formatCompact(evt.cost)}`;
             } else {
+                badge = '<span class="event-tag tag-exp">Expense</span>';
                 details += ` • ${formatCompact(evt.cost)}`;
             }
 
@@ -1194,6 +1220,7 @@
         
         let annualOneTime = 0; 
         let annualSelfContrib = 0; 
+        let annualWindfall = 0;
 
         // Table HTML Builder
         let tableRows = '';
@@ -1206,10 +1233,14 @@
             if (i > 0 && i % 12 === 0) {
                 annualOneTime = 0;
                 annualSelfContrib = 0;
+                annualWindfall = 0;
                 
-                if (!isRetired && i > 0) {
+                // FIXED: Inflation affects expenses regardless of retirement status
+                currentCOL *= (1 + inflation);
+
+                // Salary increment only applies while working
+                if (!isRetired) {
                     currentSalary *= (1 + increment);
-                    currentCOL *= (1 + inflation);
                 }
             }
 
@@ -1244,6 +1275,10 @@
                             monthlyPayment: evt.monthlyPayment,
                             monthsRemaining: evt.years * 12
                         });
+                    } else if (evt.type === 'income') {
+                        // Income Windfall
+                        currentCash += evt.cost;
+                        annualWindfall += evt.cost;
                     }
                 }
             });
@@ -1406,7 +1441,8 @@
                     boostTotal: cumulativeSelfContrib,
                     monthlyLiving: currentCOL,
                     monthlyLoan: totalLoanPayment,
-                    yearOneTime: annualOneTime
+                    yearOneTime: annualOneTime,
+                    yearWindfall: annualWindfall // Pass windfall to tooltip
                 });
 
                 tableRows += `
@@ -1754,7 +1790,7 @@
             ctx.stroke();
 
             const tipW = 200;
-            const tipH = 170;
+            const tipH = 190; // Increased height for windfall line
             let tipX = pointX + 15;
             let tipY = padding.top + 10;
             if (tipX + tipW > width) tipX = pointX - tipW - 15;
@@ -1790,6 +1826,15 @@
             ctx.fillText(`Net Worth: ${formatCompact(valWealth)}`, tipX + 12, tipY + 124);
 
             let yCursor = tipY + 146;
+            
+            // Show Windfall if present
+            if (dataSplit.yearWindfall && dataSplit.yearWindfall > 0) {
+                 ctx.fillStyle = '#34C759';
+                 ctx.font = 'bold 11px Inter';
+                 ctx.fillText(`💰 Windfall: +${formatCompact(dataSplit.yearWindfall)}`, tipX + 12, yCursor);
+                 yCursor += 22; // Move down for expense section
+            }
+
             ctx.fillStyle = '#86868B';
             ctx.font = '10px Inter';
             ctx.fillText("OUTFLOW:", tipX + 12, yCursor);
