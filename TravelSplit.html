@@ -5,17 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Expense Splitter</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- LZ-String for URL Compression (Added for Sharing) -->
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     
     <style>
@@ -26,20 +22,18 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Mobile Scaling: Reduce base size by ~10% on small screens */
+        /* Mobile Scaling: Reduce base size by ~10% on small screens for better density */
         @media (max-width: 640px) {
-            html {
-                font-size: 14px; /* Standard is 16px, so this is ~87.5% scale */
-            }
+            html { font-size: 14px; }
         }
 
-        /* Minimalist Scrollbar */
+        /* Minimalist Scrollbar Styling */
         ::-webkit-scrollbar { height: 6px; width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #d4d4d4; }
 
-        /* Animations */
+        /* Animation Utilities */
         .animate-fade-in { animation: fadeIn 0.3s ease-out; }
         .animate-slide-up { animation: slideUp 0.3s ease-out; }
 
@@ -52,30 +46,13 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Marquee Animation */
-        .marquee-container {
-            overflow: hidden;
-            white-space: nowrap;
-            position: relative;
-        }
-        
-        .marquee-content {
-            display: inline-block;
-            animation: marquee 10s linear infinite;
-            padding-right: 2rem; /* Spacing between loop */
-        }
-
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-
-        .marquee-container:hover .marquee-content {
-            animation-play-state: paused;
-        }
+        /* Marquee Animation for long names */
+        .marquee-container { overflow: hidden; white-space: nowrap; position: relative; }
+        .marquee-content { display: inline-block; animation: marquee 10s linear infinite; padding-right: 2rem; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .marquee-container:hover .marquee-content { animation-play-state: paused; }
     </style>
     
-    <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -84,7 +61,9 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- Currency Constants ---
+        /* =========================================
+           CONSTANTS & CONFIG
+           ========================================= */
         const CURRENCIES = {
             'USD': { symbol: '$', label: 'USD ($)' },
             'RM': { symbol: 'RM', label: 'RM (MYR)' },
@@ -97,11 +76,11 @@
             'AUD': { symbol: 'A$', label: 'AUD ($)' }
         };
 
-        // --- Icons ---
+        /* =========================================
+           ICON COMPONENTS (SVG)
+           ========================================= */
         const Icon = ({ children, size = 20, className = "" }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`${className} pointer-events-none`}>
-                {children}
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`${className} pointer-events-none`}>{children}</svg>
         );
 
         const Plus = (props) => <Icon {...props}><path d="M5 12h14M12 5v14"/></Icon>;
@@ -118,14 +97,13 @@
         const Percent = (props) => <Icon {...props}><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></Icon>;
         const CheckCircle = (props) => <Icon {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Icon>;
         const Globe = (props) => <Icon {...props}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></Icon>;
-        
-        // Added Icons for Sharing
         const Share2 = (props) => <Icon {...props}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></Icon>;
         const LinkIcon = (props) => <Icon {...props}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></Icon>;
         const Check = (props) => <Icon {...props}><polyline points="20 6 9 17 4 12"/></Icon>;
 
-
-        // --- UI Components ---
+        /* =========================================
+           GENERIC UI COMPONENTS
+           ========================================= */
 
         const Card = ({ children, className = "", onClick }) => (
             <div onClick={onClick} className={`bg-white border border-gray-100 rounded-xl shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] ${className}`}>
@@ -174,7 +152,10 @@
             </div>
         );
 
-        // --- Marquee Component ---
+        /* =========================================
+           HELPER COMPONENTS
+           ========================================= */
+
         const MarqueeText = ({ text }) => {
             const containerRef = useRef(null);
             const [shouldMarquee, setShouldMarquee] = useState(false);
@@ -198,8 +179,6 @@
             );
         };
 
-        // --- Modals ---
-
         const ModalOverlay = ({ isOpen, onClose, children }) => {
             if (!isOpen) return null;
             return (
@@ -211,6 +190,10 @@
                 </div>
             );
         };
+
+        /* =========================================
+           FEATURE MODALS
+           ========================================= */
 
         const ActionModal = ({ config, onClose }) => {
             if (!config.isOpen) return null;
@@ -253,40 +236,19 @@
             }, [isOpen, data]);
 
             const copyToClipboard = () => {
-                // Try modern API first
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(link).then(() => {
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                    }).catch(err => {
-                        console.error('Clipboard API failed, trying fallback', err);
-                        fallbackCopy(link);
-                    });
-                } else {
-                    fallbackCopy(link);
-                }
-            };
-
-            const fallbackCopy = (text) => {
-                try {
+                const copyText = (text) => {
                     const textArea = document.createElement("textarea");
                     textArea.value = text;
-                    textArea.style.position = "fixed";
-                    textArea.style.left = "-9999px";
+                    textArea.style.position = "fixed"; textArea.style.left = "-9999px";
                     document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    
-                    const successful = document.execCommand('copy');
+                    textArea.focus(); textArea.select();
+                    try { document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 2000); } 
+                    catch (err) { console.error('Fallback copy failed', err); }
                     document.body.removeChild(textArea);
-                    
-                    if (successful) {
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                    }
-                } catch (err) {
-                    console.error('Fallback copy failed', err);
-                }
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(link).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(() => copyText(link));
+                } else { copyText(link); }
             };
 
             return (
@@ -299,24 +261,18 @@
                             <h3 className="text-lg font-bold text-gray-900">Share Balance</h3>
                             <p className="text-sm text-gray-500 mt-1">Anyone with this link can view the current balance and expenses.</p>
                         </div>
-                        
                         <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4 flex items-center gap-2">
-                            <div className="bg-white p-1.5 rounded border border-gray-200">
-                                <LinkIcon size={14} className="text-gray-400"/>
-                            </div>
+                            <div className="bg-white p-1.5 rounded border border-gray-200"><LinkIcon size={14} className="text-gray-400"/></div>
                             <input readOnly value={link} className="bg-transparent flex-1 text-xs text-gray-600 outline-none truncate" />
                         </div>
-
-                        <Button onClick={copyToClipboard} className={`w-full ${copied ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-900'}`}>
-                            {copied ? <><Check size={16}/> Copied!</> : 'Copy Link'}
-                        </Button>
+                        <Button onClick={copyToClipboard} className={`w-full ${copied ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-900'}`}>{copied ? <><Check size={16}/> Copied!</> : 'Copy Link'}</Button>
                     </div>
                 </ModalOverlay>
             );
         };
 
         const SettlementDetailModal = ({ user, transactions, onClose, onSettle, currencySymbol }) => {
-            const [settleMode, setSettleMode] = useState(null); // { toUser: string, maxAmount: number }
+            const [settleMode, setSettleMode] = useState(null);
             const [amount, setAmount] = useState('');
 
             if (!user) return null;
@@ -349,7 +305,7 @@
                         <div className="text-center">
                             <h2 className="text-2xl font-bold text-gray-900">{user}</h2>
                             <p className={`text-sm font-medium mt-1 ${netBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                {netBalance >= 0 ? `Get back ${currencySymbol}${netBalance.toFixed(2)}` : `Owe total ${currencySymbol}${Math.abs(netBalance).toFixed(2)}`}
+                                {netBalance >= 0 ? `Net: +${currencySymbol}${netBalance.toFixed(2)}` : `Net: -${currencySymbol}${Math.abs(netBalance).toFixed(2)}`}
                             </p>
                         </div>
 
@@ -359,13 +315,7 @@
                                     <h3 className="font-semibold text-gray-900">Pay {settleMode.toUser}</h3>
                                     <button onClick={() => setSettleMode(null)} className="text-xs text-gray-400 hover:text-gray-900">Cancel</button>
                                 </div>
-                                <Input 
-                                    label="Amount" 
-                                    type="number" 
-                                    value={amount} 
-                                    onChange={e => setAmount(e.target.value)} 
-                                    prefixIcon={currencySymbol} 
-                                />
+                                <Input label="Amount" type="number" value={amount} onChange={e => setAmount(e.target.value)} prefixIcon={currencySymbol} />
                                 <div className="flex gap-2">
                                     <Button variant="secondary" className="flex-1 text-xs py-2" onClick={() => setAmount(settleMode.maxAmount.toString())}>Full {currencySymbol}{settleMode.maxAmount}</Button>
                                     <Button variant="primary" className="flex-1 text-xs py-2" onClick={confirmSettle}>Confirm Payment</Button>
@@ -569,83 +519,84 @@
             );
         };
 
-        // --- Main App Logic ---
+        /* =========================================
+           MAIN APP LOGIC
+           ========================================= */
 
         const App = () => {
-            // State
+            // State: Persistent Data
             const [travelers, setTravelers] = useState(() => JSON.parse(localStorage.getItem('travelers')) || []);
             const [receipts, setReceipts] = useState(() => JSON.parse(localStorage.getItem('receipts')) || []);
             const [currencyCode, setCurrencyCode] = useState(() => localStorage.getItem('currencyCode') || 'USD');
-            const [view, setView] = useState('dashboard');
             
-            // UI State
+            // State: UI View Management
+            const [view, setView] = useState('dashboard');
             const [selectedReceipt, setSelectedReceipt] = useState(null);
             const [selectedUserForSettlement, setSelectedUserForSettlement] = useState(null);
             const [isSidebarOpen, setIsSidebarOpen] = useState(false);
             const [isShareModalOpen, setIsShareModalOpen] = useState(false);
             const [newTravelerName, setNewTravelerName] = useState('');
             const [actionConfig, setActionConfig] = useState({ isOpen: false });
-
-            // Hidden Reset Feature State
+            
+            // State: Hidden Feature
             const [logoClicks, setLogoClicks] = useState(0);
 
             // Derived
             const currencySymbol = CURRENCIES[currencyCode].symbol;
 
+            // Persistence
             useEffect(() => {
                 localStorage.setItem('travelers', JSON.stringify(travelers));
                 localStorage.setItem('receipts', JSON.stringify(receipts));
                 localStorage.setItem('currencyCode', currencyCode);
             }, [travelers, receipts, currencyCode]);
 
+            /* PAIRWISE DEBT LOGIC */
             const settlement = useMemo(() => {
-                const balances = {};
-                travelers.forEach(t => balances[t] = 0);
+                const debtMatrix = {}; 
+                travelers.forEach(t1 => {
+                    debtMatrix[t1] = {};
+                    travelers.forEach(t2 => { if(t1 !== t2) debtMatrix[t1][t2] = 0; });
+                });
+
                 receipts.forEach(r => {
-                    if (balances[r.payer] !== undefined) balances[r.payer] += parseFloat(r.total);
-                    r.splitDetails.forEach(s => {
-                        if (balances[s.name] !== undefined) balances[s.name] -= parseFloat(s.amount);
+                    const payer = r.payer;
+                    r.splitDetails.forEach(split => {
+                        const debtor = split.name;
+                        const amount = parseFloat(split.amount);
+                        if (payer !== debtor && debtMatrix[debtor] && debtMatrix[debtor][payer] !== undefined) {
+                            debtMatrix[debtor][payer] += amount;
+                        }
                     });
                 });
-                
-                const debtors = [], creditors = [];
-                Object.keys(balances).forEach(p => {
-                    const amount = Math.round(balances[p] * 100) / 100;
-                    if (amount < -0.01) debtors.push({ name: p, amount });
-                    if (amount > 0.01) creditors.push({ name: p, amount });
-                });
-                
-                debtors.sort((a, b) => a.amount - b.amount);
-                creditors.sort((a, b) => b.amount - a.amount);
-                
+
                 const transactions = [];
-                let i = 0, j = 0;
-                while (i < debtors.length && j < creditors.length) {
-                    const debtor = debtors[i], creditor = creditors[j];
-                    const amount = Math.min(Math.abs(debtor.amount), creditor.amount);
-                    if (amount > 0.01) transactions.push({ from: debtor.name, to: creditor.name, amount: amount.toFixed(2) });
-                    debtor.amount += amount;
-                    creditor.amount -= amount;
-                    if (Math.abs(debtor.amount) < 0.01) i++;
-                    if (creditor.amount < 0.01) j++;
-                }
+                const processedPairs = new Set();
+
+                travelers.forEach(p1 => {
+                    travelers.forEach(p2 => {
+                        if (p1 === p2) return;
+                        const pairKey = [p1, p2].sort().join('-');
+                        if (processedPairs.has(pairKey)) return;
+                        processedPairs.add(pairKey);
+
+                        const p1OwesP2 = debtMatrix[p1][p2] || 0;
+                        const p2OwesP1 = debtMatrix[p2][p1] || 0;
+                        const net = p1OwesP2 - p2OwesP1;
+
+                        if (net > 0.01) {
+                            transactions.push({ from: p1, to: p2, amount: net.toFixed(2) });
+                        } else if (net < -0.01) {
+                            transactions.push({ from: p2, to: p1, amount: Math.abs(net).toFixed(2) });
+                        }
+                    });
+                });
                 return transactions;
             }, [receipts, travelers]);
 
-            const userBalances = useMemo(() => {
-                const balances = {};
-                travelers.forEach(t => balances[t] = 0);
-                settlement.forEach(t => {
-                    if(balances[t.from] !== undefined) balances[t.from] -= parseFloat(t.amount);
-                    if(balances[t.to] !== undefined) balances[t.to] += parseFloat(t.amount);
-                });
-                return balances;
-            }, [settlement, travelers]);
-
-            const handleLogoClick = () => {
-                setLogoClicks(prev => prev + 1);
-            };
-
+            // Handlers
+            const handleLogoClick = () => setLogoClicks(prev => prev + 1);
+            
             const handleResetData = () => {
                 setActionConfig({
                     isOpen: true,
@@ -676,7 +627,6 @@
                     mode: 'payment', 
                     type: 'payment'
                 };
-                
                 setReceipts(prev => [newReceipt, ...prev]);
             };
 
@@ -698,70 +648,105 @@
                     return;
                 }
                 setActionConfig({
-                    isOpen: true, title: 'Confirm Removal', message: `Remove ${name} from the group?`, type: 'danger', confirmText: 'Remove',
+                    isOpen: true,
+                    title: 'Confirm Removal',
+                    message: `Remove ${name} from the group?`,
+                    type: 'danger',
+                    confirmText: 'Remove',
                     onConfirm: () => setTravelers(prev => prev.filter(t => t !== name))
                 });
             };
 
             const deleteReceipt = (id) => {
                 setActionConfig({
-                    isOpen: true, title: 'Delete Item', message: 'This action cannot be undone.', type: 'danger', confirmText: 'Delete',
+                    isOpen: true,
+                    title: 'Delete Item',
+                    message: 'This action cannot be undone.',
+                    type: 'danger',
+                    confirmText: 'Delete',
                     onConfirm: () => { setReceipts(prev => prev.filter(r => r.id !== id)); setSelectedReceipt(null); }
                 });
             };
 
-            const AddReceiptForm = ({ onOpenSidebar }) => { // Accept prop here
-                const [title, setTitle] = useState('');
-                const [payer, setPayer] = useState(travelers[0] || '');
-                const [splitMode, setSplitMode] = useState('equal');
-                const [amount, setAmount] = useState('');
-                const [taxType, setTaxType] = useState('fixed'); 
-                const [taxValue, setTaxValue] = useState('');
+            // ADD EXPENSE COMPONENT
+            const AddReceiptForm = ({ onOpenSidebar }) => {
+                const [title, setTitle] = useState(''); 
+                const [payer, setPayer] = useState(travelers[0] || ''); 
+                const [splitMode, setSplitMode] = useState('equal'); 
+                const [amount, setAmount] = useState(''); 
+                const [taxType, setTaxType] = useState('percent');
+                const [taxValue, setTaxValue] = useState(''); 
                 const [selectedPeople, setSelectedPeople] = useState(travelers.reduce((acc, t) => ({ ...acc, [t]: true }), {}));
-                const [itemizedAmounts, setItemizedAmounts] = useState(travelers.reduce((acc, t) => ({ ...acc, [t]: '' }), {}));
+                const [itemizedAmounts, setItemizedAmounts] = useState(travelers.reduce((acc, t) => ({ ...acc, [t]: [''] }), {}));
 
-                // Auto-select payer if list changes from empty to not empty
-                useEffect(() => {
-                    if (!payer && travelers.length > 0) {
-                        setPayer(travelers[0]);
-                        // Also reset selected people to include everyone by default if previously empty
+                useEffect(() => { 
+                    if (!payer && travelers.length > 0) { 
+                        setPayer(travelers[0]); 
                         setSelectedPeople(travelers.reduce((acc, t) => ({ ...acc, [t]: true }), {}));
-                    }
+                        setItemizedAmounts(prev => {
+                            const newState = {...prev};
+                            travelers.forEach(t => { if(!newState[t]) newState[t] = ['']; });
+                            return newState;
+                        });
+                    } 
                 }, [travelers.length]);
 
+                const handleItemChange = (person, index, val) => {
+                    const newAmounts = {...itemizedAmounts};
+                    newAmounts[person][index] = val;
+                    setItemizedAmounts(newAmounts);
+                };
+
+                const addItemRow = (person) => {
+                    const newAmounts = {...itemizedAmounts};
+                    newAmounts[person] = [...newAmounts[person], ''];
+                    setItemizedAmounts(newAmounts);
+                };
+
+                const removeItemRow = (person, index) => {
+                    const newAmounts = {...itemizedAmounts};
+                    newAmounts[person] = newAmounts[person].filter((_, i) => i !== index);
+                    setItemizedAmounts(newAmounts);
+                };
+
                 const handleSubmit = () => {
-                    const involved = travelers.filter(t => selectedPeople[t]);
+                    const involved = travelers.filter(t => selectedPeople[t]); 
                     if (involved.length === 0) return setActionConfig({ isOpen: true, title: 'Error', message: 'Select at least one person.' });
                     
-                    let subTotal = 0;
-                    if(splitMode === 'equal') {
-                        subTotal = parseFloat(amount) || 0;
-                    } else {
-                        involved.forEach(p => subTotal += (parseFloat(itemizedAmounts[p]) || 0));
+                    let subTotal = 0; 
+                    if(splitMode === 'equal') { 
+                        subTotal = parseFloat(amount) || 0; 
+                    } else { 
+                        involved.forEach(p => {
+                            const items = itemizedAmounts[p] || [];
+                            items.forEach(v => subTotal += (parseFloat(v) || 0));
+                        }); 
                     }
 
                     if(subTotal <= 0) return setActionConfig({ isOpen: true, title: 'Error', message: 'Enter a valid amount.' });
-
-                    let calculatedTax = 0;
-                    const taxInput = parseFloat(taxValue) || 0;
-                    if (taxType === 'percent') {
-                        calculatedTax = (subTotal * taxInput) / 100;
-                    } else {
-                        calculatedTax = taxInput;
-                    }
-
-                    const finalTotal = subTotal + calculatedTax;
                     
-                    let finalSplit = [];
-                    if (splitMode === 'equal') {
-                        finalSplit = involved.map(p => ({ name: p, amount: finalTotal / involved.length }));
-                    } else {
-                        finalSplit = involved.map(p => {
-                            const base = parseFloat(itemizedAmounts[p]) || 0;
-                            return { name: p, amount: base + (subTotal > 0 ? (base / subTotal) * calculatedTax : (calculatedTax / involved.length)) };
-                        });
+                    let calculatedTax = 0; 
+                    const taxInput = parseFloat(taxValue) || 0;
+                    if (taxType === 'percent') { 
+                        calculatedTax = (subTotal * taxInput) / 100; 
+                    } else { 
+                        calculatedTax = taxInput; 
                     }
-
+                    
+                    const finalTotal = subTotal + calculatedTax;
+                    let finalSplit = []; 
+                    
+                    if (splitMode === 'equal') { 
+                        finalSplit = involved.map(p => ({ name: p, amount: finalTotal / involved.length })); 
+                    } else { 
+                        finalSplit = involved.map(p => { 
+                            const items = itemizedAmounts[p] || [];
+                            let base = 0;
+                            items.forEach(v => base += (parseFloat(v) || 0));
+                            return { name: p, amount: base + (subTotal > 0 ? (base / subTotal) * calculatedTax : (calculatedTax / involved.length)) }; 
+                        }); 
+                    }
+                    
                     const newReceipt = { 
                         id: Date.now(), 
                         title: title || 'Untitled', 
@@ -772,37 +757,21 @@
                         splitDetails: finalSplit, 
                         mode: splitMode 
                     };
-                    setReceipts([newReceipt, ...receipts]);
-                    setView('dashboard');
+                    setReceipts([newReceipt, ...receipts]); setView('dashboard');
                 };
 
                 return (
                     <div className="max-w-2xl mx-auto pt-8 pb-20 px-4 animate-fade-in">
-                        <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-gray-500 hover:text-black mb-6 transition-colors font-medium">
-                            <ArrowLeft size={18} /> Back
-                        </button>
-                        
+                        <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-gray-500 hover:text-black mb-6 transition-colors font-medium"><ArrowLeft size={18} /> Back</button>
                         <div className="space-y-8">
-                            <div>
-                                <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">New Expense</h1>
-                                <p className="text-gray-500">Log a new receipt to split with the group.</p>
-                            </div>
-
+                            <div><h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">New Expense</h1><p className="text-gray-500">Log a new receipt to split with the group.</p></div>
                             <Card className="p-8 space-y-8">
                                 <Input label="Description" placeholder="e.g. Dinner at Mario's" value={title} onChange={e => setTitle(e.target.value)} />
-                                
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-1.5">
                                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Who Paid?</label>
-                                        
-                                        {/* CONDITIONAL RENDER: Check if travelers exist */}
                                         {travelers.length === 0 ? (
-                                            <button 
-                                                onClick={onOpenSidebar}
-                                                className="w-full bg-red-50 border border-red-200 text-red-600 rounded-lg py-2.5 px-3 text-left text-sm font-medium hover:bg-red-100 transition-colors flex justify-between items-center"
-                                            >
-                                                Add Traveler first <Plus size={16}/>
-                                            </button>
+                                            <button onClick={onOpenSidebar} className="w-full bg-red-50 border border-red-200 text-red-600 rounded-lg py-2.5 px-3 text-left text-sm font-medium hover:bg-red-100 transition-colors flex justify-between items-center">Add Traveler first <Plus size={16}/></button>
                                         ) : (
                                             <div className="relative">
                                                 <select className="w-full bg-gray-50 border border-transparent rounded-lg py-2.5 px-3 appearance-none outline-none focus:bg-white focus:ring-1 focus:ring-black cursor-pointer" value={payer} onChange={e => setPayer(e.target.value)}>
@@ -821,12 +790,8 @@
                                             </div>
                                         </div>
                                         <Input 
-                                            placeholder="0" 
-                                            type="number"
-                                            value={taxValue} 
-                                            onChange={e => setTaxValue(e.target.value)} 
-                                            prefixIcon={taxType === 'fixed' ? currencySymbol : null}
-                                            suffixIcon={taxType === 'percent' ? <Percent size={14}/> : null}
+                                            placeholder="0" type="number" value={taxValue} onChange={e => setTaxValue(e.target.value)} 
+                                            prefixIcon={taxType === 'fixed' ? currencySymbol : null} suffixIcon={taxType === 'percent' ? <Percent size={14}/> : null} 
                                         />
                                     </div>
                                 </div>
@@ -835,39 +800,49 @@
                                     <button onClick={() => setSplitMode('equal')} className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${splitMode === 'equal' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}>Split Evenly</button>
                                     <button onClick={() => setSplitMode('itemized')} className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${splitMode === 'itemized' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}>Itemized</button>
                                 </div>
-
+                                
                                 {splitMode === 'equal' ? (
                                     <Input label="Subtotal Amount" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} prefixIcon={currencySymbol} />
                                 ) : (
-                                    <div className="border border-gray-100 rounded-lg p-4 space-y-3 bg-gray-50/50">
+                                    <div className="border border-gray-100 rounded-lg p-4 space-y-4 bg-gray-50/50">
                                         <span className="text-xs font-bold text-gray-400 uppercase">Item Costs (Before Tax)</span>
                                         {travelers.map(t => (
-                                            <div key={t} className="flex items-center justify-between">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input type="checkbox" checked={selectedPeople[t]} onChange={() => setSelectedPeople({...selectedPeople, [t]: !selectedPeople[t]})} className="accent-black w-4 h-4"/>
-                                                    <span className={`text-sm ${selectedPeople[t] ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>{t}</span>
-                                                </label>
-                                                {selectedPeople[t] && <input type="number" placeholder="0.00" className="w-24 bg-white border border-gray-200 rounded px-2 py-1 text-right text-sm outline-none focus:border-black transition-colors" value={itemizedAmounts[t]} onChange={e => setItemizedAmounts({...itemizedAmounts, [t]: e.target.value})} />}
+                                            <div key={t} className="flex flex-col gap-2 p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                        <input type="checkbox" checked={selectedPeople[t]} onChange={() => setSelectedPeople({...selectedPeople, [t]: !selectedPeople[t]})} className="accent-black w-4 h-4"/>
+                                                        <span className={`text-sm font-semibold ${selectedPeople[t] ? 'text-gray-900' : 'text-gray-400'}`}>{t}</span>
+                                                    </label>
+                                                    {selectedPeople[t] && (
+                                                        <button onClick={() => addItemRow(t)} className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 transition-colors">
+                                                            <Plus size={12}/> Add Item
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                
+                                                {selectedPeople[t] && (
+                                                    <div className="space-y-2 pl-6">
+                                                        {(itemizedAmounts[t] || ['']).map((val, idx) => (
+                                                            <div key={idx} className="flex items-center gap-2 animate-fade-in">
+                                                                <input 
+                                                                    type="number" 
+                                                                    placeholder="0.00" 
+                                                                    className="flex-1 bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-right text-sm outline-none focus:border-black transition-colors" 
+                                                                    value={val} 
+                                                                    onChange={e => handleItemChange(t, idx, e.target.value)} 
+                                                                />
+                                                                <button onClick={() => removeItemRow(t, idx)} className="text-gray-400 hover:text-red-500 transition-colors p-1"><X size={14}/></button>
+                                                            </div>
+                                                        ))}
+                                                        {(itemizedAmounts[t] || []).length === 0 && <p className="text-xs text-gray-400 italic">No items added.</p>}
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
                                 )}
-
-                                {splitMode === 'equal' && (
-                                    <div className="space-y-2">
-                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Split With</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {travelers.length === 0 ? (
-                                                <p className="text-sm text-gray-400 italic">No travelers available.</p>
-                                            ) : (
-                                                travelers.map(t => (
-                                                    <button key={t} onClick={() => setSelectedPeople({...selectedPeople, [t]: !selectedPeople[t]})} className={`px-3 py-1.5 text-sm rounded-full border transition-all ${selectedPeople[t] ? 'bg-black border-black text-white' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}>{t}</button>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
+                                
+                                {splitMode === 'equal' && (<div className="space-y-2"><label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Split With</label><div className="flex flex-wrap gap-2">{travelers.length === 0 ? (<p className="text-sm text-gray-400 italic">No travelers available.</p>) : (travelers.map(t => (<button key={t} onClick={() => setSelectedPeople({...selectedPeople, [t]: !selectedPeople[t]})} className={`px-3 py-1.5 text-sm rounded-full border transition-all ${selectedPeople[t] ? 'bg-black border-black text-white' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}>{t}</button>)))}</div></div>)}
                                 <Button className="w-full py-3 text-base" onClick={handleSubmit}>Save Expense</Button>
                             </Card>
                         </div>
@@ -881,23 +856,8 @@
                 <div className="min-h-screen bg-[#fafafa]">
                     <nav className="sticky top-0 z-20 bg-[#fafafa]/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                           <div 
-                                onClick={handleLogoClick}
-                                className="flex items-center gap-2 font-bold text-xl tracking-tight text-gray-900 cursor-pointer select-none"
-                            >
-                                <div className="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center"><Receipt size={18}/></div>
-                                TravelSplit
-                           </div>
-                           
-                           {/* Hidden Reset Button */}
-                           <div className={`overflow-hidden transition-all duration-300 ease-out ${logoClicks >= 3 ? 'w-32 opacity-100 ml-2' : 'w-0 opacity-0'}`}>
-                                <button 
-                                    onClick={handleResetData}
-                                    className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors whitespace-nowrap flex items-center gap-1"
-                                >
-                                    <Trash2 size={12}/> Clear Data
-                                </button>
-                           </div>
+                           <div onClick={handleLogoClick} className="flex items-center gap-2 font-bold text-xl tracking-tight text-gray-900 cursor-pointer select-none"><div className="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center"><Receipt size={18}/></div>TravelSplit</div>
+                           <div className={`overflow-hidden transition-all duration-300 ease-out ${logoClicks >= 3 ? 'w-32 opacity-100 ml-2' : 'w-0 opacity-0'}`}><button onClick={handleResetData} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors whitespace-nowrap flex items-center gap-1"><Trash2 size={12}/> Clear Data</button></div>
                         </div>
                         <div className="flex items-center gap-2">
                             <Button variant="ghost" onClick={() => setIsShareModalOpen(true)} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700"><Share2 size={20}/></Button>
@@ -906,120 +866,62 @@
                     </nav>
 
                     <main className="max-w-4xl mx-auto p-6 md:p-12 space-y-12">
-                        {/* Summary Headers */}
+                        {/* Summary */}
                         <div className="grid grid-cols-2 gap-4">
-                            <Card className="p-6">
-                                <p className="text-xs font-semibold text-gray-500 uppercase">Total Spent</p>
-                                <p className="text-3xl font-bold text-gray-900 mt-2">
-                                    {currencySymbol}{receipts.filter(r => r.type !== 'payment').reduce((acc, r) => acc + parseFloat(r.total), 0).toFixed(0)}
-                                </p>
-                            </Card>
-                            <Card className="p-6">
-                                <p className="text-xs font-semibold text-gray-500 uppercase">Transactions</p>
-                                <p className="text-3xl font-bold text-gray-900 mt-2">{receipts.length}</p>
-                            </Card>
+                            <Card className="p-6"><p className="text-xs font-semibold text-gray-500 uppercase">Total Spent</p><p className="text-3xl font-bold text-gray-900 mt-2">{currencySymbol}{receipts.filter(r => r.type !== 'payment').reduce((acc, r) => acc + parseFloat(r.total), 0).toFixed(0)}</p></Card>
+                            <Card className="p-6"><p className="text-xs font-semibold text-gray-500 uppercase">Transactions</p><p className="text-3xl font-bold text-gray-900 mt-2">{receipts.length}</p></Card>
                         </div>
 
-                        {/* Settlement Section (Cards) */}
+                        {/* Settlement Cards */}
                         <section className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Balances</h2>
-                                <span className="text-xs text-gray-400">Scroll to see more &rarr;</span>
-                            </div>
-                            
+                            <div className="flex justify-between items-center"><h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Balances</h2><span className="text-xs text-gray-400">Scroll to see more &rarr;</span></div>
                             <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
-                                {travelers.length === 0 ? (
-                                    <div className="w-full bg-white border border-dashed border-gray-200 rounded-xl p-8 text-center">
-                                        <p className="text-gray-400 mb-2">No travelers yet</p>
-                                        <button onClick={() => setIsSidebarOpen(true)} className="text-sm font-medium text-black underline">Add people to start</button>
-                                    </div>
-                                ) : (
-                                    travelers.map(user => {
-                                        const bal = userBalances[user] || 0;
-                                        const isOwed = bal >= 0;
-                                        return (
-                                            <Card 
-                                                key={user}
-                                                onClick={() => setSelectedUserForSettlement(user)}
-                                                className="min-w-[160px] max-w-[160px] p-4 flex-shrink-0 snap-center cursor-pointer hover:border-gray-400 transition-all group"
-                                            >
-                                                <div className="mb-8">
-                                                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-sm font-bold text-gray-600 mb-3 group-hover:bg-gray-100 transition-colors">
-                                                        {user.charAt(0)}
+                                {travelers.length === 0 ? (<div className="w-full bg-white border border-dashed border-gray-200 rounded-xl p-8 text-center"><p className="text-gray-400 mb-2">No travelers yet</p><button onClick={() => setIsSidebarOpen(true)} className="text-sm font-medium text-black underline">Add people to start</button></div>) : (travelers.map(user => { 
+                                    const myIncoming = settlement.filter(t => t.to === user);
+                                    const myOutgoing = settlement.filter(t => t.from === user);
+                                    const totalIn = myIncoming.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                                    const totalOut = myOutgoing.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                                    const isSettled = totalIn === 0 && totalOut === 0;
+
+                                    return (
+                                        <Card key={user} onClick={() => setSelectedUserForSettlement(user)} className="min-w-[160px] max-w-[160px] p-4 flex-shrink-0 snap-center cursor-pointer hover:border-gray-400 transition-all group">
+                                            <div className="mb-4">
+                                                <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-sm font-bold text-gray-600 mb-3 group-hover:bg-gray-100 transition-colors">{user.charAt(0)}</div>
+                                                <MarqueeText text={user} />
+                                            </div>
+                                            <div className="space-y-2 pt-2 border-t border-gray-50">
+                                                {totalOut > 0 && (
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Owes</span>
+                                                        <span className="text-sm font-bold text-red-600">-{currencySymbol}{totalOut.toFixed(2)}</span>
                                                     </div>
-                                                    <MarqueeText text={user} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-400 font-medium uppercase mb-1">{isOwed ? 'Gets Back' : 'Owes'}</p>
-                                                    <p className={`text-xl font-bold ${isOwed ? 'text-emerald-600' : 'text-red-600'}`}>
-                                                        {currencySymbol}{Math.abs(bal).toFixed(2)}
-                                                    </p>
-                                                </div>
-                                            </Card>
-                                        );
-                                    })
-                                )}
+                                                )}
+                                                {totalIn > 0 && (
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Gets</span>
+                                                        <span className="text-sm font-bold text-emerald-600">+{currencySymbol}{totalIn.toFixed(2)}</span>
+                                                    </div>
+                                                )}
+                                                {isSettled && (
+                                                    <div className="text-center py-1">
+                                                       <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">Settled</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Card>
+                                    ); 
+                                }))}
                             </div>
                         </section>
 
-                        {/* Recent Activity Section */}
+                        {/* Recent Activity */}
                         <section className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Recent Activity</h2>
-                                <Button variant="primary" onClick={() => setView('addReceipt')} className="shadow-lg shadow-gray-200">
-                                    <Plus size={16}/> New Expense
-                                </Button>
-                            </div>
-
-                            {receipts.length === 0 ? (
-                                <div className="border-2 border-dashed border-gray-100 rounded-xl p-12 text-center">
-                                    <p className="text-gray-400 mb-4">No activity yet</p>
-                                    <Button variant="secondary" onClick={() => setView('addReceipt')}>Add your first expense</Button>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {receipts.map(r => (
-                                        <div 
-                                            key={r.id} 
-                                            onClick={() => setSelectedReceipt(r)}
-                                            className="group bg-white p-5 rounded-xl border border-gray-100 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer flex justify-between items-center"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                {r.type === 'payment' ? (
-                                                    <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold border border-emerald-100">
-                                                        <CheckCircle size={18} />
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-10 h-10 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center text-sm font-bold border border-gray-100">
-                                                        {r.payer.charAt(0)}
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <h3 className={`font-semibold ${r.type === 'payment' ? 'text-emerald-700' : 'text-gray-900'}`}>{r.title}</h3>
-                                                    <p className="text-xs text-gray-500 mt-0.5">{r.payer} paid • {new Date(r.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})}</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className={`block font-mono font-medium ${r.type === 'payment' ? 'text-emerald-600' : 'text-gray-900'}`}>{currencySymbol}{r.total}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            <div className="flex items-center justify-between"><h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Recent Activity</h2><Button variant="primary" onClick={() => setView('addReceipt')} className="shadow-lg shadow-gray-200"><Plus size={16}/> New Expense</Button></div>
+                            {receipts.length === 0 ? (<div className="border-2 border-dashed border-gray-100 rounded-xl p-12 text-center"><p className="text-gray-400 mb-4">No activity yet</p><Button variant="secondary" onClick={() => setView('addReceipt')}>Add your first expense</Button></div>) : (<div className="space-y-3">{receipts.map(r => (<div key={r.id} onClick={() => setSelectedReceipt(r)} className="group bg-white p-5 rounded-xl border border-gray-100 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer flex justify-between items-center"><div className="flex items-center gap-4">{r.type === 'payment' ? (<div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold border border-emerald-100"><CheckCircle size={18} /></div>) : (<div className="w-10 h-10 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center text-sm font-bold border border-gray-100">{r.payer.charAt(0)}</div>)}<div><h3 className={`font-semibold ${r.type === 'payment' ? 'text-emerald-700' : 'text-gray-900'}`}>{r.title}</h3><p className="text-xs text-gray-500 mt-0.5">{r.payer} paid • {new Date(r.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})}</p></div></div><div className="text-right"><span className={`block font-mono font-medium ${r.type === 'payment' ? 'text-emerald-600' : 'text-gray-900'}`}>{currencySymbol}{r.total}</span></div></div>))}</div>)}
                         </section>
                     </main>
 
-                    <Sidebar 
-                        isOpen={isSidebarOpen} 
-                        onClose={() => setIsSidebarOpen(false)} 
-                        travelers={travelers} 
-                        onAdd={addTraveler} 
-                        onRemove={removeTraveler} 
-                        newName={newTravelerName} 
-                        setNewName={setNewTravelerName} 
-                        currency={currencyCode}
-                        setCurrency={setCurrencyCode}
-                    />
+                    <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} travelers={travelers} onAdd={addTraveler} onRemove={removeTraveler} newName={newTravelerName} setNewName={setNewTravelerName} currency={currencyCode} setCurrency={setCurrencyCode} />
                     <ReceiptModal receipt={selectedReceipt} onClose={() => setSelectedReceipt(null)} onDelete={deleteReceipt} onUpdateName={(id, name) => setReceipts(prev => prev.map(r => r.id === id ? {...r, title: name} : r))} currencySymbol={currencySymbol} />
                     <SettlementDetailModal user={selectedUserForSettlement} transactions={settlement} onClose={() => setSelectedUserForSettlement(null)} onSettle={handleSettleDebt} currencySymbol={currencySymbol} />
                     <ActionModal config={actionConfig} onClose={() => setActionConfig({...actionConfig, isOpen: false})} />
