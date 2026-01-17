@@ -23,6 +23,13 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        /* Mobile Scaling: Reduce base size by ~10% on small screens */
+        @media (max-width: 640px) {
+            html {
+                font-size: 14px; /* Standard is 16px, so this is ~87.5% scale */
+            }
+        }
+
         /* Minimalist Scrollbar */
         ::-webkit-scrollbar { height: 6px; width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -74,6 +81,19 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
+        // --- Currency Constants ---
+        const CURRENCIES = {
+            'USD': { symbol: '$', label: 'USD ($)' },
+            'RM': { symbol: 'RM', label: 'RM (MYR)' },
+            'YEN': { symbol: '¥', label: 'YEN (JPY)' },
+            'TWD': { symbol: 'NT$', label: 'TWD (NT$)' },
+            'HKD': { symbol: 'HK$', label: 'HKD ($)' },
+            'SGD': { symbol: 'S$', label: 'SGD ($)' },
+            'IDR': { symbol: 'Rp', label: 'IDR (Rp)' },
+            'THB': { symbol: '฿', label: 'THB (฿)' },
+            'AUD': { symbol: 'A$', label: 'AUD ($)' }
+        };
+
         // --- Icons ---
         const Icon = ({ children, size = 20, className = "" }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`${className} pointer-events-none`}>
@@ -94,8 +114,7 @@
         const AlertCircle = (props) => <Icon {...props}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></Icon>;
         const Percent = (props) => <Icon {...props}><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></Icon>;
         const CheckCircle = (props) => <Icon {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Icon>;
-        const RefreshCw = (props) => <Icon {...props}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></Icon>;
-        const Banknote = (props) => <Icon {...props}><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></Icon>;
+        const Globe = (props) => <Icon {...props}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></Icon>;
 
 
         // --- UI Components ---
@@ -127,7 +146,7 @@
                 {label && <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</label>}
                 <div className="relative group">
                     {prefixIcon && (
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-gray-800 transition-colors">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-gray-800 transition-colors text-sm">
                             {prefixIcon}
                         </div>
                     )}
@@ -136,7 +155,7 @@
                         value={value}
                         onChange={onChange}
                         placeholder={placeholder}
-                        className={`w-full bg-gray-50 border border-transparent rounded-lg py-2.5 ${prefixIcon ? 'pl-10' : 'px-3'} ${suffixIcon ? 'pr-10' : ''} text-gray-900 placeholder-gray-400 outline-none focus:bg-white focus:ring-1 focus:ring-gray-900 transition-all`}
+                        className={`w-full bg-gray-50 border border-transparent rounded-lg py-2.5 ${prefixIcon ? 'pl-10' : 'px-3'} ${suffixIcon ? 'pr-10' : ''} text-gray-900 placeholder-gray-400 outline-none focus:bg-white focus:ring-1 focus:ring-gray-900 transition-all text-sm`}
                     />
                     {suffixIcon && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -210,7 +229,7 @@
             );
         };
 
-        const SettlementDetailModal = ({ user, transactions, onClose, onSettle }) => {
+        const SettlementDetailModal = ({ user, transactions, onClose, onSettle, currencySymbol }) => {
             const [settleMode, setSettleMode] = useState(null); // { toUser: string, maxAmount: number }
             const [amount, setAmount] = useState('');
 
@@ -244,7 +263,7 @@
                         <div className="text-center">
                             <h2 className="text-2xl font-bold text-gray-900">{user}</h2>
                             <p className={`text-sm font-medium mt-1 ${netBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                {netBalance >= 0 ? `Get back $${netBalance.toFixed(2)}` : `Owe total $${Math.abs(netBalance).toFixed(2)}`}
+                                {netBalance >= 0 ? `Get back ${currencySymbol}${netBalance.toFixed(2)}` : `Owe total ${currencySymbol}${Math.abs(netBalance).toFixed(2)}`}
                             </p>
                         </div>
 
@@ -259,10 +278,10 @@
                                     type="number" 
                                     value={amount} 
                                     onChange={e => setAmount(e.target.value)} 
-                                    prefixIcon="$" 
+                                    prefixIcon={currencySymbol} 
                                 />
                                 <div className="flex gap-2">
-                                    <Button variant="secondary" className="flex-1 text-xs py-2" onClick={() => setAmount(settleMode.maxAmount.toString())}>Full ${settleMode.maxAmount}</Button>
+                                    <Button variant="secondary" className="flex-1 text-xs py-2" onClick={() => setAmount(settleMode.maxAmount.toString())}>Full {currencySymbol}{settleMode.maxAmount}</Button>
                                     <Button variant="primary" className="flex-1 text-xs py-2" onClick={confirmSettle}>Confirm Payment</Button>
                                 </div>
                             </div>
@@ -279,7 +298,7 @@
                                                         <span className="text-sm font-bold text-gray-900">{t.to}</span>
                                                     </div>
                                                     <div className="flex items-center gap-3">
-                                                        <span className="text-sm font-bold text-red-700">-${t.amount}</span>
+                                                        <span className="text-sm font-bold text-red-700">-{currencySymbol}{t.amount}</span>
                                                         <button 
                                                             onClick={() => handleSettleClick(t.to, t.amount)}
                                                             className="bg-white text-gray-900 border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-colors shadow-sm"
@@ -303,7 +322,7 @@
                                                         <span className="text-xs text-emerald-500 font-bold uppercase mb-0.5">From</span>
                                                         <span className="text-sm font-bold text-gray-900">{t.from}</span>
                                                     </div>
-                                                    <span className="text-sm font-bold text-emerald-700">+${t.amount}</span>
+                                                    <span className="text-sm font-bold text-emerald-700">+{currencySymbol}{t.amount}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -316,7 +335,7 @@
             );
         };
 
-        const ReceiptModal = ({ receipt, onClose, onDelete, onUpdateName }) => {
+        const ReceiptModal = ({ receipt, onClose, onDelete, onUpdateName, currencySymbol }) => {
             const [isEditing, setIsEditing] = useState(false);
             const [editName, setEditName] = useState(receipt?.title || '');
 
@@ -347,7 +366,7 @@
                                 </div>
                             )}
                             <div className="text-right">
-                                <span className="block text-2xl font-bold text-gray-900">${receipt.total}</span>
+                                <span className="block text-2xl font-bold text-gray-900">{currencySymbol}{receipt.total}</span>
                                 {receipt.type === 'payment' && <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">PAYMENT</span>}
                             </div>
                         </div>
@@ -360,7 +379,7 @@
                                 </div>
                                 <div className="p-4 bg-gray-50 rounded-lg">
                                     <span className="text-xs text-gray-400 font-bold uppercase">Tax & Tip</span>
-                                    <p className="text-gray-900 font-medium mt-1">${receipt.taxTip}</p>
+                                    <p className="text-gray-900 font-medium mt-1">{currencySymbol}{receipt.taxTip}</p>
                                 </div>
                             </div>
                         )}
@@ -376,7 +395,7 @@
                                             </div>
                                             <span className="text-sm text-gray-600">{split.name}</span>
                                         </div>
-                                        <span className="text-sm font-medium text-gray-900">${parseFloat(split.amount).toFixed(2)}</span>
+                                        <span className="text-sm font-medium text-gray-900">{currencySymbol}{parseFloat(split.amount).toFixed(2)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -392,7 +411,7 @@
             );
         };
 
-        const Sidebar = ({ isOpen, onClose, travelers, onAdd, onRemove, newName, setNewName }) => {
+        const Sidebar = ({ isOpen, onClose, travelers, onAdd, onRemove, newName, setNewName, currency, setCurrency }) => {
             return (
                 <>
                     <div className={`fixed inset-0 bg-white/80 backdrop-blur-sm z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={onClose} />
@@ -418,7 +437,7 @@
                                     </div>
                                 </form>
 
-                                <div className="space-y-1">
+                                <div className="space-y-1 mb-8">
                                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 pl-1">Group Members</h3>
                                     {travelers.map(t => (
                                         <div key={t} className="group flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
@@ -438,6 +457,25 @@
                                     ))}
                                     {travelers.length === 0 && <p className="text-sm text-gray-400 italic text-center mt-4">No travelers yet.</p>}
                                 </div>
+
+                                {/* Currency Section */}
+                                <div className="pt-6 border-t border-gray-100">
+                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 pl-1 flex items-center gap-2">
+                                        <Globe size={14}/> Currency
+                                    </h3>
+                                    <div className="relative">
+                                        <select 
+                                            value={currency} 
+                                            onChange={(e) => setCurrency(e.target.value)}
+                                            className="w-full bg-gray-50 border border-transparent rounded-lg py-2.5 px-3 appearance-none outline-none focus:bg-white focus:ring-1 focus:ring-black cursor-pointer text-sm font-medium"
+                                        >
+                                            {Object.keys(CURRENCIES).map(code => (
+                                                <option key={code} value={code}>{CURRENCIES[code].label}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 rotate-90 text-gray-400 pointer-events-none" size={16}/>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -448,9 +486,10 @@
         // --- Main App Logic ---
 
         const App = () => {
-            // UPDATED: Start with empty array instead of default names
+            // State
             const [travelers, setTravelers] = useState(() => JSON.parse(localStorage.getItem('travelers')) || []);
             const [receipts, setReceipts] = useState(() => JSON.parse(localStorage.getItem('receipts')) || []);
+            const [currencyCode, setCurrencyCode] = useState(() => localStorage.getItem('currencyCode') || 'USD');
             const [view, setView] = useState('dashboard');
             
             // UI State
@@ -463,10 +502,14 @@
             // Hidden Reset Feature State
             const [logoClicks, setLogoClicks] = useState(0);
 
+            // Derived
+            const currencySymbol = CURRENCIES[currencyCode].symbol;
+
             useEffect(() => {
                 localStorage.setItem('travelers', JSON.stringify(travelers));
                 localStorage.setItem('receipts', JSON.stringify(receipts));
-            }, [travelers, receipts]);
+                localStorage.setItem('currencyCode', currencyCode);
+            }, [travelers, receipts, currencyCode]);
 
             const settlement = useMemo(() => {
                 const balances = {};
@@ -520,13 +563,14 @@
                 setActionConfig({
                     isOpen: true,
                     title: 'Reset All Data?',
-                    message: 'This will permanently delete all travelers and expenses. This cannot be undone.',
+                    message: 'This will permanently delete all travelers, expenses, and settings. This cannot be undone.',
                     type: 'danger',
                     confirmText: 'Yes, Clear All',
                     onConfirm: () => {
                         localStorage.clear();
-                        setTravelers([]); // Clear travelers here too
+                        setTravelers([]); 
                         setReceipts([]);
+                        setCurrencyCode('USD');
                         setLogoClicks(0);
                         setView('dashboard');
                     }
@@ -685,7 +729,7 @@
                                         <div className="flex justify-between items-center">
                                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Tax & Tip</label>
                                             <div className="flex bg-gray-100 rounded p-0.5">
-                                                <button onClick={()=>setTaxType('fixed')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${taxType==='fixed' ? 'bg-white shadow text-black' : 'text-gray-500'}`}>$</button>
+                                                <button onClick={()=>setTaxType('fixed')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${taxType==='fixed' ? 'bg-white shadow text-black' : 'text-gray-500'}`}>{currencySymbol}</button>
                                                 <button onClick={()=>setTaxType('percent')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${taxType==='percent' ? 'bg-white shadow text-black' : 'text-gray-500'}`}>%</button>
                                             </div>
                                         </div>
@@ -694,7 +738,7 @@
                                             type="number"
                                             value={taxValue} 
                                             onChange={e => setTaxValue(e.target.value)} 
-                                            prefixIcon={taxType === 'fixed' ? <Plus size={14}/> : null}
+                                            prefixIcon={taxType === 'fixed' ? currencySymbol : null}
                                             suffixIcon={taxType === 'percent' ? <Percent size={14}/> : null}
                                         />
                                     </div>
@@ -706,7 +750,7 @@
                                 </div>
 
                                 {splitMode === 'equal' ? (
-                                    <Input label="Subtotal Amount" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} prefixIcon="$" />
+                                    <Input label="Subtotal Amount" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} prefixIcon={currencySymbol} />
                                 ) : (
                                     <div className="border border-gray-100 rounded-lg p-4 space-y-3 bg-gray-50/50">
                                         <span className="text-xs font-bold text-gray-400 uppercase">Item Costs (Before Tax)</span>
@@ -777,7 +821,7 @@
                             <Card className="p-6">
                                 <p className="text-xs font-semibold text-gray-500 uppercase">Total Spent</p>
                                 <p className="text-3xl font-bold text-gray-900 mt-2">
-                                    ${receipts.filter(r => r.type !== 'payment').reduce((acc, r) => acc + parseFloat(r.total), 0).toFixed(0)}
+                                    {currencySymbol}{receipts.filter(r => r.type !== 'payment').reduce((acc, r) => acc + parseFloat(r.total), 0).toFixed(0)}
                                 </p>
                             </Card>
                             <Card className="p-6">
@@ -818,7 +862,7 @@
                                                 <div>
                                                     <p className="text-xs text-gray-400 font-medium uppercase mb-1">{isOwed ? 'Gets Back' : 'Owes'}</p>
                                                     <p className={`text-xl font-bold ${isOwed ? 'text-emerald-600' : 'text-red-600'}`}>
-                                                        ${Math.abs(bal).toFixed(2)}
+                                                        {currencySymbol}{Math.abs(bal).toFixed(2)}
                                                     </p>
                                                 </div>
                                             </Card>
@@ -866,7 +910,7 @@
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <span className={`block font-mono font-medium ${r.type === 'payment' ? 'text-emerald-600' : 'text-gray-900'}`}>${r.total}</span>
+                                                <span className={`block font-mono font-medium ${r.type === 'payment' ? 'text-emerald-600' : 'text-gray-900'}`}>{currencySymbol}{r.total}</span>
                                             </div>
                                         </div>
                                     ))}
@@ -875,9 +919,19 @@
                         </section>
                     </main>
 
-                    <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} travelers={travelers} onAdd={addTraveler} onRemove={removeTraveler} newName={newTravelerName} setNewName={setNewTravelerName} />
-                    <ReceiptModal receipt={selectedReceipt} onClose={() => setSelectedReceipt(null)} onDelete={deleteReceipt} onUpdateName={(id, name) => setReceipts(prev => prev.map(r => r.id === id ? {...r, title: name} : r))} />
-                    <SettlementDetailModal user={selectedUserForSettlement} transactions={settlement} onClose={() => setSelectedUserForSettlement(null)} onSettle={handleSettleDebt} />
+                    <Sidebar 
+                        isOpen={isSidebarOpen} 
+                        onClose={() => setIsSidebarOpen(false)} 
+                        travelers={travelers} 
+                        onAdd={addTraveler} 
+                        onRemove={removeTraveler} 
+                        newName={newTravelerName} 
+                        setNewName={setNewTravelerName} 
+                        currency={currencyCode}
+                        setCurrency={setCurrencyCode}
+                    />
+                    <ReceiptModal receipt={selectedReceipt} onClose={() => setSelectedReceipt(null)} onDelete={deleteReceipt} onUpdateName={(id, name) => setReceipts(prev => prev.map(r => r.id === id ? {...r, title: name} : r))} currencySymbol={currencySymbol} />
+                    <SettlementDetailModal user={selectedUserForSettlement} transactions={settlement} onClose={() => setSelectedUserForSettlement(null)} onSettle={handleSettleDebt} currencySymbol={currencySymbol} />
                     <ActionModal config={actionConfig} onClose={() => setActionConfig({...actionConfig, isOpen: false})} />
                 </div>
             );
