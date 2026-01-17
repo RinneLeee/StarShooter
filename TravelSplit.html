@@ -14,6 +14,9 @@
     
     <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- LZ-String for URL Compression (Added for Sharing) -->
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     
     <style>
         body { 
@@ -115,6 +118,11 @@
         const Percent = (props) => <Icon {...props}><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></Icon>;
         const CheckCircle = (props) => <Icon {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Icon>;
         const Globe = (props) => <Icon {...props}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></Icon>;
+        
+        // Added Icons for Sharing
+        const Share2 = (props) => <Icon {...props}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></Icon>;
+        const LinkIcon = (props) => <Icon {...props}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></Icon>;
+        const Check = (props) => <Icon {...props}><polyline points="20 6 9 17 4 12"/></Icon>;
 
 
         // --- UI Components ---
@@ -224,6 +232,84 @@
                                 {config.confirmText || 'Confirm'}
                             </Button>
                         </div>
+                    </div>
+                </ModalOverlay>
+            );
+        };
+
+        const ShareModal = ({ isOpen, onClose, data }) => {
+            const [copied, setCopied] = useState(false);
+            const [link, setLink] = useState('');
+
+            useEffect(() => {
+                if (isOpen && data) {
+                    const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(data));
+                    const timestamp = Date.now();
+                    const currentPath = window.location.pathname;
+                    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+                    const shareUrl = `${window.location.origin}${basePath}/TravelSplit_Balance.html?data=${compressed}&time=${timestamp}`;
+                    setLink(shareUrl);
+                }
+            }, [isOpen, data]);
+
+            const copyToClipboard = () => {
+                // Try modern API first
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(link).then(() => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                    }).catch(err => {
+                        console.error('Clipboard API failed, trying fallback', err);
+                        fallbackCopy(link);
+                    });
+                } else {
+                    fallbackCopy(link);
+                }
+            };
+
+            const fallbackCopy = (text) => {
+                try {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    textArea.style.position = "fixed";
+                    textArea.style.left = "-9999px";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    if (successful) {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                    }
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                }
+            };
+
+            return (
+                <ModalOverlay isOpen={isOpen} onClose={onClose}>
+                    <div className="p-6">
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <Share2 size={24}/>
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900">Share Balance</h3>
+                            <p className="text-sm text-gray-500 mt-1">Anyone with this link can view the current balance and expenses.</p>
+                        </div>
+                        
+                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4 flex items-center gap-2">
+                            <div className="bg-white p-1.5 rounded border border-gray-200">
+                                <LinkIcon size={14} className="text-gray-400"/>
+                            </div>
+                            <input readOnly value={link} className="bg-transparent flex-1 text-xs text-gray-600 outline-none truncate" />
+                        </div>
+
+                        <Button onClick={copyToClipboard} className={`w-full ${copied ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-900'}`}>
+                            {copied ? <><Check size={16}/> Copied!</> : 'Copy Link'}
+                        </Button>
                     </div>
                 </ModalOverlay>
             );
@@ -496,6 +582,7 @@
             const [selectedReceipt, setSelectedReceipt] = useState(null);
             const [selectedUserForSettlement, setSelectedUserForSettlement] = useState(null);
             const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+            const [isShareModalOpen, setIsShareModalOpen] = useState(false);
             const [newTravelerName, setNewTravelerName] = useState('');
             const [actionConfig, setActionConfig] = useState({ isOpen: false });
 
@@ -812,7 +899,10 @@
                                 </button>
                            </div>
                         </div>
-                        <Button variant="ghost" onClick={() => setIsSidebarOpen(true)} className="p-2"><Menu size={24}/></Button>
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" onClick={() => setIsShareModalOpen(true)} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700"><Share2 size={20}/></Button>
+                            <Button variant="ghost" onClick={() => setIsSidebarOpen(true)} className="p-2"><Menu size={24}/></Button>
+                        </div>
                     </nav>
 
                     <main className="max-w-4xl mx-auto p-6 md:p-12 space-y-12">
@@ -933,6 +1023,7 @@
                     <ReceiptModal receipt={selectedReceipt} onClose={() => setSelectedReceipt(null)} onDelete={deleteReceipt} onUpdateName={(id, name) => setReceipts(prev => prev.map(r => r.id === id ? {...r, title: name} : r))} currencySymbol={currencySymbol} />
                     <SettlementDetailModal user={selectedUserForSettlement} transactions={settlement} onClose={() => setSelectedUserForSettlement(null)} onSettle={handleSettleDebt} currencySymbol={currencySymbol} />
                     <ActionModal config={actionConfig} onClose={() => setActionConfig({...actionConfig, isOpen: false})} />
+                    <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} data={{ travelers, receipts, currencyCode }} />
                 </div>
             );
         };
